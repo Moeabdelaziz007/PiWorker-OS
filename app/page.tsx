@@ -6,6 +6,8 @@ import { Terminal, Activity, Zap, Cpu, TrendingUp, ShieldAlert, Wallet, Lock, Ch
 import { useState, useEffect } from "react";
 import { usePi } from "./components/pi-provider";
 import { authenticateSovereignWallet } from "@/core/finance/pi-auth";
+import { SovereignAuditLog } from "./components/visualizers/sovereign-audit-log";
+import { BrainCircuit, Activity } from "lucide-react";
 
 export default function SovereignCommandCenter() {
   const [logs, setLogs] = useState<string[]>([
@@ -175,6 +177,11 @@ export default function SovereignCommandCenter() {
               </div>
             </div>
           </div>
+
+          {/* Audit Ledger Section */}
+          <div className="mt-4">
+            <SovereignAuditLog />
+          </div>
         </aside>
 
         {/* Center: Quantum Mirror Terminal */}
@@ -203,6 +210,25 @@ export default function SovereignCommandCenter() {
                 </motion.div>
               ))}
             </AnimatePresence>
+          </div>
+
+          {/* Neural Activity Bar */}
+          <div className="h-6 flex items-center justify-between px-2 bg-neon-green/5 border border-neon-green/10 rounded text-[8px] font-mono">
+            <div className="flex items-center gap-2">
+              <BrainCircuit size={10} className="text-neon-green" />
+              <span className="text-white/40 uppercase">Neural Oracle:</span>
+              <span className="text-neon-green uppercase">GEMINI 1.5 PRO (ACTIVE)</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="h-1 w-8 bg-neon-green/20 rounded-full overflow-hidden">
+                <motion.div 
+                  animate={{ width: ["20%", "90%", "40%"] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="h-full bg-neon-green shadow-[0_0_5px_#39FF14]"
+                />
+              </div>
+              <span className="text-white/20">94% CONF</span>
+            </div>
           </div>
 
           <div className="h-10 border border-white/5 bg-black/50 flex items-center px-4 gap-3">
