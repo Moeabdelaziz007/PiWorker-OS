@@ -55,6 +55,10 @@ export const AgentSchema = z.object({
   publicKey: z.string({
     required_error: "المفتاح العام (Public Key) مطلوب للتحقق من الهوية",
   }).min(32, "المفتاح العام غير صالح أو قصير جداً"),
+
+  walletAddress: z.string().startsWith("pi-", "عنوان محفظة Pi غير صالح").optional(),
+  
+  lastSignature: z.string().optional(),
   
   dna: AgentDNASchema,
   
