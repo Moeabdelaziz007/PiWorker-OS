@@ -5,6 +5,7 @@ import { AmrikyyTreasury } from "../finance/treasury-vault.js";
 
 /**
  * MAS-ZERO NEURAL ORACLE
+ */
 
 // Strictly typed ROI evaluation
 export interface ROIEvaluation {
@@ -91,9 +92,44 @@ export async function analyzeOpportunity(
       // We'll pass through the required skills in the metadata for the scanner
       ...(parsed.required_skills ? { requiredSkills: parsed.required_skills } : {})
     } as ROIEvaluation & { requiredSkills?: string[] };
-
+  } catch (error) {
     console.error("[ORACLE] Fatal failure in Neural Bridge:", error);
     throw new Error("NEURAL_ORACLE_TIMEOUT_OR_FAILURE");
+  }
+}
+
+/**
+ * Visual Verification for Physical PoPW (Proof of Physical Work)
+ * Level 5 Autonomy: Oracle confirms robot actually moved the item.
+ */
+export async function verifyPhysicalTask(
+  objective: string,
+  visualFrame: Buffer
+): Promise<boolean> {
+  console.log(`[ORACLE] 🤖 Visual Verification initiated for objective: ${objective}`);
+  
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `ACT AS: MAS-ZERO Vision Auditor. 
+    OBJECTIVE: ${objective}. 
+    Analyze the image. Did the robot successfully complete the objective? 
+    RETURN ONLY "TRUE" OR "FALSE".`;
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: visualFrame.toString("base64"),
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
+
+    const response = result.response.text().trim().toUpperCase();
+    return response === "TRUE";
+  } catch (error) {
+    console.error("[ORACLE] Visual audit failure:", error);
+    return false;
   }
 }
 

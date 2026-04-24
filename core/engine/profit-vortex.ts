@@ -1,4 +1,5 @@
 import { Agent } from "../types/agent";
+import { PiAdapter } from "../finance/pi-adapter.js";
 
 /**
  * PiWorker-OS ProfitVortex
@@ -47,7 +48,6 @@ export class ProfitVortex {
       
       // توزيع مكافأة الـ Pi آلياً
       if (agent.walletAddress) {
-        const { PiAdapter } = require("../finance/pi-adapter");
         PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardAmount);
       }
     }
@@ -58,6 +58,14 @@ export class ProfitVortex {
       remainingBudget: currentBudget,
       actionTaken: "none",
     };
+  }
+
+  /**
+   * حساب المصاريف التشغيلية الفيزيائية (طاقة، صيانة، اهتلاك)
+   */
+  public calculatePhysicalOverhead(durationMinutes: number, robotType: string): number {
+    const hourlyRate = robotType === 'pi-humanoid' ? 2.5 : 1.0;
+    return (durationMinutes / 60) * hourlyRate;
   }
 
   private executeCannibalism(

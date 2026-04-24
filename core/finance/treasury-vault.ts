@@ -32,8 +32,16 @@ export class AmrikyyTreasury {
       currency,
       netToAgent: netProfit,
       newReserve: this.RESERVES[currency],
-      timestamp: new Date().toISOString()
     };
+  }
+
+  /**
+   * Deducts a usage fee for plugins and tools.
+   */
+  static deductUsageFee(agentId: string, amount: number, toolName: string) {
+    this.RESERVES["Pi"] += amount;
+    console.log(`[TREASURY] 💰 Deducted ${amount} Pi from ${agentId} for ${toolName}.`);
+    return true;
   }
 
   /**
