@@ -1,4 +1,7 @@
 import { TelemetryLogger } from "../utils/telemetry-logger";
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import path from 'node:path';
 
 export interface SimulationRequest {
   goalId: string;
@@ -34,6 +37,31 @@ export interface IntentResponse {
  */
 export class SovereignBridge {
   private static readonly ENGINE_URL = "http://localhost:50051"; // Default gRPC port
+  private static client: any = null;
+
+  /**
+   * Initializes the gRPC client dynamically using the proto file.
+   */
+  private static getClient() {
+    if (!this.client) {
+      const PROTO_PATH = path.join(process.cwd(), 'sidecar/sovereign-engine/proto/sovereign.proto');
+      const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true
+      });
+      const sovereignProto = grpc.loadPackageDefinition(packageDefinition).sovereign as any;
+
+      this.client = new sovereignProto.SovereignService(
+        this.ENGINE_URL,
+        grpc.credentials.createInsecure() // Use secure credentials in production
+      );
+      console.log(`[gRPC] Sovereign Bridge connected to Go Engine at ${this.ENGINE_URL}`);
+    }
+    return this.client;
+  }
 
   /**
    * Delegates a complex simulation task to the Go Engine.
@@ -41,9 +69,9 @@ export class SovereignBridge {
    */
   public static async requestSimulation(req: SimulationRequest): Promise<SimulationResponse> {
     console.log(`🚀 [Bridge] Delegating Goal ${req.goalId} to Go Sovereign Engine...`);
-    
+
     const startTime = Date.now();
-    const TIMEOUT_MS = 5000; // 5 seconds safety cap
+    const TIMEOUT_MS = 15000; // Increased timeout for deep Go simulations
 
     try {
       // Race between the actual simulation call and a timeout promise
@@ -63,15 +91,22 @@ export class SovereignBridge {
   }
 
   private static async executeSimulationCall(req: SimulationRequest): Promise<SimulationResponse> {
-    // Simulated gRPC processing
-    await new Promise(resolve => setTimeout(resolve, 200)); 
-    return {
-      goalId: req.goalId,
-      predictedRoi: 1.85,
-      riskScore: 0.12,
-      strategyRecommendation: "Execute aggressive expansion via Pi App Studio Micro-SaaS",
-      personaInsights: []
-    };
+    const client = this.getClient();
+
+    return new Promise((resolve, reject) => {
+      client.RequestSimulation({
+        goal_id: req.goalId,
+        instances: req.parallelInstances,
+        complexity: 0.9, // Default complexity
+        personas: ["bull", "bear", "chaos", "conservative", "aggressive"]
+      }, (error: any, response: any) => {
+        if (error) {
+          console.error("[gRPC] Go Engine Simulation Error:", error);
+          return reject(error);
+        }
+        resolve(response as SimulationResponse);
+      });
+    });
   }
 
   /**
@@ -79,10 +114,10 @@ export class SovereignBridge {
    */
   public static async sendEmbodiedIntent(req: EmbodiedIntentRequest): Promise<IntentResponse> {
     console.log(`🤖 [Bridge] Sending Embodied Intent ${req.intentId} to Go Engine...`);
-    
+
     // محاكاة استجابة gRPC من محرك Go
     await new Promise(resolve => setTimeout(resolve, 150));
-    
+
     return {
       accepted: true,
       statusMessage: "π0.7_BRIDGE_SYNCED",

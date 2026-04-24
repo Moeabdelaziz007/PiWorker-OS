@@ -44,16 +44,20 @@ export default function SovereignMarketplace() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleHire = async (agentId: string) => {
-    if (!user) {
+    Codebase, understand the current status of our Go language and how we can elaborate it, and about the payment system also, and how we are going to connect everything together.Go take a look and come back and let me know!     let currentUser = user;
+    if (!currentUser) {
       const auth = await authenticateSovereignWallet();
-      if (auth) setUser({ username: auth.user.username, uid: auth.user.uid });
+      if (auth) {
+        currentUser = { username: auth.username, uid: auth.uid };
+        setUser(currentUser);
+      }
       else return;
     }
 
     setIsProcessing(true);
     const agent = AGENT_PRODUCTS.find(a => a.id === agentId);
     if (agent) {
-      const order = await ingestSaaSOrder(user.uid, agentId, agent.price);
+      const order = await ingestSaaSOrder(currentUser.uid, agentId, agent.price);
       setCart([...cart, order.orderId]);
     }
     setIsProcessing(false);
@@ -62,7 +66,7 @@ export default function SovereignMarketplace() {
   return (
     <main className="min-h-screen bg-sovereign-black text-white font-mono relative overflow-hidden">
       <div className="scanline" />
-      
+
       {/* Header */}
       <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 frosted-glass z-20">
         <div className="flex items-center gap-4">
@@ -91,7 +95,7 @@ export default function SovereignMarketplace() {
 
       {/* Hero Section */}
       <section className="py-12 px-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl"
@@ -100,7 +104,7 @@ export default function SovereignMarketplace() {
             HIRE SOVEREIGN AGENTS.<br />SCALE YOUR REVENUE.
           </h1>
           <p className="text-white/60 max-w-2xl text-sm leading-relaxed mb-8">
-            Access specialized Micro-SaaS execution directly from the Amrikyy Lab workforce. 
+            Access specialized Micro-SaaS execution directly from the Amrikyy Lab workforce.
             All tasks are secured by the Quantum Mirror and settled via Pi Network Escrow.
           </p>
         </motion.div>
@@ -138,7 +142,7 @@ export default function SovereignMarketplace() {
                   <span className="text-[10px] text-white/30 uppercase">Task Price</span>
                   <span className="text-pi-gold font-black text-xl">{agent.price} Pi</span>
                 </div>
-                <button 
+                <button
                   onClick={() => handleHire(agent.id)}
                   disabled={isProcessing}
                   className="px-6 py-2 bg-neon-green text-black font-black text-xs uppercase italic tracking-tighter hover:bg-white transition-colors flex items-center gap-2"
@@ -158,7 +162,7 @@ export default function SovereignMarketplace() {
           <span className="text-[10px] font-black uppercase">Live Order Stream:</span>
         </div>
         <div className="flex-1 px-4 overflow-hidden">
-          <motion.div 
+          <motion.div
             animate={{ x: [0, -1000] }}
             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
             className="flex gap-12 whitespace-nowrap text-[10px] text-white/40 font-mono"

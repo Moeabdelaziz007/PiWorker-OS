@@ -75,7 +75,7 @@ export class MASOrchestrator extends EventEmitter {
         prompt: `Simulate execution for skill ${skill.name} with data: ${JSON.stringify(taskData)}`,
         parallelInstances: 30
       });
-      
+
       this.emit(OrchestrationEvent.SIMULATION_PASSED, simResult);
 
       // 1.5 تفعيل البروتوكول الفيزيائي إذا لزم الأمر
@@ -86,10 +86,10 @@ export class MASOrchestrator extends EventEmitter {
 
       // 2. مرحلة التنفيذ (تخيلية هنا)
       const actualRoi = await this.simulateExecution(executor, simResult);
-      
+
       // 3. مرحلة المراجعة المالية (Profit Vortex)
-      const health = await this.vortex.evaluatePerformance(executor, actualRoi, 1000); 
-      
+      const health = await this.vortex.evaluatePerformance(executor, actualRoi, 1000);
+
       // 4. البصمة السيادية (Sovereign Signature)
       const signedResult = this.signExecutionResult(executor, {
         actualRoi,
@@ -102,11 +102,11 @@ export class MASOrchestrator extends EventEmitter {
         this.handleAgentFailure(executor, actualRoi);
       }
 
-      this.emit(OrchestrationEvent.EXECUTION_COMPLETED, { 
-        executor, 
-        actualRoi, 
+      this.emit(OrchestrationEvent.EXECUTION_COMPLETED, {
+        executor,
+        actualRoi,
         health,
-        sovereignStamp: signedResult.stamp 
+        sovereignStamp: signedResult.stamp
       });
 
 
@@ -137,11 +137,11 @@ export class MASOrchestrator extends EventEmitter {
    */
   public async orchestrateGoal(goal: string, agents?: { ceo: Agent, executor: Agent, critic: Agent }): Promise<PlanStep[]> {
     console.log(`[Orchestrator] 🚀 Starting Sovereign Goal: ${goal}`);
-    
+
     // Fallback: If no agents provided, try to get from fleet or create synthetic ones
     const resolvedAgents = (agents && agents.ceo) ? agents : await this.getOrBootstrapAgents();
     console.log(`[Orchestrator] Using Agents: CEO=${resolvedAgents.ceo.name}, Executor=${resolvedAgents.executor.name}`);
-    
+
     try {
       // PHASE 6: NEURAL MEMORY RETRIEVAL
       // Fetch relevant past experiences to inform the plan
@@ -151,7 +151,7 @@ export class MASOrchestrator extends EventEmitter {
       }
 
       // 1. مرحلة التخطيط (Compilation)
-      const contextEnhancedGoal = pastExperiences.length > 0 
+      const contextEnhancedGoal = pastExperiences.length > 0
         ? `Goal: ${goal}. Context from past experiences: ${JSON.stringify(pastExperiences.map(e => e.data))}`
         : goal;
 
@@ -161,7 +161,7 @@ export class MASOrchestrator extends EventEmitter {
       // 2. حلقة التنفيذ السيادي
       for (const step of plan) {
         console.log(`[Step ${step.id}] [${step.component.toUpperCase()}] ${step.action}`);
-        
+
         switch (step.component) {
           case "agent":
             await this.executeAgentStep(step, resolvedAgents);
@@ -195,7 +195,7 @@ export class MASOrchestrator extends EventEmitter {
 
   private async getOrBootstrapAgents(): Promise<{ ceo: Agent, executor: Agent, critic: Agent }> {
     const all = await fleetManager.getAllAgents();
-    
+
     const ceo = all.find(a => a.role === "ceo") || this.createSyntheticAgent("CEO-Prime", "ceo", "StrategicPlanning");
     const executor = all.find(a => a.role === "executor") || this.createSyntheticAgent("Executor-One", "executor", "BountyHunter");
     const critic = all.find(a => a.role === "critic") || this.createSyntheticAgent("Critic-Alpha", "critic", "CodeAuditor");
@@ -214,6 +214,7 @@ export class MASOrchestrator extends EventEmitter {
       walletAddress: `pi-${crypto.randomBytes(20).toString("hex")}`,
       dna: {
         chromosomes: ["synthetic", "bootstrap"],
+        skillChromosomes: [],
         fitnessScore: 100,
         generation: 0,
         mutations: []
@@ -251,7 +252,7 @@ export class MASOrchestrator extends EventEmitter {
    */
   private async dispatchEmbodiedIntent(step: PlanStep, executor: Agent) {
     console.log(`[π0.7] 🤖 Assembling Embodied Intent for: ${step.action}`);
-    
+
     // محاكاة تجميع تدفق مرئي (Visual Subgoals)
     const visualData = [
       Buffer.from("feature_vector_01"),
@@ -278,12 +279,12 @@ export class MASOrchestrator extends EventEmitter {
       }
 
       console.log(`[π0.7] ✅ Intent Accepted by Go Engine. Tracking: ${response.trackingId}`);
-      
+
       // Emit event for UI synchronization
-      this.emit(OrchestrationEvent.PHYSICAL_ACTION_INITIATED, { 
-        executor, 
-        action: step.action, 
-        trackingId: response.trackingId 
+      this.emit(OrchestrationEvent.PHYSICAL_ACTION_INITIATED, {
+        executor,
+        action: step.action,
+        trackingId: response.trackingId
       });
 
     } catch (error) {
@@ -301,11 +302,11 @@ export class MASOrchestrator extends EventEmitter {
 
   private async executeFinanceStep(step: PlanStep) {
     console.log(`[Finance] 💰 Processing: ${step.action}`);
-    
+
     // Extract budget or amount from parameters if available
-    const amount = step.parameters?.budget || step.parameters?.amount || 50; 
+    const amount = step.parameters?.budget || step.parameters?.amount || 50;
     const orderId = `goal-${crypto.randomBytes(4).toString("hex")}`;
-    
+
     try {
       AmrikyyTreasury.createEscrow(orderId, "MAS-ZERO", amount);
       TelemetryLogger.logFiscal("ESCROW_LOCK", { orderId, agentId: "MAS-ZERO", amount });
@@ -338,14 +339,14 @@ export class MASOrchestrator extends EventEmitter {
   private async simulateExecution(agent: Agent, sim: SimulationResult): Promise<number> {
     const deviation = (Math.random() - 0.5) * 0.2;
     // Base ROI simulation
-    return 1.5 + deviation; 
+    return 1.5 + deviation;
   }
 
   private handleAgentFailure(agent: Agent, roi: number): void {
     console.warn(`[Orchestrator] معالجة فشل الوكيل ${agent.name}. بدء الطفرة الجينية.`);
     agent.dna.fitnessScore = Math.max(0, agent.dna.fitnessScore - 10);
-    this.emit(OrchestrationEvent.AGENT_MUTATED, { 
-      agentId: agent.id, 
+    this.emit(OrchestrationEvent.AGENT_MUTATED, {
+      agentId: agent.id,
       newFitness: agent.dna.fitnessScore,
       reason: `فشل مالي: ROI ${roi.toFixed(2)}`
     });
@@ -356,10 +357,10 @@ export class MASOrchestrator extends EventEmitter {
    */
   public async mintAIX(agent: Agent, skill: Skill): Promise<AIXAsset> {
     console.log(`[Foundry] ⚒️ Minting AIX Asset for agent: ${agent.name}...`);
-    
+
     // 1. توليد الهوية السيادية عبر AxiomID
     const axiomIdentity = AxiomIDResolver.generateDID(agent.id);
-    
+
     // 2. إنشاء الأصل في السجل
     const asset: AIXAsset = {
       id: crypto.randomBytes(8).toString('hex'),
@@ -372,7 +373,7 @@ export class MASOrchestrator extends EventEmitter {
     };
 
     AssetRegistry.registerAsset(asset);
-    
+
     console.log(`[Foundry] ✅ Asset Minted: ${asset.did.did}`);
     return asset;
   }

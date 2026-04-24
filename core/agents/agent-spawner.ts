@@ -6,33 +6,16 @@
 
 import crypto from "node:crypto";
 import { SovereignLedger } from "../identity/sovereign-ledger";
-
-export type AgentSpecialization = "CODE_GEN" | "AUDITOR" | "RESEARCHER" | "CONTENT_ARCH" | "BountyHunter" | "MarketingSpecialist" | "CodeAuditor";
-
-export interface AgentIdentity {
-  browser: string;
-  os: string;
-  deviceId: string;
-  userAgent: string;
-}
-
-export interface AgentInstance {
-  agentId: string;
-  specialization: AgentSpecialization;
-  status: "INITIALIZING" | "READY" | "BUSY" | "OFFLINE";
-  spawnTime: string;
-  piBudget: number;
-  identity: AgentIdentity;
-}
-
+import { Agent, AgentSpecialization } from "../types/agent";
+import { EconomicRiskLevel } from "../governance-engine";
 import { AixPackage } from "../engine/aix-foundry";
 
 /**
  * Spawns an agent from a standardized .aix package.
  */
-export async function spawnFromAix(aixData: AixPackage): Promise<AgentInstance> {
+export async function spawnFromAix(aixData: AixPackage): Promise<Agent> {
   console.log(`[SPAWNER] Materializing Agent from AIX: ${aixData.header.name} (v${aixData.header.version})`);
-  
+
   return spawnAgent(
     aixData.dna.specialization as AgentSpecialization,
     aixData.dna.basePrice * 0.5 // Initial budget derived from asset value
@@ -45,15 +28,15 @@ export async function spawnFromAix(aixData: AixPackage): Promise<AgentInstance> 
 export async function spawnAgent(
   specialization: AgentSpecialization,
   initialBudget: number
-): Promise<AgentInstance> {
-  const agentId = `did:piworker:fleet-${crypto.randomBytes(3).toString("hex")}`;
-  
+): Promise<Agent> {
+  const agentId = `pw-agt-${crypto.randomBytes(6).toString("hex")}`;
+
   const browsers = ["Chrome", "Firefox", "Edge", "Safari"];
   const oss = ["MacOS", "Windows", "Linux", "iOS"];
   const randomBrowser = browsers[Math.floor(Math.random() * browsers.length)];
   const randomOS = oss[Math.floor(Math.random() * oss.length)];
-  
-  const identity: AgentIdentity = {
+
+  const identity = {
     browser: randomBrowser,
     os: randomOS,
     deviceId: crypto.randomBytes(8).toString("hex"),
@@ -62,30 +45,34 @@ export async function spawnAgent(
 
   console.log(`[SPAWNER] Initializing new ${specialization} Agent: ${agentId}`);
 
-    const { SovereignShield } = await import("../security/sovereign-shield");
-
-    const agent: any = {
-      agentId: `agn-${crypto.randomBytes(4).toString("hex")}`,
-      specialization,
-      status: "READY",
-      totalProfit: 0,
-      piBudget: initialBudget || 100,
-      identity: identity,
-      security: {
-        riskTolerance: 0.8,
-        threatLevel: SovereignShield.getThreatLevel(),
-        lastRotation: new Date().toISOString()
-      },
-      createdAt: new Date().toISOString()
-    };
-
-  const instance: AgentInstance = {
-    agentId,
+  const instance: Agent = {
+    id: agentId,
+    name: `${specialization}-Agent`,
+    role: "specialist",
+    publicKey: `pub-${crypto.randomBytes(16).toString("hex")}`,
+    walletAddress: `pi-${crypto.randomBytes(20).toString("hex")}`,
+    status: "active",
     specialization,
-    status: "INITIALIZING",
-    spawnTime: new Date().toISOString(),
-    piBudget: initialBudget,
-    identity
+    capabilities: [specialization],
+    identity,
+    dna: {
+      chromosomes: ["spawned_execution"],
+      skillChromosomes: [],
+      fitnessScore: 100,
+      generation: 0,
+      mutations: []
+    },
+    governance: {
+      betrayalThreshold: 0.8,
+      minRoiRequirement: 1.5,
+      riskTolerance: EconomicRiskLevel.MEDIUM
+    },
+    metrics: {
+      totalProfit: 0,
+      tasksCompleted: 0,
+      reputation: 1,
+      spawnTime: new Date().toISOString()
+    }
   };
 
   // Register the spawn event in the Ledger for accountability
@@ -100,6 +87,6 @@ export async function spawnAgent(
   // Finalize initialization
   instance.status = "READY";
   console.log(`[SPAWNER] Agent ${agentId} is now ONLINE and ready for task ingestion.`);
-  
+
   return instance;
 }

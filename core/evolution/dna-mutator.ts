@@ -12,7 +12,7 @@ export class DNAMutator {
   static mutate(dna: AgentDNA, intensity: number = 0.1): AgentDNA {
     const newDNA = { ...dna };
     const mutationId = crypto.randomUUID();
-    
+
     // 1. Tweak base chromosomes (The instructions)
     const traitIndex = Math.floor(Math.random() * newDNA.chromosomes.length);
     const originalTrait = newDNA.chromosomes[traitIndex];
@@ -20,14 +20,14 @@ export class DNAMutator {
 
     // 2. Tweak skill chromosomes (The strategy weights)
     if (newDNA.skillChromosomes && newDNA.skillChromosomes.length > 0) {
-        const skillIdx = Math.floor(Math.random() * newDNA.skillChromosomes.length);
-        const skillTrait = newDNA.skillChromosomes[skillIdx];
-        if (skillTrait.startsWith("trait:")) {
-            const parts = skillTrait.split(":");
-            const currentWeight = parseFloat(parts[2]);
-            const newWeight = Math.min(1, Math.max(0, currentWeight + (Math.random() * 2 - 1) * intensity));
-            newDNA.skillChromosomes[skillIdx] = `${parts[0]}:${parts[1]}:${newWeight.toFixed(2)}`;
-        }
+      const skillIdx = Math.floor(Math.random() * newDNA.skillChromosomes.length);
+      const skillTrait = newDNA.skillChromosomes[skillIdx];
+      if (skillTrait.startsWith("trait:")) {
+        const parts = skillTrait.split(":");
+        const currentWeight = parseFloat(parts[2]);
+        const newWeight = Math.min(1, Math.max(0, currentWeight + (Math.random() * 2 - 1) * intensity));
+        newDNA.skillChromosomes[skillIdx] = `${parts[0]}:${parts[1]}:${newWeight.toFixed(2)}`;
+      }
     }
 
     const mutationRecord = {
@@ -39,7 +39,7 @@ export class DNAMutator {
 
     newDNA.mutations.push(mutationRecord);
     newDNA.generation += 1;
-    
+
     return newDNA;
   }
 
@@ -54,6 +54,7 @@ export class DNAMutator {
 
     return {
       chromosomes: childChromosomes,
+      skillChromosomes: [],
       mutations: [],
       generation: Math.max(parentA.generation, parentB.generation) + 1,
       fitnessScore: 0, // Reset fitness for the new offspring

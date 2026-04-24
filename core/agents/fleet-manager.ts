@@ -40,14 +40,14 @@ class FleetManager {
     const stats = AmrikyyTreasury.getStats();
     const reg = await this.getRegistry();
     const fleetSize = reg.getAllAgents().length;
-    
+
     console.log(`[FLEET_MANAGER] Scaling Evaluation: Reserve at ${stats.reserves['(default)'] || 0} Pi.`);
 
     if ((stats.reserves['(default)'] || 0) >= 200 && fleetSize < 10) {
       console.log("\x1b[1m\x1b[32m[SCALING] Wealth threshold met. Spawning new Sovereign Agent...\x1b[0m");
       const specializations: AgentSpecialization[] = ["BountyHunter", "MarketingSpecialist", "CodeAuditor"];
       const randomSpec = specializations[Math.floor(Math.random() * specializations.length)];
-      
+
       const newAgent = await reg.mintIdentity(`Agent-${randomSpec}`, "executor", ["automated_task"], randomSpec);
       console.log(`\x1b[32m[SCALING] Success: Agent ${newAgent.name} joined the fleet.\x1b[0m`);
     }
@@ -81,13 +81,13 @@ class FleetManager {
   /**
    * Returns current fleet metrics.
    */
-  async getMetrics() {
+  async getMetrics(): Promise<{ total: number; active: number; ready: number }> {
     const reg = await this.getRegistry();
     const agents = reg.getAllAgents();
     const total = agents.length;
     const active = agents.filter(a => a.status === "active" || a.status === "busy").length;
     const ready = total - active;
-    
+
     return { total, active, ready };
   }
 

@@ -14,7 +14,7 @@ export class AgentRegistry {
   private static instance: AgentRegistry;
   private agents: Map<string, Agent> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   static async getInstance(): Promise<AgentRegistry> {
     if (!AgentRegistry.instance) {
@@ -80,7 +80,7 @@ export class AgentRegistry {
    */
   async mintIdentity(name: string, role: AgentRole, capabilities: string[], specialization?: AgentSpecialization): Promise<Agent> {
     const { did, passport } = PiWorkerDID.generate(name);
-    
+
     // Convert DID-like UUID to our internal standard
     const internalId = `pw-agt-${did.split(':').pop()?.replace(/-/g, '').slice(0, 12)}`;
 
@@ -99,6 +99,7 @@ export class AgentRegistry {
       },
       dna: {
         chromosomes: [role === "ceo" ? "strategy_node" : "execution_node"],
+        skillChromosomes: [],
         mutations: [],
         generation: 1,
         fitnessScore: 100
