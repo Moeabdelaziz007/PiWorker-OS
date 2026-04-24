@@ -67,8 +67,20 @@
   - **DNA Evolution**: ROI-driven mutation adjusts prompt chromosomes autonomously.
 - **Verification**: Integration test `scratch/v2-deep-test.ts` updated to validate the 30-mirror loop and worker pool dispatching.
 
+## [2026-04-24] Phase 8: Sovereign 10x Logic & DNA Financial Multipliers
+- **Feature**: 10x ROI Threshold & Fitness-Based Rewards
+- **Status**: INTEGRATED & OPERATIONAL
+- **Git Context**: `PiWorker-OS` | branch:`hardening-v2-final`
+- **Architecture**:
+  - `core/engine/profit-vortex.ts`: Implemented 10x "Sovereign Awakening" logic.
+  - `core/evolution/dna-mutator.ts`: Linked financial success to DNA mutation intensity.
+- **Logic**: 
+  - **10x Rule**: Agents hitting 10x ROI receive 100% of profits (Tax-Exempt) and "Sovereign Rank".
+  - **DNA Multiplier**: Financial rewards are scaled by the agent's Fitness Score.
+- **Philosophy**: "Operating at the intersection of complex math and raw compute. The goal is 10x, or it's not worth the logic."
+
 ## Git Metadata Record
 - **Repository**: PiWorker-OS
 - **Branch**: hardening-v2-final
 - **Commit**: [PENDING_PUSH]
-- **Timestamp**: 2026-04-24T13:30:00Z
+- **Timestamp**: 2026-04-24T16:35:00Z

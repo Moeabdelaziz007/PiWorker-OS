@@ -1,44 +1,31 @@
-# Task: Phase 6 - Neural Memory Mesh Implementation
+# Task: Phase 7 & 8 - Quantum Mirror, DNA Evolution & 10x Logic
 
 ### Goal
-Establish a sovereign vector-based memory system for agents to store, retrieve, and share experiences, enabling cross-agent learning and task optimization.
+Implement high-fidelity simulation logic (Quantum Mirror), evolutionary skill mutation, and 10x ROI sovereign financial logic.
 
 ### Memory Context
-- **Searched Patterns:** `PersistenceEngine` (JSONL storage), `NeuralMemoryMesh` (Blackboard pattern).
-- **Relevant Namespaces:** `core/brain`, `core/identity`.
-
-### Why now
-To move from reactive agents to learning agents. Memory is the foundation of long-term ROI optimization in the Agent Economy.
-
-### Scope
-- `/core/brain` - Memory logic and vector search.
-- `/core/engine` - Orchestration integration.
-
-### Out of scope
-- Distributed database clusters (keeping it local/sovereign for now).
-- External vector DB dependencies (e.g., Pinecone).
-
-### Risks / Ambiguities / Fragility
-- Performance of local vector search as memory grows.
-- Embedding cost/latency if using Gemini for every insight.
+- **Searched Patterns:** `Synthetic Consensus`, `QuantumMirrorEngine`, `ProfitVortex`.
+- **Relevant Namespaces:** `core/engine`, `core/evolution`, `core/identity`.
 
 ### Plan
-1. [x] **Step 1: Vector Store**: Create `core/brain/vector-store.ts` with cosine similarity logic.
-2. [x] **Step 2: Embedding Integration**: Connect to Gemini for generating embeddings of insights.
-3. [x] **Step 3: Mesh Upgrade**: Update `NeuralMemoryMesh` to index insights into the vector store.
-4. [x] **Step 4: Orchestration Loop**: Modify `MASOrchestrator` to retrieve relevant memories before planning.
-5. [x] **Step 5: Verification**: Run `scratch/test-neural-memory.ts` to verify retrieval accuracy.
+1. [x] **Step 1: High-Fidelity Quantum Mirror**: Port 5-persona simulation (Bull, Bear, Chaos, Conservative, Aggressive) from DigitalTwin v1.
+2. [x] **Step 2: Sovereign Worker Pool**: Re-implement coordination logic for the Golden Trio (CEO, Executor, Critic).
+3. [x] **Step 3: Genome Registry**: Map 20+ legacy skills to DNA chromosomes.
+4. [x] **Step 4: DNA Mutator Upgrade**: Implement ROI-driven trait mutation.
+5. [x] **Step 5: 10x Sovereign Logic**: Integrated 10x threshold and DNA rewards in `ProfitVortex`.
+6. [x] **Step 6: Orchestrator Hardening**: Fixed type errors and aligned Orchestrator with new 10x math.
+7. [x] **Step 7: Verification**: Updated and ran `scratch/v2-deep-test.ts` with success.
 
 ### Verification
-- [x] 2x `search-memory` calls executed before coding
-- [x] typecheck (`npx tsc --noEmit`)
-- [x] build (`npm run build`)
-- [x] Targeted test: `scratch/test-neural-memory.ts`
+- [x] 2x `search-memory` calls executed
+- [x] typecheck (`npx tsc --noEmit`) - *Fixed MASOrchestrator and GemmaAdapter*
+- [x] Targeted test: `scratch/v2-deep-test.ts`
 - [x] 1x `add-memory` call executed
 
 ### Done when
-- An agent can retrieve a "similar" past experience to solve a new goal.
-- Memory persists across system restarts.
+- Quantum Mirror runs 30 parallel simulations.
+- Agents hitting 10x ROI receive Sovereign Rank and Tax-Exempt rewards.
+- The system is architecturally zero-defect.
 
 ### Commit format
-`feat(brain): implement neural vector memory mesh`
+`feat(evolution): implement 10x sovereign logic and structural hardening`

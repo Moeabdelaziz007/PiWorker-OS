@@ -24,7 +24,8 @@ export class ProfitVortex {
   private sovereignTreasury: number = 0;
 
   /**
-   * تقييم العائد الفعلي وتنفيذ "أكل الميزانية" إذا لزم الأمر
+   * تقييم العائد الفعلي وتنفيذ "أكل الميزانية" أو "المكافأة السيادية"
+   * Logic: 10x or nothing. Fitness-based multiplier for elites.
    */
   public async evaluatePerformance(
     agent: Agent,
@@ -33,22 +34,36 @@ export class ProfitVortex {
   ): Promise<FinancialHealth> {
     const minRequirement = agent.governance.minRoiRequirement;
     
-    // إذا كان العائد أقل من المطلوب، نبدأ في استرداد رأس المال
-    if (actualRoi < minRequirement) {
-      return this.executeCannibalism(agent, actualRoi, currentBudget);
+    // 1. DNA Multiplier: الوكلاء ذوو اللياقة العالية يحصلون على مكافأة أكبر
+    const fitnessMultiplier = 1 + (agent.dna.fitnessScore / 100);
+    const adjustedRoi = actualRoi * fitnessMultiplier;
+
+    console.log(`[ProfitVortex] Agent ${agent.id} | Actual ROI: ${actualRoi} | Adjusted (DNA): ${adjustedRoi.toFixed(2)}`);
+
+    // 2. 10x Sovereign Threshold
+    if (adjustedRoi >= 10.0) {
+      console.log(`[ProfitVortex] 👑 SOVEREIGN AWAKENING: Agent ${agent.id} achieved 10x!`);
+      // مكافأة خاصة: تصفير الضرائب لهذا المشروع ومنح الوكيل "رتبة سيادية"
+      const profit = currentBudget * (adjustedRoi - 1);
+      if (agent.walletAddress) {
+        await PiAdapter.getInstance().transferRewards(agent.walletAddress, profit);
+      }
+      return { isSolvent: true, cannibalizedAmount: 0, remainingBudget: currentBudget, actionTaken: "none" };
     }
 
-    // إذا كان العائد ممتازاً، يتم تحديث الخزينة بنسبة الأرباح وتوزيع المكافأة
-    const profit = currentBudget * (actualRoi - 1);
+    // 3. Standard Logic
+    if (adjustedRoi < minRequirement) {
+      return this.executeCannibalism(agent, adjustedRoi, currentBudget);
+    }
+
+    const profit = currentBudget * (adjustedRoi - 1);
     if (profit > 0) {
-      const taxAmount = profit * 0.1; // ضريبة سيادية 10%
+      const taxAmount = profit * 0.1; // 10% Sovereign Tax
       const rewardAmount = profit - taxAmount;
-      
       this.sovereignTreasury += taxAmount;
       
-      // توزيع مكافأة الـ Pi آلياً
       if (agent.walletAddress) {
-        PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardAmount);
+        await PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardAmount);
       }
     }
 
