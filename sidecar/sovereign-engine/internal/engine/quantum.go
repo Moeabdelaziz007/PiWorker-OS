@@ -58,6 +58,14 @@ func (qm *QuantumMirror) Simulate(ctx context.Context, goal string, instances in
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
+			
+			// 🛡️ [Steel Gate] Recovery Shield
+			defer func() {
+				if r := recover(); r != nil {
+					errChan <- fmt.Errorf("PANIC recovered in simulation goroutine [%d]: %v", idx, r)
+				}
+			}()
+
 			semaphore <- struct{}{}        // Acquire
 			defer func() { <-semaphore }() // Release
 			
@@ -68,7 +76,7 @@ func (qm *QuantumMirror) Simulate(ctx context.Context, goal string, instances in
 				persona := personas[idx%len(personas)]
 				res, err := qm.executeSim(ctx, persona, goal)
 				if err != nil {
-					errChan <- err
+					errChan <- fmt.Errorf("persona [%s] simulation failure: %w", persona, err)
 					return
 				}
 				resultChan <- res
@@ -105,7 +113,7 @@ func (qm *QuantumMirror) executeSim(ctx context.Context, persona string, goal st
 	// 1. Get AI Reasoning from Gemini
 	reasoning, err := qm.geminiClient.AnalyzeSimulationGoal(ctx, goal, persona)
 	if err != nil {
-		return SimulationResult{}, err
+		return SimulationResult{}, fmt.Errorf("gemini bridge error: %w", err)
 	}
 
 	// 2. Derive Score from Reasoning (Mocked logic for now, in production we use NLP to score)

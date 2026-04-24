@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node --loader ts-node/esm scripts/preflight-check.ts",
+    "prebuild": "npx tsx scripts/preflight-check.ts",
     "build": "next build",
     "build:sovereign": "./scripts/sovereign-build.sh",
     "start": "next start",

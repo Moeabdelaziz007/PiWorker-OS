@@ -23,6 +23,11 @@ export default function SovereignCommandCenter() {
   const [user, setUser] = useState<{username: string, uid: string} | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [liquidity, setLiquidity] = useState(295);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleConnectWallet = async () => {
     if (!isInitialized) {
@@ -144,7 +149,7 @@ export default function SovereignCommandCenter() {
                   </div>
                   <div className="flex justify-between text-[8px] text-white/30 uppercase items-center">
                     <span>Content Harvested</span>
-                    <span className="text-neon-green">{(Math.random() * 100).toFixed(0)} Units</span>
+                    <span className="text-neon-green">{mounted ? (Math.random() * 100).toFixed(0) : "0"} Units</span>
                   </div>
                   <div className="flex justify-between text-[8px] text-white/30 uppercase items-center">
                     <span>Governance Tier</span>
@@ -405,7 +410,7 @@ export default function SovereignCommandCenter() {
             >
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex gap-4 items-center">
-                  <span className="text-[10px] text-white/40 uppercase font-mono">Inflow from Agent did:piworker:{Math.random().toString(16).slice(2, 8)}</span>
+                  <span className="text-[10px] text-white/40 uppercase font-mono">Inflow from Agent did:piworker:{mounted ? Math.random().toString(16).slice(2, 8) : "8888"}</span>
                   <span className="text-neon-green font-bold text-xs">+$124.50</span>
                   <span className="text-white/20">|</span>
                 </div>

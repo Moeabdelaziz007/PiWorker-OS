@@ -23,8 +23,22 @@ export interface SovereignState {
 }
 
 export const fetchSovereignStateWithFallback = async (): Promise<{ data: SovereignState; isSimulated: boolean }> => {
-  // In a real scenario, this would try to fetch from the Go Sidecar API first.
-  // For now, we provide high-fidelity tactical data.
+  try {
+    const res = await fetch('/api/sovereign/state', {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+
+    if (res.ok) {
+      const liveData = await res.json();
+      return { data: liveData, isSimulated: false };
+    }
+  } catch (err) {
+    console.warn("[BRIDGE] Live Sovereign Engine unreachable. Engaging Tactical Fallback.");
+  }
 
   const mockData: SovereignState = {
     treasury: {
@@ -48,11 +62,8 @@ export const fetchSovereignStateWithFallback = async (): Promise<{ data: Soverei
     ],
   };
 
-  // Simulate a slight network delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
   return {
     data: mockData,
-    isSimulated: true, // Mark as simulated until Go Bridge is live
+    isSimulated: true,
   };
 };

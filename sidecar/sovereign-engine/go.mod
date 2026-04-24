@@ -8,4 +8,5 @@ require (
 	github.com/google/generative-ai-go v0.18.0
 	google.golang.org/api v0.203.0
 	github.com/dbos-inc/dbos-go v0.10.0
+	github.com/robertkrimen/otto v0.5.1
 )

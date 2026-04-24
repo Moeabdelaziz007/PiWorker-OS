@@ -10,6 +10,10 @@ import (
 	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/bridge"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/engine"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/finance"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/sandbox"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"crypto/tls"
 	"crypto/x509"
 	pb "github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/pb"
@@ -22,16 +26,26 @@ import (
 )
 
 // authInterceptor checks for a valid Sovereign-Auth-Token in the gRPC metadata.
+func recoveryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🔥 [PANIC_RECOVERED] %v", r)
+			err = status.Errorf(codes.Internal, "[SEC_ERROR] Neural spike detected: %v", r)
+		}
+	}()
+	return handler(ctx, req)
+}
+
 func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, "[SEC_ERROR] Missing metadata")
 	}
 
-	tokens := md["sovereign-auth-token"]
 	expectedToken := os.Getenv("SOVEREIGN_AUTH_TOKEN")
 	if expectedToken == "" {
-		expectedToken = "DEFAULT_SAFE_TOKEN" // MUST be set in production
+		log.Printf("❌ [FATAL] SOVEREIGN_AUTH_TOKEN is not set. Security lockdown engaged.")
+		return nil, status.Errorf(codes.Internal, "[SEC_ERROR] Server misconfiguration: missing auth token")
 	}
 
 	if len(tokens) == 0 || tokens[0] != expectedToken {
@@ -46,6 +60,7 @@ type sovereignServer struct {
 	pb.UnimplementedSovereignServiceServer
 	quantumMirror *engine.QuantumMirror
 	geminiClient  *bridge.GeminiClient
+	sandboxEngine *sandbox.NeuralSandbox
 }
 
 func newSovereignServer(ctx context.Context) (*sovereignServer, error) {
@@ -58,6 +73,7 @@ func newSovereignServer(ctx context.Context) (*sovereignServer, error) {
 	return &sovereignServer{
 		quantumMirror: engine.NewQuantumMirror(gc),
 		geminiClient:  gc,
+		sandboxEngine: sandbox.NewNeuralSandbox(5 * time.Second),
 	}, nil
 }
 
@@ -68,7 +84,7 @@ func (s *sovereignServer) RequestSimulation(ctx context.Context, req *pb.Simulat
 	results, err := s.quantumMirror.Simulate(ctx, req.GoalId, int(req.Instances))
 	if err != nil {
 		log.Printf("❌ Simulation failed: %v", err)
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "simulation failure: %w", err)
 	}
 
 	// Calculate Aggregate Results
@@ -109,6 +125,46 @@ func (s *sovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.Embodi
 	}, nil
 }
 
+// 2.5 Ring 3: Neural-Isolated Sandbox Execution
+func (s *sovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginRequest) (*pb.PluginResponse, error) {
+	log.Printf("🛡️ [Sandbox] Executing Plugin: %s", req.PluginId)
+	
+	// 🖋️ [Steel Gate] Verify Source Code Signature
+	secret := os.Getenv("AGENT_SYSTEM_SECRET")
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(req.SourceCode))
+	expectedSig := hex.EncodeToString(h.Sum(nil))
+
+	if req.Signature != expectedSig {
+		log.Printf("⚠️ [SEC_ALERT] Plugin Signature Mismatch! ID: %s", req.PluginId)
+		return &pb.PluginResponse{
+			PluginId:     req.PluginId,
+			Success:      false,
+			ErrorMessage: "[SEC_ERROR] Plugin signature verification failed. Tampering detected.",
+		}, nil
+	}
+	
+	start := time.Now()
+	output, err := s.sandboxEngine.Execute(ctx, req.SourceCode, req.EnvVars, req.AllowedCapabilities)
+	duration := time.Since(start).Milliseconds()
+
+	if err != nil {
+		return &pb.PluginResponse{
+			PluginId:         req.PluginId,
+			Success:          false,
+			ErrorMessage:     fmt.Sprintf("sandbox failure: %v", err),
+			ExecutionTimeMs:  duration,
+		}, nil
+	}
+
+	return &pb.PluginResponse{
+		PluginId:         req.PluginId,
+		Success:          true,
+		OutputJson:       output,
+		ExecutionTimeMs:  duration,
+	}, nil
+}
+
 // 3. Financial Layer
 func (s *sovereignServer) LockEscrow(ctx context.Context, req *pb.EscrowRequest) (*pb.EscrowResponse, error) {
 	log.Printf("🔒 [Escrow] Locking %.2f Pi for TX %s", req.AmountPi, req.TxId)
@@ -120,7 +176,11 @@ func (s *sovereignServer) LockEscrow(ctx context.Context, req *pb.EscrowRequest)
 
 func (s *sovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyTxRequest) (*pb.VerifyTxResponse, error) {
 	log.Printf("🔍 [Ledger] Verifying Transaction %s", req.TxId)
-	connector := finance.NewLedgerConnector("https://api.testnet.minepi.com")
+	nodeURL := os.Getenv("PI_NODE_URL")
+	if nodeURL == "" {
+		nodeURL = "https://api.testnet.minepi.com"
+	}
+	connector := finance.NewLedgerConnector(nodeURL)
 	verified, sender, err := connector.VerifyPiTransaction(req.TxId, req.ExpectedReceiver, req.ExpectedAmount)
 	if err != nil {
 		return &pb.VerifyTxResponse{Verified: false, StatusMessage: err.Error()}, nil
@@ -132,11 +192,10 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 	log.Printf("💰 [Sovereign Maker] Authorizing Payment: %.4f Pi to %s", req.AmountPi, req.RecipientId)
 	
 	// SECURITY_FIX: VULN-001 [Steel Gate Protocol]
-	// We must validate the AgentAuthToken before proceeding. 
-	// In production, this should be a cryptographically signed JWT or a session lookup.
 	expectedAgentToken := os.Getenv("AGENT_SYSTEM_SECRET")
 	if expectedAgentToken == "" {
-		expectedAgentToken = "AGENT_UNSAFE_DEV_TOKEN" // Default for dev, must be hardened
+		log.Printf("❌ [FATAL] AGENT_SYSTEM_SECRET is not set. Payments disabled.")
+		return &pb.PaymentResponse{Success: false, ErrorMessage: "PAYMENT_SYSTEM_MISCONFIGURED"}, nil
 	}
 
 	if req.AgentAuthToken == "" || req.AgentAuthToken != expectedAgentToken {
@@ -147,7 +206,11 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 		}, nil
 	}
 
-	maker := finance.NewPaymentMaker("https://api.testnet.minepi.com")
+	nodeURL := os.Getenv("PI_NODE_URL")
+	if nodeURL == "" {
+		nodeURL = "https://api.testnet.minepi.com"
+	}
+	maker := finance.NewPaymentMaker(nodeURL)
 	txID, err := maker.ExecuteSovereignPayment(ctx, finance.PaymentRequest{
 		RecipientID: req.RecipientId,
 		AmountPi:    req.AmountPi,
@@ -230,10 +293,13 @@ func main() {
 		log.Fatalf("failed to load mTLS credentials: %v", err)
 	}
 
-	// PRO PATCH: Add the Auth Interceptor and TLS to the gRPC server
+	// PRO PATCH: Add the Auth Interceptor, Recovery, and TLS to the gRPC server
 	grpcServer := grpc.NewServer(
 		grpc.Creds(credentials.NewTLS(tlsConfig)),
-		grpc.UnaryInterceptor(authInterceptor),
+		grpc.ChainUnaryInterceptor(
+			recoveryInterceptor,
+			authInterceptor,
+		),
 	)
 	pb.RegisterSovereignServiceServer(grpcServer, server)
 	

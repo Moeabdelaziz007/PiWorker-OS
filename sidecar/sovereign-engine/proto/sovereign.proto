@@ -109,6 +109,7 @@ message PluginRequest {
   string source_code = 2;
   map<string, string> env_vars = 3;
   repeated string allowed_capabilities = 4;
+  string signature = 5;
 }
 
 message PluginResponse {

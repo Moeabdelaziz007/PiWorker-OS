@@ -224,7 +224,7 @@ export default function SovereignDashboard() {
                 Agent Performance
               </h3>
               <div className="space-y-2">
-                {fleet.agents?.slice(0, 3).map((agent: any) => (
+                {(fleet.agents || []).slice(0, 3).map((agent: any) => (
                   <div key={agent.agentId} className="text-xs">
                     <div className="flex justify-between mb-1">
                       <span className="text-gray-400">{agent.agentId}</span>

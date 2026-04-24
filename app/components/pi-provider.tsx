@@ -25,6 +25,7 @@ export const PiProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const initPi = () => {
     try {
       if (typeof window !== "undefined" && (window as any).Pi) {
+        console.log(`[PI_SDK] 🌍 Current Origin: ${window.location.origin}`);
         (window as any).Pi.init({ version: "2.0", sandbox: true });
         setIsInitialized(true);
         console.log("%c[PI_SDK] Sovereign Initialization Complete (Sandbox Mode)", "color: #39FF14; font-weight: bold;");

@@ -67,13 +67,13 @@ export const SovereignAuditLog = () => {
                 </div>
                 <div className="flex justify-between text-[7px] text-white/40 font-mono">
                   <span>INPUT_HASH</span>
-                  <span className="text-white/60">{entry.inputHash.slice(0, 12)}...</span>
+                  <span className="text-white/60">{(entry.inputHash || '').slice(0, 12)}...</span>
                 </div>
                 <div className="flex justify-between text-[7px] text-white/40 font-mono">
                   <span>CAUSAL_LINK</span>
                   <div className="flex items-center gap-1 text-pi-gold">
                     <LinkIcon size={8} />
-                    <span>{entry.causalLink.slice(0, 8)}</span>
+                    <span>{(entry.causalLink || '').slice(0, 8)}</span>
                   </div>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export const SovereignAuditLog = () => {
               <div className="mt-1 pt-1 border-t border-white/5 flex justify-between items-center">
                 <span className="text-[6px] text-white/20 uppercase tracking-widest">Shard-Verified</span>
                 <span className="text-[7px] text-neon-green font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                  {entry.signature.slice(0, 16)}...
+                  {(entry.signature || '').slice(0, 16)}...
                 </span>
               </div>
             </motion.div>

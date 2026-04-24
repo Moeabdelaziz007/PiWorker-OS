@@ -54,19 +54,38 @@ export interface VerifyTxResponse {
   senderAddress: string;
 }
 
+export interface PluginRequest {
+  pluginId: string;
+  sourceCode: string;
+  envVars: Record<string, string>;
+  allowedCapabilities: string[];
+}
+
+export interface PluginResponse {
+  pluginId: string;
+  success: boolean;
+  outputJson: string;
+  errorMessage: string;
+  executionTimeMs: number;
+}
+
 /**
  * SovereignBridge (The Diplomatic Channel)
  * Connects the TypeScript Orchestrator to the Go Sovereign Engine.
  */
 export class SovereignBridge {
   private static readonly ENGINE_URL = process.env.SOVEREIGN_ENGINE_URL || "localhost:50051";
-  private static readonly AUTH_TOKEN = process.env.SOVEREIGN_AUTH_TOKEN || "DEFAULT_SAFE_TOKEN";
+  private static getAuthToken(): string {
+    const token = process.env.SOVEREIGN_AUTH_TOKEN;
+    if (!token) throw new Error("FATAL: SOVEREIGN_AUTH_TOKEN not set in environment.");
+    return token;
+  }
   private static client: any = null;
 
   // Helper to create secure metadata for gRPC calls
   private static getMetadata(): grpc.Metadata {
     const metadata = new grpc.Metadata();
-    metadata.add('sovereign-auth-token', this.AUTH_TOKEN);
+    metadata.add('sovereign-auth-token', this.getAuthToken());
     return metadata;
   }
 
@@ -231,7 +250,8 @@ export class SovereignBridge {
     console.log(`💰 [Bridge] Requesting Secure Payment: ${amount} Pi to ${recipientId}`);
     const client = this.getClient();
 
-    const agentToken = process.env.AGENT_SYSTEM_SECRET || "AGENT_UNSAFE_DEV_TOKEN";
+    const agentToken = process.env.AGENT_SYSTEM_SECRET;
+    if (!agentToken) throw new Error("FATAL: AGENT_SYSTEM_SECRET not set. Payments blocked.");
 
     return new Promise((resolve, reject) => {
       client.CommitPayment({
@@ -249,6 +269,35 @@ export class SovereignBridge {
           return reject(new Error("UNAUTHORIZED_PAYMENT_REQUEST"));
         }
         resolve(response);
+      });
+    });
+  }
+
+  /**
+   * Executes untrusted plugin code within the Go Sovereign Sandbox (Ring 3).
+   * SECURITY: Generates an IBCT-compliant signature for the source code.
+   */
+  public static async executePlugin(req: PluginRequest): Promise<PluginResponse> {
+    console.log(`🛡️ [Bridge] Delegating Sandbox Execution for ${req.pluginId} to Go...`);
+    const client = this.getClient();
+
+    // 🖋️ [Steel Gate] Sign the source code to prevent MITM tampering
+    const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
+    const signature = crypto.createHmac('sha256', secret).update(req.sourceCode).digest('hex');
+
+    return new Promise((resolve, reject) => {
+      client.ExecutePlugin({
+        pluginId: req.pluginId,
+        sourceCode: req.sourceCode,
+        envVars: req.envVars,
+        allowedCapabilities: req.allowedCapabilities,
+        signature: signature
+      }, this.getMetadata(), (error: any, response: any) => {
+        if (error) {
+          console.error("[gRPC] Sandbox Execution Error:", error);
+          return reject(error);
+        }
+        resolve(response as PluginResponse);
       });
     });
   }

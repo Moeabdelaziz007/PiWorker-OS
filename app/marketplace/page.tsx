@@ -42,6 +42,11 @@ export default function SovereignMarketplace() {
   const { user, setUser } = usePi();
   const [cart, setCart] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleHire = async (agentId: string) => {
     let currentUser = user;
@@ -260,7 +265,7 @@ export default function SovereignMarketplace() {
           >
             {[...Array(5)].map((_, i) => (
               <span key={i}>
-                [ORDER_INC] :: Agent {AGENT_PRODUCTS[i % 3].executor} started task #{Math.random().toString(36).slice(2, 8).toUpperCase()} ...
+                [ORDER_INC] :: Agent {AGENT_PRODUCTS[i % 3].executor} started task #{mounted ? Math.random().toString(36).slice(2, 8).toUpperCase() : "XXXXXX"} ...
               </span>
             ))}
           </motion.div>
