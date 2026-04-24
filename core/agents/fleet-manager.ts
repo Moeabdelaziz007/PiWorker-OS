@@ -1,5 +1,6 @@
-import { AgentInstance, AgentSpecialization } from "./agent-spawner";
-import { PersistenceEngine } from "../brain/persistence-engine";
+import { AgentInstance, AgentSpecialization, spawnAgent } from "./agent-spawner.js";
+import { PersistenceEngine } from "../brain/persistence-engine.js";
+import { AmrikyyTreasury } from "../finance/treasury-vault.js";
 
 class FleetManager {
   private fleet: Map<string, AgentInstance> = new Map();
@@ -21,6 +22,25 @@ class FleetManager {
     if (agent) {
       agent.status = status;
       await this.syncToDisk();
+    }
+  }
+
+  /**
+   * Evaluates if the fleet needs to expand based on treasury health.
+   */
+  async evaluateScaling() {
+    const stats = AmrikyyTreasury.getStats();
+    console.log(`[FLEET_MANAGER] Scaling Evaluation: Reserve at ${stats.reserve} Pi.`);
+
+    if (stats.reserve >= 200 && this.fleet.size < 10) {
+      console.log("\x1b[1m\x1b[32m[SCALING] Wealth threshold met. Spawning new Sovereign Agent...\x1b[0m");
+      const specializations: AgentSpecialization[] = ["BountyHunter", "MarketingSpecialist", "CodeAuditor"];
+      const randomSpec = specializations[Math.floor(Math.random() * specializations.length)];
+      
+      const newAgent = await spawnAgent(`AUTON-${this.fleet.size + 1}`, 50);
+      await this.register(newAgent);
+      
+      console.log(`\x1b[32m[SCALING] Success: Agent ${newAgent.agentId} joined the fleet.\x1b[0m`);
     }
   }
 
