@@ -75,4 +75,31 @@ body {
   left: 0;
   animation: scanline 8s linear infinite;
   pointer-events: none;
+  z-index: 50;
+}
+
+.tech-grid {
+  background-image: 
+    linear-gradient(rgba(57, 255, 20, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.pulse-glow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.sovereign-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sovereign-card:hover {
+  border-color: rgba(57, 255, 20, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.1);
 }

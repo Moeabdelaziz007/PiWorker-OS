@@ -2,11 +2,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { PiLogo } from "@/app/components/ui/pi-logo";
-import { Terminal, Activity, Zap, Cpu, TrendingUp, ShieldAlert, Wallet, Lock, CheckCircle } from "lucide-react";
+import { Terminal, Activity, Zap, Cpu, TrendingUp, ShieldAlert, Wallet, Lock, CheckCircle, Bot } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePi } from "./components/pi-provider";
 import { authenticateSovereignWallet } from "@/core/finance/pi-auth";
 import { SovereignAuditLog } from "./components/visualizers/sovereign-audit-log";
+import { RoboticFleetStatus } from "./components/visualizers/robotic-fleet-status";
 import { BrainCircuit, Boxes, Network } from "lucide-react";
 
 export default function SovereignCommandCenter() {
@@ -182,6 +183,11 @@ export default function SovereignCommandCenter() {
           {/* Audit Ledger Section */}
           <div className="mt-4">
             <SovereignAuditLog />
+          </div>
+
+          {/* Robotics Section */}
+          <div className="mt-6">
+            <RoboticFleetStatus />
           </div>
 
           {/* Fleet Status Section */}
