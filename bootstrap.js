@@ -74,7 +74,11 @@ async function runSovereignBootstrap() {
         }
       }
 
-      // D. Cooldown
+      // E. FISCAL DIVERSIFICATION (Wealth Management)
+      const bridge = await import("./core/finance/fiscal-bridge.js");
+      await bridge.FiscalBridge.autoDiversify();
+
+      // F. Cooldown
       cycleCount++;
       await new Promise(resolve => setTimeout(resolve, 30000)); // 30s Heartbeat
     }

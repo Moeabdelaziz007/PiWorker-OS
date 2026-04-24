@@ -17,12 +17,13 @@ export async function GET() {
     const insights = await PersistenceEngine.loadInsights();
     const lastLogs = insights.slice(-5).reverse();
 
-    return NextResponse.json({
-      success: true,
+    const treasuryStats = AmrikyyTreasury.getStats();
+
+    const state = {
       timestamp: new Date().toISOString(),
       treasury: {
-        reserve: treasury.reserve,
-        status: treasury.reserve > 100 ? "PROSPEROUS" : "STABLE"
+        reserves: treasuryStats.reserves,
+        status: treasuryStats.status
       },
       fleet: {
         count: fleet.total,
