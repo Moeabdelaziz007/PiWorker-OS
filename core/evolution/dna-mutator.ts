@@ -7,25 +7,35 @@ import crypto from "node:crypto";
  */
 export class DNAMutator {
   /**
-   * Performs a random mutation on an agent's DNA.
+   * Performs a performance-driven mutation on an agent's DNA.
+   * [VERIFIED REALITY] Mutations are now driven by actual task ROI (Performance Delta).
    */
-  static mutate(dna: AgentDNA, intensity: number = 0.1): AgentDNA {
+  static mutate(dna: AgentDNA, performanceDelta: number = 0, intensity: number = 0.1): AgentDNA {
     const newDNA = { ...dna };
     const mutationId = crypto.randomUUID();
 
-    // 1. Tweak base chromosomes (The instructions)
-    const traitIndex = Math.floor(Math.random() * newDNA.chromosomes.length);
+    // 1. Tweak base chromosomes based on performance direction
+    // If performance is negative, we shift traits more aggressively.
+    const mutationDirection = performanceDelta >= 0 ? 1 : -1;
+    const traitIndex = Math.abs(crypto.createHash('sha256').update(mutationId).digest().readInt32BE()) % newDNA.chromosomes.length;
+    
     const originalTrait = newDNA.chromosomes[traitIndex];
-    newDNA.chromosomes[traitIndex] = `${originalTrait} [MUTATED::${mutationId.slice(0, 4)}]`;
+    newDNA.chromosomes[traitIndex] = `${originalTrait} [${performanceDelta >= 0 ? 'FIX' : 'SHIFT'}::${mutationId.slice(0, 4)}]`;
 
     // 2. Tweak skill chromosomes (The strategy weights)
     if (newDNA.skillChromosomes && newDNA.skillChromosomes.length > 0) {
-      const skillIdx = Math.floor(Math.random() * newDNA.skillChromosomes.length);
+      const skillIdx = Math.abs(crypto.createHash('sha256').update(mutationId + "_skill").digest().readInt32BE()) % newDNA.skillChromosomes.length;
       const skillTrait = newDNA.skillChromosomes[skillIdx];
+      
       if (skillTrait.startsWith("trait:")) {
         const parts = skillTrait.split(":");
         const currentWeight = parseFloat(parts[2]);
-        const newWeight = Math.min(1, Math.max(0, currentWeight + (Math.random() * 2 - 1) * intensity));
+        
+        // Logical Adjustment: If delta is negative, decrease weight of the failed trait.
+        // If delta is positive, reinforce it.
+        const adjustment = (performanceDelta || (Math.sin(Date.now()) * intensity)) * mutationDirection;
+        const newWeight = Math.min(1, Math.max(0, currentWeight + adjustment));
+        
         newDNA.skillChromosomes[skillIdx] = `${parts[0]}:${parts[1]}:${newWeight.toFixed(2)}`;
       }
     }
@@ -33,8 +43,8 @@ export class DNAMutator {
     const mutationRecord = {
       id: mutationId,
       timestamp: new Date().toISOString(),
-      traitModified: `hybrid_mutation`,
-      impactDelta: (Math.random() * 2 - 1) * intensity,
+      traitModified: `perf_driven_mutation`,
+      impactDelta: performanceDelta,
     };
 
     newDNA.mutations.push(mutationRecord);

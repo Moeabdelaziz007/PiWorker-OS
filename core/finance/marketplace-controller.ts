@@ -28,21 +28,20 @@ export class MarketplaceController {
 
         // 1. Create Escrow in Treasury
         const orderId = `ord-${Date.now()}`;
-        AmrikyyTreasury.createEscrow(orderId, buyerWallet, asset.price_pi);
+        await AmrikyyTreasury.createEscrow(orderId, buyerWallet, asset.price_pi);
 
         try {
             // 2. Collect Sovereign Tax & Process Inflow
-            // In a real sale, the seller gets the net, and the treasury gets the tax.
-            const result = AmrikyyTreasury.processInflow(buyerWallet, asset.price_pi);
+            const result = await AmrikyyTreasury.processInflow(buyerWallet, asset.price_pi);
             
             // 3. Release Escrow
-            AmrikyyTreasury.releaseEscrow(orderId);
+            await AmrikyyTreasury.releaseEscrow(orderId);
 
             // 4. Transfer Ownership
             const updatedAsset: AIXAsset = {
                 ...asset,
                 owner_wallet: buyerWallet,
-                status: 'active' // Keep active for potential resale
+                status: 'active'
             };
 
             AssetRegistry.updateAsset(updatedAsset);

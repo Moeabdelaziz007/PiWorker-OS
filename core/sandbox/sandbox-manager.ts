@@ -24,11 +24,14 @@ export interface SandboxExecutionResult {
   durationMs: number;
 }
 
+import { SovereignBridge } from '../engine/sovereign-bridge';
+import crypto from "node:crypto";
+
+// ... previous schema and interfaces ...
+
 export class SandboxManager {
   /**
    * Provisions a new sandbox for a specific task.
-   * Logic: In a local-first environment, this manages ephemeral Docker containers 
-   * or isolated sub-processes.
    */
   async claim(config: Partial<SandboxConfig>): Promise<string> {
     const validatedConfig = SandboxConfigSchema.parse({
@@ -41,23 +44,43 @@ export class SandboxManager {
   }
 
   /**
-   * Executes code within the isolated sandbox.
-   * Logic: Wraps the execution in a security boundary.
+   * Executes code within the isolated sandbox (Ring 3).
+   * [Sovereign Sync] Delegates to the Go Muscle for neural-isolated execution.
    */
-  async execute(sandboxId: string, code: string): Promise<SandboxExecutionResult> {
-    console.log(`[SandboxManager] Executing in ${sandboxId}...`);
+  async execute(sandboxId: string, code: string, env: Record<string, string> = {}): Promise<SandboxExecutionResult> {
+    console.log(`[SandboxManager] Delegating execution for ${sandboxId} to Go Muscle...`);
     
-    const start = Date.now();
-    
-    // Placeholder: Integration with Docker/gVisor goes here
-    // For alpha, we simulate a secure execution
-    return {
-      stdout: 'Execution successful. Logic verified within boundary.',
-      stderr: '',
-      exitCode: 0,
-      durationMs: Date.now() - start,
-    };
+    try {
+      const response = await SovereignBridge.executePlugin({
+        pluginId: sandboxId,
+        sourceCode: code,
+        envVars: env,
+        allowedCapabilities: ["fs_read", "network_fetch"] // Restricted policy
+      });
+
+      return {
+        stdout: response.outputJson,
+        stderr: response.errorMessage,
+        exitCode: response.success ? 0 : 1,
+        durationMs: response.executionTimeMs,
+      };
+    } catch (err: any) {
+      return {
+        stdout: '',
+        stderr: `SANDBOX_BRIDGE_FAILURE: ${err.message}`,
+        exitCode: -1,
+        durationMs: 0,
+      };
+    }
   }
+
+  /**
+   * Terminates and cleans up the sandbox.
+   */
+  async release(sandboxId: string): Promise<void> {
+    console.log(`[SandboxManager] Released and Scrubbed Sandbox: ${sandboxId}`);
+  }
+}
 
   /**
    * Terminates and cleans up the sandbox.

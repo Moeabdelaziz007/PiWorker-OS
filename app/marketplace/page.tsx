@@ -8,47 +8,17 @@ import { usePi } from "../components/pi-provider";
 import { authenticateSovereignWallet } from "@/core/finance/pi-auth";
 import { ingestSaaSOrder } from "@/core/engine/order-ingestion";
 
-const AGENT_PRODUCTS = [
-  {
-    id: "agt-ui-gen",
-    name: "React/Next.js UI Generator",
-    description: "High-fidelity component architecture & design systems.",
-    price: 2,
-    executor: "Market Sniper",
-    dna: "98% Match",
-    icon: <Code className="text-neon-green" />
-  },
-  {
-    id: "agt-audit",
-    name: "Smart Contract Auditor",
-    description: "Deep-tissue security analysis for Solidity & Rust.",
-    price: 5,
-    executor: "CEO Orchestrator",
-    dna: "99% Match",
-    icon: <ShieldCheck className="text-pi-gold" />
-  },
-  {
-    id: "agt-content",
-    name: "AI Content Architect",
-    description: "SEO-optimized technical documentation & marketing DNA.",
-    price: 1.5,
-    executor: "SaaS Factory",
-    dna: "82% Match",
-    icon: <Search className="text-blue-400" />
-  }
-];
-
-export default function SovereignMarketplace() {
-  const { user, setUser } = usePi();
-  const [cart, setCart] = useState<string[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
 
   React.useEffect(() => {
     setMounted(true);
+    fetch('/api/marketplace/assets')
+      .then(res => res.json())
+      .then(data => setProducts(data))
+      .catch(err => console.error("Failed to fetch assets:", err));
   }, []);
 
-  const handleHire = async (agentId: string) => {
+  const handleHire = async (assetId: string) => {
     let currentUser = user;
     if (!currentUser) {
       const auth = await authenticateSovereignWallet();
@@ -60,9 +30,9 @@ export default function SovereignMarketplace() {
     }
 
     setIsProcessing(true);
-    const agent = AGENT_PRODUCTS.find(a => a.id === agentId);
+    const asset = products.find(a => a.id === assetId);
 
-    if (!agent) {
+    if (!asset) {
       setIsProcessing(false);
       return;
     }
@@ -70,18 +40,17 @@ export default function SovereignMarketplace() {
     // 1. Execute Native Pi Payment if SDK is available
     if (typeof window !== "undefined" && window.Pi) {
       window.Pi.createPayment({
-        amount: agent.price,
-        memo: `Sovereign Agent Hire: ${agent.name}`,
-        metadata: { agentId }
+        amount: asset.price_pi,
+        memo: `Sovereign Agent Hire: ${asset.name}`,
+        metadata: { assetId }
       }, {
         onReadyForServerApproval: async (paymentId: string) => {
           console.log("[Pi SDK] Payment ready for server approval:", paymentId);
           try {
-            // 1.5 ZERO-TRUST: Request Backend to double-check price and approve
             const res = await fetch('/api/marketplace/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, assetId: agentId, type: 'agent' })
+              body: JSON.stringify({ paymentId, assetId, type: 'agent' })
             });
             if (!res.ok) throw new Error("Sovereign Backend rejected payment approval.");
             console.log("[Pi SDK] Backend confirmed price. Waiting for user signature...");
@@ -93,27 +62,6 @@ export default function SovereignMarketplace() {
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           console.log(`[Pi SDK] Payment approved by user! TXID: ${txid}`);
           try {
-            const mockAgent: any = {
-              id: `pw-agt-${Math.random().toString(16).slice(2, 14)}`,
-              name: agentId.charAt(0).toUpperCase() + agentId.slice(1),
-              role: "executor",
-              publicKey: "pi-mock-public-key",
-              status: "active",
-              capabilities: ["autonomous-execution"],
-              dna: {
-                chromosomes: ["initial-v1"],
-                generation: 1,
-                fitnessScore: 100,
-                mutations: [],
-                skillChromosomes: []
-              },
-              governance: {
-                betrayalThreshold: 0.8,
-                minRoiRequirement: 1.5,
-                riskTolerance: "MEDIUM"
-              }
-            };
-
             const response = await fetch('/api/marketplace/purchase', {
               method: 'POST',
               headers: {
@@ -121,17 +69,16 @@ export default function SovereignMarketplace() {
                 'Authorization': `Bearer ${currentUser?.uid}`
               },
               body: JSON.stringify({
-                assetId: agentId,
+                assetId,
                 buyerWallet: currentUser?.uid,
-                txId: txid,
-                agentData: mockAgent
+                txId: txid
               })
             });
 
             const data = await response.json();
             if (response.ok && data.success) {
               console.log("[Pi SDK] 👑 Sovereign purchase natively verified via Go!");
-              setCart(prev => [...prev, agentId]);
+              setCart(prev => [...prev, assetId]);
               alert("✅ تم الاستحواذ على الوكيل بنجاح!");
             } else {
               console.error("[Pi SDK] ❌ Verification failed:", data.error);
@@ -153,7 +100,7 @@ export default function SovereignMarketplace() {
       });
     } else {
       console.warn("[Pi SDK] Not detected. Executing simulated SaaS Order.");
-      const order = await ingestSaaSOrder(currentUser.uid, agentId, agent.price);
+      const order = await ingestSaaSOrder(currentUser.uid, assetId, asset.price_pi);
       setCart([...cart, order.orderId]);
       setIsProcessing(false);
     }
@@ -207,7 +154,7 @@ export default function SovereignMarketplace() {
 
         {/* Marketplace Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {AGENT_PRODUCTS.map((agent, i) => (
+          {products.map((agent, i) => (
             <motion.div
               key={agent.id}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -221,22 +168,23 @@ export default function SovereignMarketplace() {
 
               <div className="flex items-center gap-4 mb-4">
                 <div className="p-3 bg-white/5 rounded-xl border border-white/10 group-hover:border-neon-green/30">
-                  {agent.icon}
+                  {/* Fallback Icon */}
+                  <Cpu className="text-neon-green" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg leading-tight">{agent.name}</h3>
-                  <span className="text-[10px] text-neon-green font-black uppercase">{agent.dna} FIT</span>
+                  <span className="text-[10px] text-neon-green font-black uppercase">SOVEREIGN FIT</span>
                 </div>
               </div>
 
               <p className="text-xs text-white/50 mb-6 h-10 line-clamp-2">
-                {agent.description}
+                Specialized execution unit for {agent.name.toLowerCase()}. Securely managed via Amrikyy Lab.
               </p>
 
               <div className="flex items-center justify-between border-t border-white/5 pt-4">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-white/30 uppercase">Task Price</span>
-                  <span className="text-pi-gold font-black text-xl">{agent.price} Pi</span>
+                  <span className="text-pi-gold font-black text-xl">{agent.price_pi} Pi</span>
                 </div>
                 <button
                   onClick={() => handleHire(agent.id)}

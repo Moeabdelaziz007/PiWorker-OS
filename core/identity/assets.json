@@ -1,0 +1,29 @@
+[
+  {
+    "id": "agt-ui-gen",
+    "name": "React/Next.js UI Generator",
+    "did": { "did": "did:piworker:agt-ui-gen" },
+    "owner_wallet": "SYSTEM_FORGE",
+    "price_pi": 2,
+    "status": "active",
+    "manifest_path": "core/agents/manifests/ui-gen.json"
+  },
+  {
+    "id": "agt-audit",
+    "name": "Smart Contract Auditor",
+    "did": { "did": "did:piworker:agt-audit" },
+    "owner_wallet": "SYSTEM_FORGE",
+    "price_pi": 5,
+    "status": "active",
+    "manifest_path": "core/agents/manifests/audit.json"
+  },
+  {
+    "id": "agt-content",
+    "name": "AI Content Architect",
+    "did": { "did": "did:piworker:agt-content" },
+    "owner_wallet": "SYSTEM_FORGE",
+    "price_pi": 1.5,
+    "status": "active",
+    "manifest_path": "core/agents/manifests/content.json"
+  }
+]
