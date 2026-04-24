@@ -41,8 +41,20 @@
 - **Physical Sovereignty**: Agents can now execute 6-DOF movements and gripper actions via signed VLA payloads.
 - **Verification**: Proof of Physical Work (PoPW) enabled via Gemini visual auditing.
 
+## [2026-04-24] Phase 6: Neural Memory Mesh (Collective Intelligence)
+- **Feature**: Sovereign Vector Memory & Semantic Recall
+- **Status**: INTEGRATED & OPERATIONAL
+- **Git Context**: `PiWorker-OS` | branch:`main` | commit:`f161090`
+- **Architecture**:
+  - `core/brain/vector-store.ts`: Local engine for cosine similarity search.
+  - `core/brain/embedding-engine.ts`: Gemini-powered semantic vector generation.
+  - `core/brain/neural-memory.ts`: Upgraded mesh with indexing and search capabilities.
+  - `core/engine/mas-orchestrator.ts`: Cognitive recall integrated into the goal planning loop.
+- **Cognitive Sovereignty**: Agents can now "remember" past experiences, optimizing current plans based on historical success/failure data.
+- **Verification**: Verified semantic retrieval of financial arbitrage tasks using Gemini embeddings.
+
 ## Git Metadata Record
 - **Repository**: PiWorker-OS
 - **Branch**: main
-- **Commit**: p5_embodied_001_latest
-- **Timestamp**: 2026-04-24T12:35:00Z
+- **Commit**: f161090805edcb346b48d2d56ec3da19f04e76b3
+- **Timestamp**: 2026-04-24T12:45:00Z

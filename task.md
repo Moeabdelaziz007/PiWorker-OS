@@ -23,18 +23,18 @@ To move from reactive agents to learning agents. Memory is the foundation of lon
 - Embedding cost/latency if using Gemini for every insight.
 
 ### Plan
-1. [ ] **Step 1: Vector Store**: Create `core/brain/vector-store.ts` with cosine similarity logic.
-2. [ ] **Step 2: Embedding Integration**: Connect to Gemini for generating embeddings of insights.
-3. [ ] **Step 3: Mesh Upgrade**: Update `NeuralMemoryMesh` to index insights into the vector store.
-4. [ ] **Step 4: Orchestration Loop**: Modify `MASOrchestrator` to retrieve relevant memories before planning.
-5. [ ] **Step 5: Verification**: Run `scratch/test-neural-memory.ts` to verify retrieval accuracy.
+1. [x] **Step 1: Vector Store**: Create `core/brain/vector-store.ts` with cosine similarity logic.
+2. [x] **Step 2: Embedding Integration**: Connect to Gemini for generating embeddings of insights.
+3. [x] **Step 3: Mesh Upgrade**: Update `NeuralMemoryMesh` to index insights into the vector store.
+4. [x] **Step 4: Orchestration Loop**: Modify `MASOrchestrator` to retrieve relevant memories before planning.
+5. [x] **Step 5: Verification**: Run `scratch/test-neural-memory.ts` to verify retrieval accuracy.
 
 ### Verification
-- [ ] 2x `search-memory` calls executed before coding
-- [ ] typecheck (`npx tsc --noEmit`)
-- [ ] build (`npm run build`)
-- [ ] Targeted test: `scratch/test-neural-memory.ts`
-- [ ] 1x `add-memory` call executed
+- [x] 2x `search-memory` calls executed before coding
+- [x] typecheck (`npx tsc --noEmit`)
+- [x] build (`npm run build`)
+- [x] Targeted test: `scratch/test-neural-memory.ts`
+- [x] 1x `add-memory` call executed
 
 ### Done when
 - An agent can retrieve a "similar" past experience to solve a new goal.
