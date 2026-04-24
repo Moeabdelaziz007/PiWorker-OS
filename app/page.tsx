@@ -10,23 +10,52 @@ import { SovereignAuditLog } from "./components/visualizers/sovereign-audit-log"
 import { RoboticFleetStatus } from "./components/visualizers/robotic-fleet-status";
 import { BrainCircuit, Boxes, Network } from "lucide-react";
 
+import { SovereignBridge } from "@/core/engine/sovereign-bridge";
+
 export default function SovereignCommandCenter() {
   const [logs, setLogs] = useState<string[]>([
     "Initializing MAS-ZERO Kernel...",
-    "Loading Agent DNA Registry...",
-    "Quantum Mirror Simulation: ACTIVE",
-    "Profit Vortex: STANDBY",
-    "System Status: SOVEREIGN",
+    "Synchronizing with Sovereign Muscle...",
   ]);
 
   const { isInitialized } = usePi();
   const [user, setUser] = useState<{username: string, uid: string} | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [liquidity, setLiquidity] = useState(295);
+  const [liquidity, setLiquidity] = useState(0);
+  const [activeIntents, setActiveIntents] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+
+    // 📡 [Real-Time] Connect to Sovereign Event Stream
+    SovereignBridge.listenToEvents((data) => {
+      const timestamp = new Date().toLocaleTimeString();
+      let logMsg = `[${timestamp}] >> EVENT: ${JSON.stringify(data)}`;
+      
+      if (data.status === "PENDING") {
+        logMsg = `[${timestamp}] >> 💰 AUTHORIZING: ${data.amount} Pi to ${data.target.slice(-6)}`;
+      } else if (data.status === "CONFIRMED") {
+        logMsg = `[${timestamp}] >> ✅ CONFIRMED: ${data.amount} Pi delivered. SIG::${data.id.slice(-6)}`;
+      }
+      
+      setLogs(prev => [...prev.slice(-20), logMsg]);
+      
+      // Refresh status on important events
+      fetchStatus();
+    });
+
+    // 📊 [Status] Initial fetch and periodic polling
+    const fetchStatus = async () => {
+      const stats = await SovereignBridge.getSystemStatus();
+      setLiquidity(stats.pi_balance);
+      setActiveIntents(stats.active_intents);
+    };
+
+    fetchStatus();
+    const statusInterval = setInterval(fetchStatus, 30000); // Sync every 30s
+
+    return () => clearInterval(statusInterval);
   }, []);
 
   const handleConnectWallet = async () => {
@@ -46,25 +75,6 @@ export default function SovereignCommandCenter() {
       setIsAuthenticating(false);
     }
   };
-
-  // Simulate incoming logs
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const agentId = `pw-agt-${Math.random().toString(16).slice(2, 14)}`;
-      const signature = Math.random().toString(36).substring(2, 15).toUpperCase();
-      
-      const logTemplates = [
-        `[${new Date().toLocaleTimeString()}] >> Node signaling: SUCCESS -- ROI: ${(Math.random() * 2).toFixed(2)}x`,
-        `[${new Date().toLocaleTimeString()}] >> [GoogleConnector] Syncing Gemini 1.5 Flash... reasoning complete.`,
-        `[${new Date().toLocaleTimeString()}] >> [PiAdapter] Disbursing ${(Math.random() * 5).toFixed(4)} Pi to ${agentId.slice(-6)}`,
-        `[${new Date().toLocaleTimeString()}] >> [Workspace] Agent spawned Google Sheet for profit tracking. ID: ${Math.random().toString(36).slice(2, 10)}`,
-      ];
-
-      const newLog = `${logTemplates[Math.floor(Math.random() * logTemplates.length)]} \n   🖋️ SIG::${agentId.slice(-4)}::${signature}...`;
-      setLogs(prev => [...prev.slice(-15), newLog]);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <>

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { PathResolver } from '../utils/path-resolver';
 import { SovereignCipher } from '../utils/sovereign-cipher';
 import axios from 'axios';
+import { PaymentSchema, SimulationSchema, PluginSchema } from './validation';
 
 export interface SimulationRequest {
   goalId: string;
@@ -153,6 +154,9 @@ export class SovereignBridge {
     const TIMEOUT_MS = 15000; // Increased timeout for deep Go simulations
 
     try {
+      // 🛡️ [Brain] Validate request before sending
+      SimulationSchema.parse(req);
+
       // Race between the actual simulation call and a timeout promise
       const result = await Promise.race([
         this.executeSimulationCall(req),
@@ -255,6 +259,10 @@ export class SovereignBridge {
    */
   public static async commitPayment(recipientId: string, amount: number, priority: string = "instant"): Promise<any> {
     console.log(`💰 [Bridge] Requesting Secure Payment: ${amount} Pi to ${recipientId}`);
+    
+    // 🛡️ [Brain] Validate payment before sending
+    PaymentSchema.parse({ recipientId, amountPi: amount, priority });
+
     const client = this.getClient();
 
     const agentToken = process.env.AGENT_SYSTEM_SECRET;
@@ -337,31 +345,75 @@ export class SovereignBridge {
   /**
    * Listens to the Sovereign Event Stream (SSE).
    * Used to receive real-time updates from the Muscle (Go Engine).
+   * Includes AUTO-RECONNECT logic for Vercel Serverless environment.
    */
   public static listenToEvents(onEvent: (data: any) => void): void {
     console.log(`📡 [Bridge] Subscribing to Muscle Event Stream...`);
     const eventUrl = `${this.GATEWAY_URL}/api/events`;
+    const authToken = this.getAuthToken();
 
-    // In a browser environment, use EventSource. In Node.js, we simulate or use axios stream.
-    axios({
-      method: 'get',
-      url: eventUrl,
-      responseType: 'stream'
-    }).then(response => {
-      response.data.on('data', (chunk: any) => {
-        const line = chunk.toString();
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.replace('data: ', '').trim());
-            onEvent(data);
-          } catch (e) {
-            // Partial data or non-JSON
+    const connect = () => {
+      axios({
+        method: 'get',
+        url: eventUrl,
+        headers: { 'X-Sovereign-Token': authToken },
+        responseType: 'stream'
+      }).then(response => {
+        console.log(`[SSE] Connected to Sovereign Stream.`);
+        response.data.on('data', (chunk: any) => {
+          const lines = chunk.toString().split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.replace('data: ', '').trim());
+                onEvent(data);
+              } catch (e) {
+                // Partial data
+              }
+            }
           }
-        }
+        });
+
+        response.data.on('end', () => {
+          console.warn(`[SSE] Stream ended. Reconnecting in 3s...`);
+          setTimeout(connect, 3000);
+        });
+
+        response.data.on('error', (err: any) => {
+          console.error(`[SSE] Stream error: ${err.message}. Reconnecting...`);
+          setTimeout(connect, 5000);
+        });
+      }).catch(err => {
+        console.error(`❌ [Bridge] SSE Connection Failed: ${err.message}. Retrying...`);
+        setTimeout(connect, 10000);
       });
-    }).catch(err => {
-      console.error(`❌ [Bridge] SSE Subscription Failed: ${err.message}`);
-    });
+    };
+
+    connect();
+  }
+
+  /**
+   * Fetches the current system status (Balance, Active Intents, Version)
+   */
+  public static async getSystemStatus(): Promise<any> {
+    console.log(`📡 [Bridge] Fetching Sovereign System Status...`);
+    const statusUrl = `${this.GATEWAY_URL}/api/status`;
+    const authToken = this.getAuthToken();
+
+    try {
+      const response = await axios.get(statusUrl, {
+        headers: { 'X-Sovereign-Token': authToken }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error(`❌ [Bridge] Status Fetch Failed: ${error.message}`);
+      return {
+        pi_balance: 0,
+        active_intents: 0,
+        version: "ERROR",
+        mode: "OFFLINE"
+      };
+    }
   }
 
   /**
