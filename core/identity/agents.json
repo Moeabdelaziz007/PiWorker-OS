@@ -1,1 +1,110 @@
-[]
+[
+  {
+    "id": "pw-agt-f32a69b18888",
+    "name": "CEO Orchestrator",
+    "role": "ceo",
+    "publicKey": "z6Mkm...SOVEREIGN_KEY_CEO",
+    "status": "active",
+    "capabilities": ["governance", "task_allocation", "strategy"],
+    "specialization": "CONTENT_ARCH",
+    "governance": {
+      "betrayalThreshold": 0.9,
+      "minRoiRequirement": 1.0,
+      "riskTolerance": 1
+    },
+    "dna": {
+      "chromosomes": ["strategy_node"],
+      "skillChromosomes": [],
+      "mutations": [],
+      "generation": 1,
+      "fitnessScore": 100
+    },
+    "metrics": {
+      "totalProfit": 0,
+      "tasksCompleted": 0,
+      "reputation": 1,
+      "spawnTime": "2026-04-25T01:00:00Z"
+    }
+  },
+  {
+    "id": "pw-agt-d10c4e888888",
+    "name": "Market Sniper",
+    "role": "executor",
+    "publicKey": "z6Mkm...SOVEREIGN_KEY_SNIPER",
+    "status": "active",
+    "capabilities": ["arbitrage", "mev_analysis", "trading"],
+    "specialization": "MarketingSpecialist",
+    "governance": {
+      "betrayalThreshold": 0.8,
+      "minRoiRequirement": 1.5,
+      "riskTolerance": 2
+    },
+    "dna": {
+      "chromosomes": ["execution_node"],
+      "skillChromosomes": [],
+      "mutations": [],
+      "generation": 1,
+      "fitnessScore": 95
+    },
+    "metrics": {
+      "totalProfit": 12.5,
+      "tasksCompleted": 4,
+      "reputation": 0.98,
+      "spawnTime": "2026-04-25T01:05:00Z"
+    }
+  },
+  {
+    "id": "pw-agt-a0b27f688888",
+    "name": "SaaS Factory",
+    "role": "executor",
+    "publicKey": "z6Mkm...SOVEREIGN_KEY_FACTORY",
+    "status": "idle",
+    "capabilities": ["code_generation", "deployment", "automation"],
+    "specialization": "CODE_GEN",
+    "governance": {
+      "betrayalThreshold": 0.85,
+      "minRoiRequirement": 1.2,
+      "riskTolerance": 1
+    },
+    "dna": {
+      "chromosomes": ["execution_node"],
+      "skillChromosomes": [],
+      "mutations": [],
+      "generation": 1,
+      "fitnessScore": 88
+    },
+    "metrics": {
+      "totalProfit": 5.2,
+      "tasksCompleted": 2,
+      "reputation": 0.95,
+      "spawnTime": "2026-04-25T01:10:00Z"
+    }
+  },
+  {
+    "id": "pw-agt-e8d13c088888",
+    "name": "Bounty Hunter",
+    "role": "executor",
+    "publicKey": "z6Mkm...SOVEREIGN_KEY_HUNTER",
+    "status": "active",
+    "capabilities": ["web_scraping", "content_extraction", "bounty_resolution"],
+    "specialization": "BountyHunter",
+    "governance": {
+      "betrayalThreshold": 0.75,
+      "minRoiRequirement": 2.0,
+      "riskTolerance": 3
+    },
+    "dna": {
+      "chromosomes": ["execution_node"],
+      "skillChromosomes": [],
+      "mutations": [],
+      "generation": 1,
+      "fitnessScore": 92
+    },
+    "metrics": {
+      "totalProfit": 2.1,
+      "tasksCompleted": 1,
+      "reputation": 0.92,
+      "spawnTime": "2026-04-25T01:15:00Z"
+    }
+  }
+]
