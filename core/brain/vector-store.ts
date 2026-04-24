@@ -11,14 +11,27 @@ export interface VectorEntry {
     metadata: any;
 }
 
+import { PersistenceEngine } from "./persistence-engine";
+
 export class VectorStore {
     private static entries: VectorEntry[] = [];
 
     /**
-     * Adds an entry to the vector store.
+     * Initializes the vector store by loading existing entries from disk.
      */
-    static addEntry(entry: VectorEntry) {
+    static async initialize() {
+        console.log(`[VECTOR_STORE] Initializing semantic memory...`);
+        const stored = await PersistenceEngine.loadVectorEntries();
+        this.entries = stored;
+        console.log(`[VECTOR_STORE] ${this.entries.length} semantic embeddings loaded.`);
+    }
+
+    /**
+     * Adds an entry to the vector store and persists it.
+     */
+    static async addEntry(entry: VectorEntry) {
         this.entries.push(entry);
+        await PersistenceEngine.saveVectorEntry(entry);
     }
 
     /**

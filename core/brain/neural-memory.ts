@@ -23,6 +23,22 @@ export class NeuralMemoryMesh {
   private static activeClaims: Map<string, { agentId: string, expires: number }> = new Map();
 
   /**
+   * Restores the collective intelligence state from disk.
+   */
+  static async initialize() {
+    console.log(`[NEURAL_MESH] Restoring collective memory...`);
+    
+    // 1. Load Insights
+    const insights = await PersistenceEngine.loadInsights();
+    this.blackboard = insights.slice(-100); // Last 100 for RAM
+    
+    // 2. Initialize Vector Store
+    await VectorStore.initialize();
+    
+    console.log(`[NEURAL_MESH] Memory Mesh synchronized with ${this.blackboard.length} active insights.`);
+  }
+
+  /**
    * Posts a signed insight to the collective memory and indexes it for vector search.
    */
   static async postInsight(insight: SovereignInsight) {
@@ -36,7 +52,7 @@ export class NeuralMemoryMesh {
     const contentToEmbed = `${insight.topic}: ${JSON.stringify(insight.data)}`;
     const vector = await EmbeddingEngine.generate(contentToEmbed);
     
-    VectorStore.addEntry({
+    await VectorStore.addEntry({
         id: insight.id,
         vector,
         metadata: insight
