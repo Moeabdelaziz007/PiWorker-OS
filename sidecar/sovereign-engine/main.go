@@ -64,12 +64,25 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	return handler(ctx, req)
 }
 
+func httpAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("X-Sovereign-Token")
+		if token == "" || token != os.Getenv("SOVEREIGN_AUTH_TOKEN") {
+			log.Printf("⚠️ [HTTP_SEC_ALERT] Unauthorized access attempt from %s", r.RemoteAddr)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 type sovereignServer struct {
 	pb.UnimplementedSovereignServiceServer
 	quantumMirror *engine.QuantumMirror
 	geminiClient  *bridge.GeminiClient
 	sandboxEngine *sandbox.NeuralSandbox
 	fiscalQueue   *finance.FiscalQueue
+	journal       *engine.SovereignJournal
 	mu            sync.RWMutex
 	txListeners   []chan finance.QueuedTx
 }
@@ -86,11 +99,23 @@ func newSovereignServer(ctx context.Context) (*sovereignServer, error) {
 		log.Printf("⚠️ [Finance] Could not initialize queue: %v", err)
 	}
 
+	jrnl, err := engine.NewSovereignJournal("data/sovereign.journal")
+	if err != nil {
+		log.Printf("⚠️ [Journal] Could not initialize journal: %v", err)
+	} else {
+		// 🛠️ [Self-Healing] Replay Journal on startup
+		active, _ := jrnl.Replay()
+		if len(active) > 0 {
+			log.Printf("🦾 [Journal] Found %d unfinished intents. Recovery initiated.", len(active))
+		}
+	}
+
 	return &sovereignServer{
 		quantumMirror: engine.NewQuantumMirror(gc),
 		geminiClient:  gc,
 		sandboxEngine: sandbox.NewNeuralSandbox(5 * time.Second),
 		fiscalQueue:   queue,
+		journal:       jrnl,
 		txListeners:   []chan finance.QueuedTx{},
 	}, nil
 }
@@ -224,6 +249,24 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 		}, nil
 	}
 
+	// 🛡️ [Pi Ecosystem] Balance Guard
+	nodeURL := os.Getenv("PI_NODE_URL")
+	if nodeURL == "" {
+		nodeURL = "https://api.testnet.minepi.com"
+	}
+	connector := finance.NewLedgerConnector(nodeURL)
+	sourceWallet := os.Getenv("SOVEREIGN_WALLET_ADDRESS")
+	if sourceWallet != "" {
+		balance, err := connector.GetBalance(sourceWallet)
+		if err == nil && balance < req.AmountPi {
+			log.Printf("⚠️ [Fiscal Guard] Insufficient balance in Sovereign Wallet: %.4f < %.4f", balance, req.AmountPi)
+			return &pb.PaymentResponse{
+				Success:      false,
+				ErrorMessage: "INSUFFICIENT_SOVEREIGN_FUNDS",
+			}, nil
+		}
+	}
+
 	// 💾 [Persistence] Push to Sovereign Fiscal Queue before execution
 	if s.fiscalQueue != nil {
 		tx := finance.QueuedTx{
@@ -248,6 +291,12 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 		s.mu.RUnlock()
 	}
 
+	// 📒 [Durable Sovereignty] Record Intent start in Journal
+	txID_temp := fmt.Sprintf("intent_%d", time.Now().UnixNano())
+	if s.journal != nil {
+		s.journal.Begin(txID_temp, "payment", req)
+	}
+
 	nodeURL := os.Getenv("PI_NODE_URL")
 	if nodeURL == "" {
 		nodeURL = "http://localhost:8000" // Point to Mock Horizon by default if missing
@@ -260,7 +309,15 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 	})
 	
 	if err != nil {
-		return &pb.PaymentResponse{Success: false}, nil
+		if s.journal != nil {
+			s.journal.Fail(txID_temp, "payment", err.Error())
+		}
+		return &pb.PaymentResponse{Success: false, ErrorMessage: err.Error()}, nil
+	}
+
+	// 📒 [Durable Sovereignty] Commit execution to Journal
+	if s.journal != nil {
+		s.journal.Commit(txID_temp, "payment")
 	}
 
 	return &pb.PaymentResponse{
@@ -274,13 +331,6 @@ func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 func (s *sovereignServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// 1. Verify Sovereign Auth Token
-	token := r.Header.Get("X-Sovereign-Token")
-	if token == "" || token != os.Getenv("SOVEREIGN_AUTH_TOKEN") {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -355,6 +405,39 @@ func (s *sovereignServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (s *sovereignServer) handleStatus(w http.ResponseWriter, r *http.Request) {
+	nodeURL := os.Getenv("PI_NODE_URL")
+	if nodeURL == "" {
+		nodeURL = "http://localhost:8000"
+	}
+	connector := finance.NewLedgerConnector(nodeURL)
+	
+	balance := 0.0
+	sourceWallet := os.Getenv("SOVEREIGN_WALLET_ADDRESS")
+	if sourceWallet != "" {
+		b, err := connector.GetBalance(sourceWallet)
+		if err == nil {
+			balance = b
+		}
+	}
+
+	activeIntents := 0
+	if s.journal != nil {
+		active, _ := s.journal.Replay()
+		activeIntents = len(active)
+	}
+
+	status := map[string]interface{}{
+		"pi_balance":     balance,
+		"active_intents": activeIntents,
+		"version":        "2.0.0-SOVEREIGN",
+		"mode":           os.Getenv("MAS_ZERO_MODE"),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
 }
 
 func loadmTLSCreds() (*tls.Config, error) {
@@ -452,8 +535,9 @@ func main() {
 	
 	// Register SSE and standard Gateway
 	mux := http.NewServeMux()
-	mux.Handle("/api/intent", server)
-	mux.HandleFunc("/api/events", server.handleEvents)
+	mux.Handle("/api/intent", httpAuthMiddleware(server))
+	mux.Handle("/api/events", httpAuthMiddleware(http.HandlerFunc(server.handleEvents)))
+	mux.Handle("/api/status", httpAuthMiddleware(http.HandlerFunc(server.handleStatus)))
 
 	// 🧪 [Fiscal Bridge] Start Mock Horizon Server in Dev Mode
 	if os.Getenv("MAS_ZERO_MODE") == "SIMULATION" || os.Getenv("PI_NODE_URL") == "" {

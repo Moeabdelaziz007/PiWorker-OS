@@ -83,4 +83,6 @@
   - Fixed missing `sync` and `time` imports in `main.go`.
   - Resolved undefined `tokens` variable in gRPC `authInterceptor`.
   - Synchronized `go.work` and root `go.mod` to Go 1.25.0.
+- **Application-Level mTLS**: ✅ **IMPLEMENTED**.
+  - Centralized `httpAuthMiddleware` verifies `X-Sovereign-Token` on all gateway and SSE endpoints.
 

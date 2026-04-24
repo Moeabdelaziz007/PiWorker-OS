@@ -24,6 +24,9 @@ func NewNeuralSandbox(timeout time.Duration) *NeuralSandbox {
 // Execute runs the provided JS source code in a restricted Otto isolate.
 func (ns *NeuralSandbox) Execute(ctx context.Context, source string, env map[string]string, capabilities []string) (string, error) {
 	vm := otto.New()
+	
+	// 🛡️ [SECURITY] Pre-emptively initialize Interrupt channel (Ring 3 Hardening)
+	vm.Interrupt = make(chan func(), 1)
 
 	// Helper to check for capability
 	hasCap := func(c string) bool {
@@ -35,22 +38,18 @@ func (ns *NeuralSandbox) Execute(ctx context.Context, source string, env map[str
 		return false
 	}
 
-	// 🛡️ [SECURITY] Set resource limits (Instruction count limit if supported, but Otto is single-threaded & blocking)
-	// We handle blocking via a context-based interrupt.
-	
 	// Inject Environment Variables
 	for k, v := range env {
 		vm.Set(k, v)
 	}
 
-	// 🔒 [SECURITY] Disable dangerous globals unless explicitly permitted
+	// 🔒 [SECURITY] Disable dangerous globals (Ring 5 Lockdown)
 	if !hasCap("NETWORK_ACCESS") {
 		vm.Set("net", nil)
 		vm.Set("http", nil)
 		vm.Set("fetch", nil)
 	}
 	
-	// Always disable these (Ring 5 Lockdown)
 	vm.Set("os", nil)
 	vm.Set("fs", nil)
 	vm.Set("process", nil)
@@ -64,6 +63,12 @@ func (ns *NeuralSandbox) Execute(ctx context.Context, source string, env map[str
 	resChan := make(chan result, 1)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				resChan <- result{err: fmt.Errorf("neural isolation failure: %v", r)}
+			}
+		}()
+
 		// Run the script
 		value, err := vm.Run(source)
 		if err != nil {
@@ -82,8 +87,7 @@ func (ns *NeuralSandbox) Execute(ctx context.Context, source string, env map[str
 	case res := <-resChan:
 		return res.val, res.err
 	case <-time.After(ns.timeout):
-		// 🛠️ Hard Lockdown: Send an interrupt to the VM
-		vm.Interrupt = make(chan func(), 1)
+		// 🛠️ Hard Lockdown: Interrupt the VM
 		vm.Interrupt <- func() {
 			panic("SOVEREIGN_SANDBOX_TIMEOUT_BREACH")
 		}

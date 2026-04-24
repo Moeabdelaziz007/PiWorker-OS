@@ -32,10 +32,15 @@ type LedgerEvent struct {
 	Timestamp time.Time
 }
 
+// HTTPClient interface allows mocking the network layer for verifiable testing.
+type HTTPClient interface {
+	Get(url string) (*http.Response, error)
+}
+
 // LedgerConnector handles the native link to the Pi/Stellar network
 type LedgerConnector struct {
 	NetworkURL  string
-	Client      *http.Client
+	Client      HTTPClient
 	processedTx sync.Map // Safe concurrent map to track spent transactions
 }
 
@@ -43,7 +48,7 @@ func NewLedgerConnector(url string) *LedgerConnector {
 	return &LedgerConnector{
 		NetworkURL: url,
 		Client: &http.Client{
-			Timeout: 10 * time.Second, // حماية ضد تعليق الاتصال
+			Timeout: 10 * time.Second,
 		},
 	}
 }
@@ -90,6 +95,44 @@ func (lc *LedgerConnector) InvokeSoroban(contractID string, function string, arg
 	fmt.Printf("📜 [Soroban] Invoking %s on contract %s\n", function, contractID)
 	// Native Go implementation for smart contract execution
 	return "tx_success_hash", nil
+}
+
+// GetBalance queries the ledger for the current Pi balance of a wallet.
+func (lc *LedgerConnector) GetBalance(walletAddress string) (float64, error) {
+	url := fmt.Sprintf("%s/accounts/%s", lc.NetworkURL, walletAddress)
+
+	resp, err := lc.Client.Get(url)
+	if err != nil {
+		return 0, fmt.Errorf("ledger connection failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("wallet not found or ledger error: %d", resp.StatusCode)
+	}
+
+	var account struct {
+		Balances []struct {
+			AssetType string `json:"asset_type"`
+			Balance   string `json:"balance"`
+		} `json:"balances"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&account); err != nil {
+		return 0, fmt.Errorf("failed to parse account data: %v", err)
+	}
+
+	for _, b := range account.Balances {
+		if b.AssetType == "native" {
+			balance, err := strconv.ParseFloat(b.Balance, 64)
+			if err != nil {
+				return 0, fmt.Errorf("invalid balance format: %v", err)
+			}
+			return balance, nil
+		}
+	}
+
+	return 0, fmt.Errorf("no native Pi balance found")
 }
 
 // VerifyPiTransaction queries the blockchain to mathematically prove a payment happened.
