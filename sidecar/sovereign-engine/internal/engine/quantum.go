@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
@@ -116,18 +118,32 @@ func (qm *QuantumMirror) executeSim(ctx context.Context, persona string, goal st
 		return SimulationResult{}, fmt.Errorf("gemini bridge error: %w", err)
 	}
 
-	// 2. Derive Score from Reasoning (Mocked logic for now, in production we use NLP to score)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	baseScore := r.Float32()
+	// 2. Derive Score from Reasoning (Extracting SUCCESS_PROBABILITY via Regex)
+	score := qm.extractScore(reasoning)
 	
-	// Adjust revenue simulation based on persona
-	revenue := baseScore * 100.0
+	// Adjust revenue simulation based on persona and AI score
+	revenue := score * 100.0
 
 	return SimulationResult{
 		Persona:    persona,
-		Score:      baseScore,
+		Score:      score,
 		Reasoning:  reasoning,
 		RevenueUSD: revenue,
 	}, nil
 }
 
+func (qm *QuantumMirror) extractScore(reasoning string) float32 {
+	re := regexp.MustCompile(`SUCCESS_PROBABILITY:\s*([0-1]\.?\d*)`)
+	match := re.FindStringSubmatch(reasoning)
+	
+	if len(match) > 1 {
+		score, err := strconv.ParseFloat(match[1], 32)
+		if err == nil {
+			return float32(score)
+		}
+	}
+
+	// Fallback: If AI fails to provide structured score, use a safe baseline (0.5) 
+	// rather than pure randomness.
+	return 0.5
+}

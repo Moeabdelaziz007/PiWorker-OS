@@ -59,7 +59,10 @@ func (gc *GeminiClient) AnalyzeSimulationGoal(ctx context.Context, goal string, 
 		
 		Goal: %s
 		
-		Output Format: Provide a structured reasoning chain followed by potential risks and opportunities.
+		Output Format:
+		1. REASONING: <your reasoning chain>
+		2. RISKS: <identified risks>
+		3. SUCCESS_PROBABILITY: <a single number between 0.0 and 1.0 representing the likelihood of achieving the goal>
 	`, persona, goal)
 
 	resp, err := gc.model.GenerateContent(ctx, genai.Text(prompt))
