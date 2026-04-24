@@ -23,9 +23,10 @@ export class SignatureProvider {
 
   /**
    * Signs a payload (task result, directive, etc.) with an agent's private key.
+   * PRO-FIX: Uses a deterministic key-sorted stringify to prevent signature mismatches.
    */
-  static signPayload(payload: any, privateKey: string): string {
-    const data = JSON.stringify(payload);
+  static signPayload(payload: Record<string, unknown>, privateKey: string): string {
+    const data = JSON.stringify(payload, Object.keys(payload).sort());
     const signature = crypto.sign(null, Buffer.from(data), privateKey);
     return signature.toString("hex");
   }
@@ -33,8 +34,8 @@ export class SignatureProvider {
   /**
    * Verifies a signature against a payload and public key.
    */
-  static verifySignature(payload: any, signature: string, publicKey: string): boolean {
-    const data = JSON.stringify(payload);
+  static verifySignature(payload: Record<string, unknown>, signature: string, publicKey: string): boolean {
+    const data = JSON.stringify(payload, Object.keys(payload).sort());
     return crypto.verify(
       null,
       Buffer.from(data),

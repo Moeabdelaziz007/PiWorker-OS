@@ -12,8 +12,32 @@ import (
 	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/finance"
 	pb "github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
+
+// authInterceptor checks for a valid Sovereign-Auth-Token in the gRPC metadata.
+func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "[SEC_ERROR] Missing metadata")
+	}
+
+	tokens := md["sovereign-auth-token"]
+	expectedToken := os.Getenv("SOVEREIGN_AUTH_TOKEN")
+	if expectedToken == "" {
+		expectedToken = "DEFAULT_SAFE_TOKEN" // MUST be set in production
+	}
+
+	if len(tokens) == 0 || tokens[0] != expectedToken {
+		log.Printf("⚠️ [SEC_ALERT] Unauthorized access attempt to %s", info.FullMethod)
+		return nil, status.Errorf(codes.Unauthenticated, "[SEC_ERROR] Invalid or missing auth token")
+	}
+
+	return handler(ctx, req)
+}
 
 type sovereignServer struct {
 	pb.UnimplementedSovereignServiceServer
@@ -104,6 +128,22 @@ func (s *sovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyT
 func (s *sovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequest) (*pb.PaymentResponse, error) {
 	log.Printf("💰 [Sovereign Maker] Authorizing Payment: %.4f Pi to %s", req.AmountPi, req.RecipientId)
 	
+	// SECURITY_FIX: VULN-001 [Steel Gate Protocol]
+	// We must validate the AgentAuthToken before proceeding. 
+	// In production, this should be a cryptographically signed JWT or a session lookup.
+	expectedAgentToken := os.Getenv("AGENT_SYSTEM_SECRET")
+	if expectedAgentToken == "" {
+		expectedAgentToken = "AGENT_UNSAFE_DEV_TOKEN" // Default for dev, must be hardened
+	}
+
+	if req.AgentAuthToken == "" || req.AgentAuthToken != expectedAgentToken {
+		log.Printf("⚠️ [SEC_ALERT] Unauthorized Payment Attempt! Recipient: %s, Amount: %.2f", req.RecipientId, req.AmountPi)
+		return &pb.PaymentResponse{
+			Success: false,
+			TxId:    "REJECTED_UNAUTHORIZED",
+		}, nil
+	}
+
 	maker := finance.NewPaymentMaker("https://api.testnet.minepi.com")
 	txID, err := maker.ExecuteSovereignPayment(ctx, finance.PaymentRequest{
 		RecipientID: req.RecipientId,
@@ -139,13 +179,16 @@ func main() {
 		log.Fatalf("failed to start sovereign server: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	// PRO PATCH: Add the Auth Interceptor to the gRPC server
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(authInterceptor),
+	)
 	pb.RegisterSovereignServiceServer(grpcServer, server)
 	
 	// Enable Reflection for debugging tools like grpcui or postman
 	reflection.Register(grpcServer)
 
-	log.Printf("👑 [Sovereign Engine] Go Sidecar Online on :%s", port)
+	log.Printf("👑 [SOVEREIGN_ENGINE] Steel Gate Active. Online on :%s", port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

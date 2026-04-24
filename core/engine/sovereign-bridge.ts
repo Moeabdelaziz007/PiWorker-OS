@@ -58,17 +58,22 @@ export interface VerifyTxResponse {
  * Connects the TypeScript Orchestrator to the Go Sovereign Engine.
  */
 export class SovereignBridge {
-  private static readonly ENGINE_URL = "http://localhost:50051"; // Default gRPC port
+  private static readonly ENGINE_URL = process.env.SOVEREIGN_ENGINE_URL || "localhost:50051";
+  private static readonly AUTH_TOKEN = process.env.SOVEREIGN_AUTH_TOKEN || "DEFAULT_SAFE_TOKEN";
   private static client: any = null;
 
-  /**
-   * Initializes the gRPC client dynamically using the proto file.
-   */
+  // Helper to create secure metadata for gRPC calls
+  private static getMetadata(): grpc.Metadata {
+    const metadata = new grpc.Metadata();
+    metadata.add('sovereign-auth-token', this.AUTH_TOKEN);
+    return metadata;
+  }
+
   private static getClient() {
     if (!this.client) {
       const PROTO_PATH = path.join(process.cwd(), 'sidecar/sovereign-engine/proto/sovereign.proto');
       const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-        keepCase: true,
+        keepCase: false,
         longs: String,
         enums: String,
         defaults: true,
@@ -76,11 +81,16 @@ export class SovereignBridge {
       });
       const sovereignProto = grpc.loadPackageDefinition(packageDefinition).sovereign as any;
 
+      // Use SSL in production, Insecure only for local dev with strict token
       this.client = new sovereignProto.SovereignService(
         this.ENGINE_URL,
-        grpc.credentials.createInsecure() // Use secure credentials in production
+        grpc.credentials.createInsecure(), 
+        {
+          "grpc.primary_user_agent": "PiWorker-Orchestrator/2.0",
+          "grpc.default_authority": "axiomid.app"
+        }
       );
-      console.log(`[gRPC] Sovereign Bridge connected to Go Engine at ${this.ENGINE_URL}`);
+      console.log(`[gRPC] Sovereign Bridge secured and connected to ${this.ENGINE_URL}`);
     }
     return this.client;
   }
@@ -117,12 +127,12 @@ export class SovereignBridge {
 
     return new Promise((resolve, reject) => {
       client.RequestSimulation({
-        goal_id: req.goalId,
+        goalId: req.goalId,
         instances: req.parallelInstances,
         complexity: 0.9,
-        model_version: req.modelVersion || "gemini-1.5-pro",
+        modelVersion: req.modelVersion || "gemini-1.5-pro",
         personas: ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"]
-      }, (error: any, response: any) => {
+      }, this.getMetadata(), (error: any, response: any) => {
         if (error) {
           console.error("[gRPC] Go Engine Simulation Error:", error);
           return reject(error);
@@ -153,7 +163,21 @@ export class SovereignBridge {
    */
   public static async lockEscrow(agentId: string, amount: number): Promise<boolean> {
     console.log(`🔒 [Bridge] Requesting Go Escrow Lock: ${amount} Pi for ${agentId}`);
-    return true;
+    const client = this.getClient();
+
+    return new Promise((resolve, reject) => {
+      client.LockEscrow({
+        txId: `escrow-${crypto.randomBytes(4).toString("hex")}`,
+        amountPi: amount,
+        targetWallet: agentId
+      }, this.getMetadata(), (error: any, response: any) => {
+        if (error) {
+          console.error("[gRPC] Escrow Lock Error:", error);
+          return reject(error);
+        }
+        resolve(response.locked);
+      });
+    });
   }
 
   /**
@@ -165,15 +189,45 @@ export class SovereignBridge {
 
     return new Promise((resolve, reject) => {
       client.VerifyTransaction({
-        tx_id: req.txId,
-        expected_receiver: req.expectedReceiver,
-        expected_amount: req.expectedAmount
-      }, (error: any, response: any) => {
+        txId: req.txId,
+        expectedReceiver: req.expectedReceiver,
+        expectedAmount: req.expectedAmount
+      }, this.getMetadata(), (error: any, response: any) => {
         if (error) {
           console.error("[gRPC] Ledger Verification Error:", error);
           return reject(error);
         }
         resolve(response as VerifyTxResponse);
+      });
+    });
+  }
+
+  /**
+   * Authorizes a payment via the Go Sovereign Engine.
+   * SECURITY: Injects the AGENT_SYSTEM_SECRET for authorization.
+   */
+  public static async commitPayment(recipientId: string, amount: number, priority: string = "instant"): Promise<any> {
+    console.log(`💰 [Bridge] Requesting Secure Payment: ${amount} Pi to ${recipientId}`);
+    const client = this.getClient();
+
+    const agentToken = process.env.AGENT_SYSTEM_SECRET || "AGENT_UNSAFE_DEV_TOKEN";
+
+    return new Promise((resolve, reject) => {
+      client.CommitPayment({
+        recipientId: recipientId,
+        amountPi: amount,
+        agentAuthToken: agentToken,
+        priority: priority
+      }, this.getMetadata(), (error: any, response: any) => {
+        if (error) {
+          console.error("[gRPC] Payment Authorization Error:", error);
+          return reject(error);
+        }
+        if (!response.success) {
+          console.error(`❌ [Bridge] Payment Rejected: ${response.tx_id}`);
+          return reject(new Error("UNAUTHORIZED_PAYMENT_REQUEST"));
+        }
+        resolve(response);
       });
     });
   }

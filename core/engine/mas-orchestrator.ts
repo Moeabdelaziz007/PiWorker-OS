@@ -145,14 +145,14 @@ export class MASOrchestrator extends EventEmitter {
     try {
       // PHASE 6: NEURAL MEMORY RETRIEVAL
       // Fetch relevant past experiences to inform the plan
-      const pastExperiences = await NeuralMemoryMesh.query(); // Simplified query for hardening
+      const pastExperiences = NeuralMemoryMesh.query(); // Simplified query for hardening
       if (pastExperiences.length > 0) {
         console.log(`[Orchestrator] 🧠 Recalled ${pastExperiences.length} relevant memories to optimize plan.`);
       }
 
       // 1. مرحلة التخطيط (Compilation)
       const contextEnhancedGoal = pastExperiences.length > 0
-        ? `Goal: ${goal}. Context from past experiences: ${JSON.stringify(pastExperiences.map(e => e.data))}`
+        ? `Goal: ${goal}. Context from past experiences: ${JSON.stringify(pastExperiences.map((e: any) => e.data))}`
         : goal;
 
       const plan = await this.compiler.compile(contextEnhancedGoal);
@@ -339,7 +339,7 @@ export class MASOrchestrator extends EventEmitter {
   private async simulateExecution(agent: Agent, sim: any): Promise<number> {
     const deviation = (Math.random() - 0.5) * 0.2;
     // Base ROI simulation using Go engine results if available
-    const baseRoi = sim.revenue_usd ? (sim.revenue_usd / 100) : 1.5;
+    const baseRoi = sim.estimatedRevenueUsd ? (sim.estimatedRevenueUsd / 100) : 1.5;
     return baseRoi + deviation;
   }
 

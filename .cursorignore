@@ -1,0 +1,17 @@
+# Cursor AI Indexing Exclusion
+node_modules/
+.next/
+dist/
+build/
+.git/
+sidecar/sovereign-engine/bin/
+scratch/
+.system_generated/
+tmp/
+*.log
+.env
+.env.*
+.go-cache/
+sidecar/sovereign-engine/.go-cache/
+tsc_current_errors.txt
+tsc_errors_final.txt

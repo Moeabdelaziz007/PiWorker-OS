@@ -60,3 +60,26 @@ telemetry.json
 scratch/
 .system_generated/
 tmp/
+.go-cache/
+sidecar/sovereign-engine/.go-cache/
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs and Build Errors
+*.txt
+!README.md
+!LICENSE
+!SECURITY.md
+!ARCHITECTURE.md
+!SECURITY_HARDENING.md
+!ARCHITECTURE_MASTER_PLAN.md
+!openmemory.md
+!next-env.d.ts
+!package.json
+!tsconfig.json
+!package-lock.json
