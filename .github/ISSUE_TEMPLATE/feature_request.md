@@ -1,26 +1,38 @@
 ---
-name: "🚀 Feature Request"
-about: Propose a new capability for the Sovereign Agent Swarm.
-title: "[FEAT] "
+name: '🚀 Feature Request'
+about: Suggest an idea for the PiWorker-OS project.
+title: '[FEATURE] '
 labels: enhancement
 assignees: ''
+---
+
+## 🛑 Stop: Read Before Proceeding
+
+Feature requests must align with our zero-trust and decentralized architecture. Explain _why_ this feature is necessary from a "First Principles" perspective. Search existing issues before submitting to avoid duplicates.
 
 ---
 
-**Is your feature request related to a problem?**
-A clear and concise description of what the problem is. Ex: I'm always frustrated when [...]
+### **1. 🎯 The Problem**
 
-**Describe the proposed solution**
-A clear and concise description of what you want to happen.
+Is your feature request related to a problem? Please describe it clearly and concisely.
+(e.g., "I'm always frustrated when [x] happens because [y].")
 
-**Agent DNA Impact**
-How does this feature modify or enhance Agent DNA? (New chromosomes, mutation types, etc.)
+### **2. 💡 Proposed Solution (First Principles Approach)**
 
-**ROI & Economic Justification**
-How does this feature contribute to the "Profit Vortex"? Will it increase agent efficiency or decrease burn rate?
+Describe the solution you'd like. How does this solution align with the core philosophy of PiWorker-OS (Agent sovereignty, Zero-trust, PoPW)?
 
-**Technical Implementation Details (Optional)**
-Any specific ideas on how to implement this within the `core/engine` or `sandbox`.
+### **3. ⚖️ Alternatives Considered**
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Describe any alternative solutions or features you've considered. Why is your proposed solution superior?
+
+### **4. 🛠️ Implementation Outline (Optional but recommended)**
+
+Provide a high-level overview of how this feature could be implemented.
+
+- Which modules will be affected? (e.g., `core/finance`, `sidecar/diplomacy`)
+- Are there new dependencies required?
+- Does it require a change to the DNA structure or Sandbox environment?
+
+### **5. 🔗 Additional Context**
+
+Add any other context, links, or screenshots about the feature request here.

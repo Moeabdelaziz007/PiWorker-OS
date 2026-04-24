@@ -1,0 +1,15 @@
+# This file is used to define the individuals or teams that are responsible for code in a repository.
+
+# The core finance module handles escrows and sensitive financial logic.
+# Requires mandatory review by Moeabdelaziz007
+/core/finance/ @Moeabdelaziz007
+
+# The physical bridge connects the digital OS to physical hardware/robotics.
+# Requires mandatory review by Moeabdelaziz007
+/sidecar/physical-bridge/ @Moeabdelaziz007
+
+# The security module defines the zero-trust boundaries.
+/core/security/ @Moeabdelaziz007
+
+# Global fallback (optional)
+# * @Moeabdelaziz007
