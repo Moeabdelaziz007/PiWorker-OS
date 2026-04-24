@@ -6,15 +6,24 @@ import path from 'node:path';
 
 export interface SimulationRequest {
   goalId: string;
-  prompt: string;
   parallelInstances: number;
+  modelVersion: string; // gemini-1.5-pro
+}
+
+export interface GeminiReasoning {
+  logicChain: string;
+  criticalRisks: string[];
+  opportunities: string[];
+  confidenceScore: string;
 }
 
 export interface SimulationResponse {
   goalId: string;
-  revenue_usd: number;
-  risk_score: number;
-  strategy_recommendation: string;
+  predictedRoi: number;
+  riskScore: number;
+  strategyRecommendation: string;
+  reasoning: GeminiReasoning;
+  estimatedRevenueUsd: number;
 }
 
 export interface EmbodiedIntentRequest {
@@ -110,8 +119,9 @@ export class SovereignBridge {
       client.RequestSimulation({
         goal_id: req.goalId,
         instances: req.parallelInstances,
-        complexity: 0.9, // Default complexity
-        personas: ["bull", "bear", "chaos", "conservative", "aggressive"]
+        complexity: 0.9,
+        model_version: req.modelVersion || "gemini-1.5-pro",
+        personas: ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"]
       }, (error: any, response: any) => {
         if (error) {
           console.error("[gRPC] Go Engine Simulation Error:", error);

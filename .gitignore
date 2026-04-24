@@ -1,39 +1,62 @@
+# --- PiWorker-OS Sovereign Ignore List ---
+
 # Dependencies
 node_modules/
 .pnp
 .pnp.js
+jspm_packages/
 
-# Testing
-coverage/
-
-# Next.js
+# Next.js Build
 .next/
 out/
 build/
 
-# Misc
+# Go Build & Binaries
+sidecar/sovereign-engine/bin/
+sidecar/sovereign-engine/internal/pb/*.go
+!sidecar/sovereign-engine/internal/pb/sovereign.pb.go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Python & AI
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS/IDEs
 .DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Vercel
 .vercel
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# Debug/Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+telemetry.json
 
-# Sovereign OS specific
-core/identity/sovereign-ledger.jsonl
+# Scratch/Temporary
 scratch/
+.system_generated/
+tmp/

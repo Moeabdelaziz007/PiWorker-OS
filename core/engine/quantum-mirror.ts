@@ -16,7 +16,7 @@ export interface SimulationResult {
   mirrorId: string;
   success: boolean;
   outcome: 'success' | 'failure' | 'partial';
-  revenue_usd: number;
+  revenueUsd: number;
   riskScore: number;
   timeToCompletion: number;
   confidence: number;
@@ -54,17 +54,17 @@ export class QuantumMirror {
     // Call the Sovereign Engine through the bridge
     const response = await SovereignBridge.requestSimulation({
       goalId: `sim-${agent.id}-${Date.now()}`,
-      prompt: `Simulate skill ${skill.name} for agent ${agent.name} with data: ${JSON.stringify(taskData)}`,
-      parallelInstances: 30
+      parallelInstances: 30,
+      modelVersion: "gemini-1.5-pro"
     });
 
     const consensus: CompressedSimulation = {
       topPaths: [[]], // Placeholder for path extraction
-      expectedRevenue: response.revenue_usd,
-      expectedRisk: response.risk_score,
-      overallConfidence: 1.0 - (response.risk_score / 100),
-      recommendation: response.revenue_usd > 1500 ? 'proceed' : 'caution',
-      reasoning: response.strategy_recommendation,
+      expectedRevenue: response.estimatedRevenueUsd,
+      expectedRisk: response.riskScore,
+      overallConfidence: 1.0 - (response.riskScore / 10),
+      recommendation: response.estimatedRevenueUsd > 1500 ? 'proceed' : 'caution',
+      reasoning: response.strategyRecommendation,
       simulationDepthDays
     };
 
@@ -98,7 +98,7 @@ export class QuantumMirror {
       mirrorId: `mirror-golden-${agent.id}`,
       success: true,
       outcome: 'success',
-      revenue_usd: compressed.expectedRevenue,
+      revenueUsd: compressed.expectedRevenue,
       riskScore: compressed.expectedRisk,
       timeToCompletion: compressed.simulationDepthDays,
       confidence: compressed.overallConfidence,

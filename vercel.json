@@ -1,15 +1,20 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "framework": "nextjs",
   "rewrites": [
-    { "source": "/api/sovereign/(.*)", "destination": "/api/sovereign/$1" }
-  ],
-  "headers": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Sovereign-State", "value": "Amrikyy-Lab" },
-        { "key": "X-Robots-Tag", "value": "index, follow" }
-      ]
+      "source": "/api/sovereign/(.*)",
+      "destination": "/api/index.go"
     }
-  ]
+  ],
+  "functions": {
+    "api/*.go": {
+      "runtime": "vercel-go@3.0.0"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://axiomid.app"
+  }
 }
