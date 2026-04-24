@@ -37,9 +37,28 @@ async function runSovereignBootstrap() {
     await NeuralMemoryMesh.postInsight(insight);
     console.log("\x1b[32m[SUCCESS] First Sovereign Insight Pushed to Persistence Layer.\x1b[0m");
 
-    // 4. Verify Ledger State
-    console.log("[BOOTSTRAP] Finalizing Causal Link Verification...");
-    console.log("\x1b[1m\x1b[32m=== SYSTEM ONLINE: AMRIKYY LAB IS SOVEREIGN ===\x1b[0m");
+    // 5. START ETERNAL SOVEREIGN LOOP
+    console.log("\x1b[1m\x1b[36m--- [SYSTEM] ENGAGING ETERNAL SOVEREIGN LOOP (LEVEL 5) ---\x1b[0m");
+    
+    let cycleCount = 1;
+    while (true) {
+      console.log(`\n\x1b[35m[CYCLE ${cycleCount}] Processing Sovereign Economy...\x1b[0m`);
+      
+      // A. Fleet Management & Scaling
+      const fleet = await import("./core/agents/fleet-manager.js");
+      await fleet.fleetManager.evaluateScaling();
+      
+      // B. Economy Simulation (Mock Task Execution)
+      const treasury = await import("./core/finance/treasury-vault.js");
+      const profit = 5 + Math.random() * 15; 
+      const inflow = treasury.AmrikyyTreasury.processInflow(agent.agentId, profit);
+      
+      console.log(`[CYCLE ${cycleCount}] Profit Harvested: ${inflow.taxAmount.toFixed(2)} Pi added to Reserve.`);
+      
+      // C. Cooldown
+      cycleCount++;
+      await new Promise(resolve => setTimeout(resolve, 30000)); // 30s Heartbeat
+    }
 
   } catch (error) {
     console.error("\x1b[31m[CRITICAL] Bootstrap Failure:\x1b[0m", error);
