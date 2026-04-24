@@ -1,50 +1,61 @@
 import crypto from "node:crypto";
-import { TreasuryStorage, TreasuryState } from "./treasury-storage";
+import { TreasuryStorageFactory, TreasuryState, ITreasuryStorage } from "./treasury-storage";
+import { SovereignBridge } from "../engine/sovereign-bridge";
 
 /**
  * Amrikyy Treasury Vault
  * The central financial authority of PiWorker-OS.
  * Manages the national wealth and sovereign tax with full persistence.
+ * [SERVERLESS READY] Optimized for Vercel/KV environments.
  */
 export class AmrikyyTreasury {
-  private static state: TreasuryState = TreasuryStorage.load();
+  private static storage: ITreasuryStorage = TreasuryStorageFactory.getStorage();
   private static SOVEREIGN_TAX_RATE = 0.10;
-
-  private static persist() {
-    TreasuryStorage.save(this.state);
-  }
-
-  // Helper for internal use
-  private static get reserves() { return this.state.reserves; }
-  private static get escrows() { return this.state.escrows; }
 
   /**
    * Creates an escrow for a task, locking funds.
+   * [Sovereign Sync] Prioritizes Go Muscle for fiscal integrity.
    */
-  static createEscrow(orderId: string, agentId: string, amount: number) {
-    if (this.reserves["Pi"] < amount) {
-      throw new Error(`[TREASURY] ❌ Insufficient reserves for escrow: ${amount} Pi requested, ${this.reserves["Pi"]} available.`);
+  static async createEscrow(orderId: string, agentId: string, amount: number) {
+    console.log(`[TREASURY] 🛡️ Initiating Escrow for ${orderId}...`);
+    
+    // 1. Attempt Go Muscle Sync (Priority 1)
+    try {
+      const lockedOnMuscle = await SovereignBridge.lockEscrow(agentId, amount);
+      if (lockedOnMuscle) {
+        console.log(`[TREASURY] ✅ Go Muscle confirmed escrow lock for ${agentId}.`);
+      }
+    } catch (err) {
+      console.warn(`[TREASURY] ⚠️ Go Muscle unreachable. Falling back to local sovereign vault.`);
     }
 
-    this.reserves["Pi"] -= amount;
-    this.escrows[orderId] = { amount, agentId, status: "LOCKED" };
+    // 2. Local Persistent Fallback (Priority 2)
+    const state = await this.storage.load();
     
-    this.persist();
-    console.log(`[TREASURY] 🔐 Escrow created for Order ${orderId}: ${amount} Pi locked.`);
+    if (state.reserves["Pi"] < amount) {
+      throw new Error(`[TREASURY] ❌ Insufficient reserves: ${amount} Pi requested, ${state.reserves["Pi"]} available.`);
+    }
+
+    state.reserves["Pi"] -= amount;
+    state.escrows[orderId] = { amount, agentId, status: "LOCKED" };
+    
+    await this.storage.save(state);
     return orderId;
   }
 
   /**
    * Releases escrowed funds to an agent after successful task completion.
    */
-  static releaseEscrow(orderId: string) {
-    const escrow = this.escrows[orderId];
+  static async releaseEscrow(orderId: string) {
+    const state = await this.storage.load();
+    const escrow = state.escrows[orderId];
+
     if (!escrow || escrow.status !== "LOCKED") {
       throw new Error(`[TREASURY] ❌ No locked escrow found for Order ${orderId}.`);
     }
 
     escrow.status = "RELEASED";
-    this.persist();
+    await this.storage.save(state);
     console.log(`[TREASURY] 🔓 Escrow released for Order ${orderId}: ${escrow.amount} Pi credited to ${escrow.agentId}.`);
     return true;
   }
@@ -52,14 +63,16 @@ export class AmrikyyTreasury {
   /**
    * Processes an agent's task profit in a specific currency.
    */
-  static processInflow(agentId: string, grossProfit: number, currency: string = "Pi") {
-    if (!this.reserves[currency]) this.reserves[currency] = 0;
+  static async processInflow(agentId: string, grossProfit: number, currency: string = "Pi") {
+    const state = await this.storage.load();
+    
+    if (!state.reserves[currency]) state.reserves[currency] = 0;
     
     const taxAmount = grossProfit * this.SOVEREIGN_TAX_RATE;
     const netProfit = grossProfit - taxAmount;
     
-    this.reserves[currency] += taxAmount;
-    this.persist();
+    state.reserves[currency] += taxAmount;
+    await this.storage.save(state);
 
     return {
       txId: `tx-tax-${crypto.randomBytes(4).toString("hex")}`,
@@ -68,29 +81,57 @@ export class AmrikyyTreasury {
       taxAmount,
       currency,
       netToAgent: netProfit,
-      newReserve: this.reserves[currency],
+      newReserve: state.reserves[currency],
     };
   }
 
   /**
    * Deducts a usage fee for plugins and tools.
    */
-  static deductUsageFee(agentId: string, amount: number, toolName: string) {
-    this.reserves["Pi"] += amount;
-    this.persist();
+  static async deductUsageFee(agentId: string, amount: number, toolName: string) {
+    const state = await this.storage.load();
+    state.reserves["Pi"] += amount;
+    await this.storage.save(state);
     console.log(`[TREASURY] 💰 Deducted ${amount} Pi from ${agentId} for ${toolName}.`);
     return true;
   }
 
   /**
-   * Returns current state of all national assets.
+   * Directly modifies a specific currency reserve.
+   * [Sovereign Utility] Used for swaps and diversification.
    */
-  static getStats() {
+  static async modifyReserve(currency: string, delta: number) {
+    const state = await this.storage.load();
+    if (!state.reserves[currency]) state.reserves[currency] = 0;
+    state.reserves[currency] += delta;
+    await this.storage.save(state);
+    return state.reserves[currency];
+  }
+
+  /**
+   * Returns current state of all national assets.
+   * [Sovereign Sync] Merges Muscle balance with Brain reserves.
+   */
+  static async getStats() {
+    const state = await this.storage.load();
+    let muscleBalance = 0;
+
+    try {
+      const muscleStatus = await SovereignBridge.getSystemStatus();
+      muscleBalance = muscleStatus.pi_balance || 0;
+    } catch (err) {
+      // Ignore bridge errors for stats fallback
+    }
+
     return {
-      reserves: this.reserves,
+      reserves: {
+        ...state.reserves,
+        "Muscle_Pi": muscleBalance, // For audit transparency
+        "Total_Sovereign_Pi": (state.reserves["Pi"] || 0) + muscleBalance
+      },
       taxRate: this.SOVEREIGN_TAX_RATE,
-      status: "STABLE",
-      lastAudit: this.state.lastUpdate
+      status: muscleBalance > 0 ? "SYNCHRONIZED" : "LOCAL_ONLY",
+      lastAudit: state.lastUpdate
     };
   }
 }
