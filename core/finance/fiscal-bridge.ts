@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { AmrikyyTreasury } from "./treasury-vault.js";
+import { AmrikyyTreasury } from "./treasury-vault";
 
 /**
  * Sovereign Fiscal Bridge

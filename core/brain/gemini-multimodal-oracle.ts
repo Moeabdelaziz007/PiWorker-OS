@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import crypto from "node:crypto";
-import { PluginGateway } from "../engine/plugin-gateway.js";
-import { AmrikyyTreasury } from "../finance/treasury-vault.js";
+import { PluginGateway } from "../engine/plugin-gateway";
+import { AmrikyyTreasury } from "../finance/treasury-vault";
 
 /**
  * MAS-ZERO NEURAL ORACLE
@@ -60,7 +60,7 @@ export async function analyzeOpportunity(
         "estimated_pi_profit": number (value of work in Pi),
         "confidence": number (0-1),
         "summary": string (technical audit),
-        "required_skills": string[] (e.g. "Next.js", "Go", "Solidity")
+        "required_skills": string[] (e.g. "Next", "Go", "Solidity")
       }
     `;
     

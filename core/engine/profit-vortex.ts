@@ -1,5 +1,5 @@
 import { Agent } from "../types/agent";
-import { PiAdapter } from "../finance/pi-adapter.js";
+import { PiAdapter } from "../finance/pi-adapter";
 
 /**
  * PiWorker-OS ProfitVortex

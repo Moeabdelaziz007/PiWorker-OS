@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { OmniTerminal } from '@/app/components/omni-terminal';
+import { Cpu, AlertCircle } from 'lucide-react';
 
 /**
- * AMRIKYY LAB :: SOVEREIGN DASHBOARD V2
- * THEME: QUANTUM CYBERPUNK (CARBON & NEON)
- * STATUS: LIVE DATA SYNC ACTIVE
+ * AMRIKYY LAB :: SOVEREIGN DASHBOARD V3
+ * THEME: QUANTUM CYBERPUNK TACTICAL COMMAND CENTER
+ * LAYOUT: 3-COLUMN TACTICAL SYSTEM
+ * STATUS: ELITE SOVEREIGN CONTROL PLANE ACTIVE
  */
 export default function SovereignDashboard() {
   const [data, setData] = useState<any>(null);
@@ -18,7 +22,7 @@ export default function SovereignDashboard() {
         const res = await fetch('/api/sovereign-state');
         const json = await res.json();
         if (json.success) {
-          setData(json);
+          setData(json.state);
         }
       } catch (err) {
         console.error("Dashboard sync error:", err);
@@ -34,176 +38,311 @@ export default function SovereignDashboard() {
 
   if (loading && !data) {
     return (
-      <div style={{ backgroundColor: '#0a0a0a', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#39FF14' }}>
-        <div style={{ letterSpacing: '5px', fontWeight: 'bold' }}>INITIALIZING QUANTUM BRIDGE...</div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-screen flex items-center justify-center bg-black"
+      >
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            className="mx-auto mb-4"
+          >
+            <Cpu size={40} className="text-green-500" />
+          </motion.div>
+          <div className="text-green-500 font-mono text-lg tracking-widest">
+            INITIALIZING QUANTUM BRIDGE...
+          </div>
+        </div>
+      </motion.div>
     );
   }
 
-  const treasury = data?.treasury || { reserve: 0, status: "OFFLINE" };
-  const fleet = data?.fleet || { count: 0, active: 0, ready: 0 };
+  const treasury = data?.treasury || { reserves: 0, status: 'OFFLINE' };
+  const fleet = data?.fleet || { count: 0, active: 0, ready: 0, agents: [] };
   const logs = data?.logs || [];
 
   return (
-    <div style={{
-      backgroundColor: '#0a0a0a',
-      color: '#ffffff',
-      minHeight: '100vh',
-      fontFamily: '"Outfit", "Inter", sans-serif',
-      padding: '2rem',
-      backgroundImage: 'linear-gradient(135deg, #0a0a0a 0%, #111111 100%)',
-      overflowX: 'hidden'
-    }}>
-      
-      {/* Background Carbon Grid Effect */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundSize: '30px 30px',
-        backgroundImage: 'linear-gradient(to right, #151515 1px, transparent 1px), linear-gradient(to bottom, #151515 1px, transparent 1px)',
-        zIndex: 0, pointerEvents: 'none'
-      }} />
+    <div className="min-h-screen bg-black text-white overflow-auto">
+      {/* Background Carbon Grid */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #151515 1px, transparent 1px), linear-gradient(to bottom, #151515 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          zIndex: 0,
+        }}
+      />
 
-      <main style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto' }}>
-        
-        {/* Header - Apple Minimalist x Cyberpunk */}
-        <header style={{ 
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', 
-          borderBottom: '1px solid #222', paddingBottom: '2rem', marginBottom: '3rem' 
-        }}>
-          <div>
-            <h1 style={{ 
-              fontSize: '2.5rem', fontWeight: 800, margin: 0, letterSpacing: '-1px',
-              textShadow: '0 0 20px rgba(57, 255, 20, 0.2)'
-            }}>
-              AMRIKYY<span style={{ color: '#39FF14' }}>LAB</span>
-            </h1>
-            <p style={{ opacity: 0.5, fontSize: '0.9rem', marginTop: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-              Sovereign Agent Economy OS // Level 5
-            </p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.7rem', opacity: 0.4, textTransform: 'uppercase' }}>System Heartbeat</div>
-            <div style={{ color: '#39FF14', fontWeight: 'bold' }}>● OPERATIONAL</div>
-          </div>
-        </header>
-
-        {/* Main Metrics Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-          
-          {/* Treasury - The Golden Vault */}
-          <div style={{ 
-            gridColumn: 'span 4', background: '#111', border: '1px solid #222', borderRadius: '24px', padding: '2rem',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)', transition: 'all 0.3s ease'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#F7B733', fontWeight: 700, textTransform: 'uppercase', marginBottom: '1.5rem', letterSpacing: '1px' }}>
-              National Reserve
+      <main className="relative z-10 p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8 border-b border-gray-700/50 pb-6"
+        >
+          <div className="flex justify-between items-end">
+            <div>
+              <h1 className="text-5xl font-black -tracking-1">
+                AMRIKYY<span className="text-green-500">LAB</span>
+              </h1>
+              <p className="text-xs uppercase tracking-widest text-gray-500 mt-2">
+                Sovereign Agent Economy OS // Tactical Command v3.0
+              </p>
             </div>
-            <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#F7B733', lineHeight: 1 }}>
-              {treasury.reserve.toFixed(2)}<span style={{ fontSize: '1.5rem', opacity: 0.5, marginLeft: '0.5rem' }}>π</span>
-            </div>
-            <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#39FF14' }} />
-              <span style={{ fontSize: '0.9rem', color: '#39FF14', textTransform: 'uppercase', fontWeight: 600 }}>{treasury.status}</span>
-            </div>
-          </div>
-
-          {/* Fleet Status */}
-          <div style={{ 
-            gridColumn: 'span 4', background: '#111', border: '1px solid #222', borderRadius: '24px', padding: '2rem',
-            display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
-          }}>
-            <div style={{ fontSize: '0.8rem', color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Agent Fleet
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem' }}>
-              <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#ffffff' }}>{fleet.count}</div>
-              <div style={{ fontSize: '1.2rem', opacity: 0.5 }}>Units Active</div>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <div style={{ flex: 1, background: '#181818', padding: '0.75rem', borderRadius: '12px', border: '1px solid #222' }}>
-                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>ACTIVE</div>
-                <div style={{ fontWeight: 'bold', color: '#39FF14' }}>{fleet.active}</div>
+            <motion.div
+              animate={{ opacity: [0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-right"
+            >
+              <div className="text-xs uppercase tracking-wider text-gray-600">
+                System Heartbeat
               </div>
-              <div style={{ flex: 1, background: '#181818', padding: '0.75rem', borderRadius: '12px', border: '1px solid #222' }}>
-                <div style={{ fontSize: '0.6rem', opacity: 0.5 }}>READY</div>
-                <div style={{ fontWeight: 'bold' }}>{fleet.ready}</div>
+              <div className="text-lg font-bold text-green-500 flex items-center justify-end gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                OPERATIONAL
               </div>
-            </div>
+            </motion.div>
           </div>
+        </motion.header>
 
-          {/* Neural Terminal Feed */}
-          <div style={{ 
-            gridColumn: 'span 4', background: '#070707', border: '1px solid #333', borderRadius: '24px', padding: '1.5rem',
-            fontFamily: '"JetBrains Mono", "Fira Code", monospace', fontSize: '0.8rem', position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: '#39FF14', boxShadow: '0 0 10px #39FF14' }} />
-            <div style={{ marginBottom: '1rem', color: '#39FF14', fontSize: '0.7rem', fontWeight: 'bold' }}>NEURAL_TERMINAL_FEED v1.0</div>
-            <div style={{ color: '#555', lineHeight: '1.6' }}>
-              {logs.length === 0 ? (
-                <div>{">"} Waiting for neural pulse...</div>
-              ) : logs.map((log: any, i: number) => (
-                <div key={log.id} style={{ marginBottom: '0.5rem', borderLeft: '1px solid #222', paddingLeft: '0.5rem' }}>
-                  <span style={{ color: '#333' }}>[{new Date(log.timestamp).toLocaleTimeString()}]</span><br/>
-                  <span style={{ color: '#39FF14' }}>{log.agentId}</span>: <span style={{ color: '#888' }}>{log.topic}</span>
+        {/* 3-Column Tactical Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* LEFT COLUMN: Fleet Status */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="col-span-3 space-y-6"
+          >
+            {/* Active Agents */}
+            <div
+              className="frosted-glass rounded-lg p-6 border border-cyan-500/30 min-h-72"
+              style={{
+                boxShadow:
+                  '0 0 20px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.03)',
+              }}
+            >
+              <h3 className="text-xs uppercase tracking-widest font-bold text-cyan-400 mb-6">
+                Fleet Status
+              </h3>
+
+              <div className="space-y-6">
+                {/* Total Units */}
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                    Total Units
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-5xl font-black text-cyan-400"
+                  >
+                    {fleet.count}
+                  </motion.div>
                 </div>
-              ))}
-              <div style={{ color: '#39FF14', animation: 'pulse 1s infinite' }}>_</div>
+
+                {/* Active / Ready Split */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-black/40 border border-green-500/30 rounded-lg p-4 text-center">
+                    <div className="text-[10px] uppercase tracking-widest text-green-500 font-bold mb-1">
+                      Active
+                    </div>
+                    <div className="text-3xl font-black text-green-400">
+                      {fleet.active}
+                    </div>
+                  </div>
+                  <div className="bg-black/40 border border-yellow-500/30 rounded-lg p-4 text-center">
+                    <div className="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-1">
+                      Ready
+                    </div>
+                    <div className="text-3xl font-black text-yellow-400">
+                      {fleet.ready}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Neural Load */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs uppercase tracking-wider text-gray-500">
+                      Neural Load
+                    </span>
+                    <span className="text-xs font-bold text-cyan-400">72%</span>
+                  </div>
+                  <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-cyan-500/20">
+                    <motion.div
+                      initial={{ width: '60%' }}
+                      animate={{ width: '72%' }}
+                      transition={{ duration: 1 }}
+                      className="h-full bg-gradient-to-r from-cyan-500 to-green-500"
+                      style={{
+                        boxShadow: '0 0 10px rgba(0, 229, 255, 0.6)',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Detailed Fleet List (Carbon Style) */}
-          <div style={{ 
-            gridColumn: 'span 12', background: '#111', border: '1px solid #222', borderRadius: '24px', padding: '2rem',
-            marginTop: '1rem'
-          }}>
-            <h3 style={{ margin: '0 0 2rem 0', fontSize: '1.2rem', fontWeight: 700 }}>SOVEREIGN_AGENT_ROSTER</h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #222', textAlign: 'left', color: '#555', fontSize: '0.8rem' }}>
-                  <th style={{ padding: '1rem' }}>AGENT_ID</th>
-                  <th style={{ padding: '1rem' }}>SPECIALIZATION</th>
-                  <th style={{ padding: '1rem' }}>STATUS</th>
-                  <th style={{ padding: '1rem' }}>RESERVE</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fleet.agents?.map((agent: any) => (
-                  <tr key={agent.agentId} style={{ borderBottom: '1px solid #181818' }}>
-                    <td style={{ padding: '1rem', fontWeight: 'bold', color: '#39FF14' }}>{agent.agentId}</td>
-                    <td style={{ padding: '1rem', opacity: 0.7 }}>{agent.specialization}</td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ 
-                        padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold',
-                        background: agent.status === 'READY' ? 'rgba(57, 255, 20, 0.1)' : 'rgba(247, 183, 51, 0.1)',
-                        color: agent.status === 'READY' ? '#39FF14' : '#F7B733',
-                        border: `1px solid ${agent.status === 'READY' ? 'rgba(57, 255, 20, 0.2)' : 'rgba(247, 183, 51, 0.2)'}`
-                      }}>
-                        {agent.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem', fontWeight: 'bold' }}>{agent.reserve.toFixed(2)} π</td>
-                  </tr>
+            {/* Agent Performance */}
+            <div
+              className="frosted-glass rounded-lg p-6 border border-purple-500/30"
+              style={{
+                boxShadow:
+                  '0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 20px rgba(168, 85, 247, 0.02)',
+              }}
+            >
+              <h3 className="text-xs uppercase tracking-widest font-bold text-purple-400 mb-4">
+                Agent Performance
+              </h3>
+              <div className="space-y-2">
+                {fleet.agents?.slice(0, 3).map((agent: any) => (
+                  <div key={agent.agentId} className="text-xs">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-400">{agent.agentId}</span>
+                      <span className="text-green-400 font-bold">98%</span>
+                    </div>
+                    <div className="w-full h-1 bg-black/40 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500/50 w-[98%]" />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          </motion.div>
 
+          {/* CENTER COLUMN: Omni-Terminal Command Center */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="col-span-6"
+          >
+            <OmniTerminal />
+          </motion.div>
+
+          {/* RIGHT COLUMN: Profit Vortex / Treasury */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="col-span-3 space-y-6"
+          >
+            {/* Profit Vortex - Big Golden Numbers */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="frosted-glass rounded-lg p-8 border border-yellow-500/40 min-h-72 flex flex-col justify-center items-center text-center"
+              style={{
+                boxShadow:
+                  '0 0 30px rgba(247, 183, 51, 0.3), inset 0 0 30px rgba(247, 183, 51, 0.05)',
+              }}
+            >
+              <h3 className="text-xs uppercase tracking-widest font-bold text-yellow-500 mb-4">
+                National Reserve
+              </h3>
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.8 }}
+                className="mb-4"
+              >
+                <div className="text-6xl font-black text-yellow-400">
+                  {treasury.reserves.toFixed(0)}
+                </div>
+                <div className="text-2xl text-yellow-500 font-bold mt-2">π</div>
+              </motion.div>
+
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <div
+                  className="w-3 h-3 rounded-full bg-green-500"
+                  style={{
+                    boxShadow: '0 0 8px rgba(57, 255, 20, 0.8)',
+                  }}
+                />
+                <span className="text-xs uppercase tracking-wider font-bold text-green-500">
+                  {treasury.status}
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Escrow Status */}
+            <div
+              className="frosted-glass rounded-lg p-6 border border-red-500/20"
+              style={{
+                boxShadow:
+                  '0 0 15px rgba(239, 68, 68, 0.1), inset 0 0 15px rgba(239, 68, 68, 0.02)',
+              }}
+            >
+              <h3 className="text-xs uppercase tracking-widest font-bold text-red-400 mb-4">
+                Escrow Holdings
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-xs text-gray-400">Locked Reserve</span>
+                    <span className="text-xs font-bold text-red-400">
+                      {(treasury.reserves * 0.15).toFixed(0)} π
+                    </span>
+                  </div>
+                  <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-full w-[15%] bg-red-500/50" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-xs text-gray-400">Pending Release</span>
+                    <span className="text-xs font-bold text-orange-400">
+                      {(treasury.reserves * 0.08).toFixed(0)} π
+                    </span>
+                  </div>
+                  <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-full w-[8%] bg-orange-500/50" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* System Alerts */}
+            <div
+              className="frosted-glass rounded-lg p-4 border border-blue-500/20"
+              style={{
+                boxShadow:
+                  '0 0 15px rgba(59, 130, 246, 0.1), inset 0 0 15px rgba(59, 130, 246, 0.02)',
+              }}
+            >
+              <h3 className="text-xs uppercase tracking-widest font-bold text-blue-400 mb-3">
+                System Alerts
+              </h3>
+              <div className="space-y-2">
+                <motion.div
+                  initial={{ x: -10 }}
+                  animate={{ x: 0 }}
+                  className="flex items-start gap-2 text-xs p-2 bg-blue-500/10 rounded border border-blue-500/20"
+                >
+                  <AlertCircle size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                  <span className="text-blue-300">
+                    Neural sync: {fleet.active}/{fleet.count} agents online
+                  </span>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        <footer style={{ marginTop: '4rem', textAlign: 'center', opacity: 0.2, fontSize: '0.7rem', letterSpacing: '4px' }}>
-          AMRIKYY LAB // SOVEREIGN ENGINE // ALL RIGHTS RESERVED
-        </footer>
+        {/* Footer */}
+        <motion.footer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-12 text-center text-xs opacity-20 tracking-widest uppercase"
+        >
+          AMRIKYY LAB // SOVEREIGN ENGINE // ELITE COMMAND TIER // ALL RIGHTS RESERVED
+        </motion.footer>
       </main>
-
-      <style jsx global>{`
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        body { margin: 0; background-color: #0a0a0a; }
-      `}</style>
     </div>
   );
 }

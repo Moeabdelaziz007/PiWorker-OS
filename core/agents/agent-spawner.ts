@@ -62,7 +62,7 @@ export async function spawnAgent(
 
   console.log(`[SPAWNER] Initializing new ${specialization} Agent: ${agentId}`);
 
-    const { SovereignShield } = await import("../security/sovereign-shield.js");
+    const { SovereignShield } = await import("../security/sovereign-shield");
 
     const agent: any = {
       agentId: `agn-${crypto.randomBytes(4).toString("hex")}`,

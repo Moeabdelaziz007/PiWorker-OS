@@ -1,6 +1,6 @@
-import { AgentInstance, AgentSpecialization, spawnAgent } from "./agent-spawner.js";
-import { PersistenceEngine } from "../brain/persistence-engine.js";
-import { AmrikyyTreasury } from "../finance/treasury-vault.js";
+import { AgentInstance, AgentSpecialization, spawnAgent } from "./agent-spawner";
+import { PersistenceEngine } from "../brain/persistence-engine";
+import { AmrikyyTreasury } from "../finance/treasury-vault";
 
 class FleetManager {
   private fleet: Map<string, AgentInstance> = new Map();
