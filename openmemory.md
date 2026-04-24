@@ -43,8 +43,8 @@
 - [x] **Master Build Orchestrator**: `scripts/sovereign-build.sh` implemented and integrated.
 - [x] **Zero-Error CI Pipeline**: Strict TS/Go checks and automated deployment trigger.
 - [x] **The Sandbox Audit**: Integrated Playwright E2E tests and Go engine service container into GitHub Actions.
-- [x] **Live Vercel Deployment**: FIXED structural errors in pre-flight by refining `.vercelignore` to allow `sidecar/sovereign-engine`. Notified user of mandatory environment variables for security compliance.
-- [x] **Deep Research Audit**: Confirmed that "Steel Gate Protocol" (Pre-flight) is correctly blocking builds when security secrets are missing in Vercel.
+- [x] **Live Vercel Deployment**: FIXED `Module not found` error by allowing `sidecar/physical-bridge` in `.vercelignore`. Refined sidecar ignore rules to be source-inclusive while excluding binaries.
+- [x] **Deep Research Audit**: Confirmed that the Orchestrator depends on `physical-bridge` for π0.7 compliance; verified all sidecar dependencies are now bundle-eligible.
 - [x] **Communication**: 🌍 Switched to Arabic as per user request. Technical operations remain in English/TypeScript/Go.
 
 ### Infrastructure & Security Status
