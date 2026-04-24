@@ -44,6 +44,8 @@
 - [x] **Zero-Error CI Pipeline**: Strict TS/Go checks and automated deployment trigger.
 - [x] **The Sandbox Audit**: Integrated Playwright E2E tests and Go engine service container into GitHub Actions.
 - [x] **Live Vercel Deployment**: Fixed Go runtime error by initializing root `go.mod` and explicitly setting runtime to `go` in `vercel.json`. Prevents legacy `vercel-go` fallback.
+- [x] **Git Sync Protocol**: Instructed user on `git pull --rebase` to resolve branch divergence and explained the critical role of `go.mod` in modern Vercel infra.
+- [x] **Communication**: 🌍 Switched to Arabic as per user request. Technical operations remain in English/TypeScript/Go.
 
 ### Infrastructure & Security Status
 - **CI/CD**: Green (Pre-Sandbox Integration).
