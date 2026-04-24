@@ -1,6 +1,9 @@
 # Vercel Ignore: Sovereign Assets
-sidecar/
+sidecar/*
+!sidecar/sovereign-engine/
+sidecar/sovereign-engine/*
 !sidecar/sovereign-engine/proto/
+!sidecar/sovereign-engine/go.mod
 # Allow build scripts
 !scripts/
 bin/
