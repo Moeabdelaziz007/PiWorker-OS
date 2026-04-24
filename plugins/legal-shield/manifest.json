@@ -1,0 +1,21 @@
+{
+  "id": "legal-shield",
+  "name": "Sovereign Legal Shield",
+  "version": "1.0.0",
+  "description": "Risk mitigation engine that analyzes platform TOS and adjusts agent behavior to prevent bans.",
+  "costPerUse": 6.0,
+  "entryPoint": "index.js",
+  "signature": "SIG_SOVEREIGN_ROOT_0xSHIELD",
+  "toolSchema": {
+    "name": "mitigate_risk",
+    "description": "Analyzes platform activity and provides safety recommendations to prevent asset freezing.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "platform": { "type": "string", "description": "Target platform (e.g. 'github', 'twitter', 'discord')." },
+        "activityLevel": { "type": "number", "description": "Current hourly activity level of the agent." }
+      },
+      "required": ["platform", "activityLevel"]
+    }
+  }
+}

@@ -37,7 +37,7 @@ class FleetManager {
       const specializations: AgentSpecialization[] = ["BountyHunter", "MarketingSpecialist", "CodeAuditor"];
       const randomSpec = specializations[Math.floor(Math.random() * specializations.length)];
       
-      const newAgent = await spawnAgent(`AUTON-${this.fleet.size + 1}`, 50);
+      const newAgent = await spawnAgent(randomSpec, 50);
       await this.register(newAgent);
       
       console.log(`\x1b[32m[SCALING] Success: Agent ${newAgent.agentId} joined the fleet.\x1b[0m`);

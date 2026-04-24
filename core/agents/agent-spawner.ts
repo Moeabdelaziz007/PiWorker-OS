@@ -7,7 +7,14 @@
 import crypto from "node:crypto";
 import { SovereignLedger } from "../identity/sovereign-ledger";
 
-export type AgentSpecialization = "CODE_GEN" | "AUDITOR" | "RESEARCHER" | "CONTENT_ARCH";
+export type AgentSpecialization = "CODE_GEN" | "AUDITOR" | "RESEARCHER" | "CONTENT_ARCH" | "BountyHunter" | "MarketingSpecialist" | "CodeAuditor";
+
+export interface AgentIdentity {
+  browser: string;
+  os: string;
+  deviceId: string;
+  userAgent: string;
+}
 
 export interface AgentInstance {
   agentId: string;
@@ -15,6 +22,7 @@ export interface AgentInstance {
   status: "INITIALIZING" | "READY" | "BUSY" | "OFFLINE";
   spawnTime: string;
   piBudget: number;
+  identity: AgentIdentity;
 }
 
 /**
@@ -26,6 +34,18 @@ export async function spawnAgent(
 ): Promise<AgentInstance> {
   const agentId = `did:piworker:fleet-${crypto.randomBytes(3).toString("hex")}`;
   
+  const browsers = ["Chrome", "Firefox", "Edge", "Safari"];
+  const oss = ["MacOS", "Windows", "Linux", "iOS"];
+  const randomBrowser = browsers[Math.floor(Math.random() * browsers.length)];
+  const randomOS = oss[Math.floor(Math.random() * oss.length)];
+  
+  const identity: AgentIdentity = {
+    browser: randomBrowser,
+    os: randomOS,
+    deviceId: crypto.randomBytes(8).toString("hex"),
+    userAgent: `Mozilla/5.0 (${randomOS}) AppleWebKit/537.36 (KHTML, like Gecko) ${randomBrowser}/120.0.0.0`
+  };
+
   console.log(`[SPAWNER] Initializing new ${specialization} Agent: ${agentId}`);
 
   const instance: AgentInstance = {
@@ -33,7 +53,8 @@ export async function spawnAgent(
     specialization,
     status: "INITIALIZING",
     spawnTime: new Date().toISOString(),
-    piBudget: initialBudget
+    piBudget: initialBudget,
+    identity
   };
 
   // Register the spawn event in the Ledger for accountability
