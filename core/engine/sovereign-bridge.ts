@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { TelemetryLogger } from "../utils/telemetry-logger";
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';

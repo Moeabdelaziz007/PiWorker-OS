@@ -54,18 +54,17 @@ export class QuantumMirror {
     // Call the Sovereign Engine through the bridge
     const response = await SovereignBridge.requestSimulation({
       goalId: `sim-${agent.id}-${Date.now()}`,
-      instances: 30,
-      complexity: 0.9,
-      personas: ['bull', 'bear', 'chaos', 'conservative', 'aggressive']
+      prompt: `Simulate skill ${skill.name} for agent ${agent.name} with data: ${JSON.stringify(taskData)}`,
+      parallelInstances: 30
     });
 
     const consensus: CompressedSimulation = {
       topPaths: [[]], // Placeholder for path extraction
-      expectedRevenue: response.predictedRoi * 1000, // Normalized for legacy compatibility
-      expectedRisk: response.riskScore * 100,
-      overallConfidence: 1.0 - response.riskScore,
-      recommendation: response.predictedRoi > 1.5 ? 'proceed' : 'caution',
-      reasoning: response.strategyRecommendation,
+      expectedRevenue: response.revenue_usd,
+      expectedRisk: response.risk_score,
+      overallConfidence: 1.0 - (response.risk_score / 100),
+      recommendation: response.revenue_usd > 1500 ? 'proceed' : 'caution',
+      reasoning: response.strategy_recommendation,
       simulationDepthDays
     };
 

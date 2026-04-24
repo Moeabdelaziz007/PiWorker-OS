@@ -178,7 +178,7 @@ function SafeModeUI({
             </div>
           </div>
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* Glitch animation */}
       <style jsx>{`

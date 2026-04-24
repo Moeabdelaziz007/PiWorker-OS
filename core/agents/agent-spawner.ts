@@ -85,7 +85,7 @@ export async function spawnAgent(
   });
 
   // Finalize initialization
-  instance.status = "READY";
+  instance.status = "active";
   console.log(`[SPAWNER] Agent ${agentId} is now ONLINE and ready for task ingestion.`);
 
   return instance;

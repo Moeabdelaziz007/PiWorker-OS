@@ -44,7 +44,7 @@ export default function SovereignMarketplace() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleHire = async (agentId: string) => {
-    Codebase, understand the current status of our Go language and how we can elaborate it, and about the payment system also, and how we are going to connect everything together.Go take a look and come back and let me know!     let currentUser = user;
+    let currentUser = user;
     if (!currentUser) {
       const auth = await authenticateSovereignWallet();
       if (auth) {
@@ -82,30 +82,52 @@ export default function SovereignMarketplace() {
             console.log("[Pi SDK] Backend confirmed price. Waiting for user signature...");
           } catch (err) {
             console.error("[Pi SDK] ❌ Security Halt:", err);
-            // If approval fails, the Pi SDK will automatically halt the flow
+            setIsProcessing(false);
           }
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
           console.log(`[Pi SDK] Payment approved by user! TXID: ${txid}`);
           try {
-            // 2. Pass the txid to our secure Next.js API -> Go Engine LedgerConnector
-            const res = await fetch('/api/marketplace/purchase', {
+            const mockAgent: any = {
+              id: `pw-agt-${Math.random().toString(16).slice(2, 14)}`,
+              name: agentId.charAt(0).toUpperCase() + agentId.slice(1),
+              role: "executor",
+              publicKey: "pi-mock-public-key",
+              status: "active",
+              capabilities: ["autonomous-execution"],
+              dna: {
+                chromosomes: ["initial-v1"],
+                generation: 1,
+                fitnessScore: 100,
+                mutations: [],
+                skillChromosomes: []
+              },
+              governance: {
+                betrayalThreshold: 0.8,
+                minRoiRequirement: 1.5,
+                riskTolerance: "MEDIUM"
+              }
+            };
+
+            const response = await fetch('/api/marketplace/purchase', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${activeToken}`
+                'Authorization': `Bearer ${currentUser?.uid}`
               },
               body: JSON.stringify({
                 assetId: agentId,
-                buyerWallet: currentUser!.uid,
-                txId: txid
+                buyerWallet: currentUser?.uid,
+                txId: txid,
+                agentData: mockAgent
               })
             });
 
-            const data = await res.json();
-            if (res.ok && data.success) {
+            const data = await response.json();
+            if (response.ok && data.success) {
               console.log("[Pi SDK] 👑 Sovereign purchase natively verified via Go!");
               setCart(prev => [...prev, agentId]);
+              alert("✅ تم الاستحواذ على الوكيل بنجاح!");
             } else {
               console.error("[Pi SDK] ❌ Verification failed:", data.error);
             }
@@ -125,7 +147,6 @@ export default function SovereignMarketplace() {
         }
       });
     } else {
-      // Fallback logic for local environment without Pi Browser
       console.warn("[Pi SDK] Not detected. Executing simulated SaaS Order.");
       const order = await ingestSaaSOrder(currentUser.uid, agentId, agent.price);
       setCart([...cart, order.orderId]);

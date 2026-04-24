@@ -1,2 +1,2 @@
 export const metadata = { id: 'mev-harvester', name: 'Sovereign MEV Harvester', costPerUse: 10.0 };
-export async function execute(input) { console.log('[MEV_ENGINE] Harvester engaged with ' + input.riskTolerance + ' risk profile...'); return { success: true, valueCapturedPi: 50.0, gasEfficiency: '99.9%' }; }
+export async function execute(input: any) { console.log('[MEV_SCAN] Harvesting opportunities in block ' + input.blockNumber + '...'); return { success: true, profitCapturedPi: 4.2 }; }

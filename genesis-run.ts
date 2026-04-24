@@ -14,7 +14,7 @@ async function runGenesisBounty() {
 
   // 1. SPAWN: Generate the First Bounty Hunter
   const hunter = await spawnAgent("CODE_GEN", 50); // Initial 50 Pi Budget
-  console.log(`[GENESIS] Agent ${hunter.agentId} Spawned.`);
+  console.log(`[GENESIS] Agent ${hunter.id} Spawned.`);
 
   // 2. SCAN: Locate a Mock Technical Requirement
   const mockRequirement = "Build a secure Pi Wallet Balance Validator in TypeScript.";
@@ -37,15 +37,15 @@ async function runGenesisBounty() {
 
   // 5. SEAL: Cryptographic Packaging
   const oracleCert = "CERT-GEMINI-1.5-PRO-VALIDATED";
-  const pkg = await sealDelivery(hunter.agentId, taskOutput, oracleCert);
+  const pkg = await sealDelivery(hunter.id, taskOutput, oracleCert);
   console.log(`[GENESIS] Delivery Sealed: ${pkg.packageId} | Threshold Signature: ${pkg.thresholdSignature.substring(0, 16)}...`);
 
   // 6. SETTLE: Payout & Evolution
   console.log(`[GENESIS] Settlement Triggered. Releasing Funds to Agent Wallet.`);
-  const newDna = await trackAndEvolve(hunter.agentId, true, report.estimatedPiValue);
+  const newDna = await trackAndEvolve(hunter.id, true, report.estimatedPiValue);
   
   console.log("\n--- [GENESIS RUN] MISSION SUCCESSFUL ---");
-  console.log(`[EVOLUTION] New Agent DNA: Greed: ${newDna.greed.toFixed(2)}, Cunning: ${newDna.cunning.toFixed(2)}`);
+  console.log(`[EVOLUTION] Agent Evolution Complete for ${hunter.id}`);
   console.log("-----------------------------------------\n");
 }
 

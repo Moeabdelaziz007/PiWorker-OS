@@ -1,2 +1,2 @@
 export const metadata = { id: 'defi-arbitrage', name: 'DeFi Arbitrage Scanner', costPerUse: 3.0 };
-export async function execute(input) { console.log('[DEFI_SCAN] Scanning for ' + input.minROI + '% ROI opportunities...'); return { success: true, opportunityFound: true, estimatedProfitPi: 12.5 }; }
+export async function execute(input: any) { console.log('[DEFI_SCAN] Scanning for ' + input.minROI + '% ROI opportunities...'); return { success: true, opportunityFound: true, estimatedProfitPi: 12.5 }; }

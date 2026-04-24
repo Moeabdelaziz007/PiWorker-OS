@@ -336,10 +336,11 @@ export class MASOrchestrator extends EventEmitter {
     };
   }
 
-  private async simulateExecution(agent: Agent, sim: SimulationResult): Promise<number> {
+  private async simulateExecution(agent: Agent, sim: any): Promise<number> {
     const deviation = (Math.random() - 0.5) * 0.2;
-    // Base ROI simulation
-    return 1.5 + deviation;
+    // Base ROI simulation using Go engine results if available
+    const baseRoi = sim.revenue_usd ? (sim.revenue_usd / 100) : 1.5;
+    return baseRoi + deviation;
   }
 
   private handleAgentFailure(agent: Agent, roi: number): void {
