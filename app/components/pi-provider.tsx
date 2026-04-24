@@ -3,16 +3,16 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import Script from "next/script";
 
-export interface PiUser {
-  uid: string;
+interface User {
   username: string;
+  uid: string;
 }
 
 interface PiContextType {
   isInitialized: boolean;
   error: string | null;
-  user: PiUser | null;
-  setUser: (user: PiUser | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 const PiContext = createContext<PiContextType | undefined>(undefined);
@@ -20,7 +20,7 @@ const PiContext = createContext<PiContextType | undefined>(undefined);
 export const PiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<PiUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const initPi = () => {
     try {

@@ -8,24 +8,33 @@ import crypto from "node:crypto";
 export class DNAMutator {
   /**
    * Performs a random mutation on an agent's DNA.
-   * This represents a "creative leap" or a strategy adjustment.
    */
   static mutate(dna: AgentDNA, intensity: number = 0.1): AgentDNA {
     const newDNA = { ...dna };
     const mutationId = crypto.randomUUID();
     
-    // Simulate chromosome adjustment (e.g., tweaking a prompt parameter or strategy weight)
+    // 1. Tweak base chromosomes (The instructions)
     const traitIndex = Math.floor(Math.random() * newDNA.chromosomes.length);
     const originalTrait = newDNA.chromosomes[traitIndex];
-    
-    // For the demo, we append a mutation tag. In reality, this would be a logic tweak.
     newDNA.chromosomes[traitIndex] = `${originalTrait} [MUTATED::${mutationId.slice(0, 4)}]`;
+
+    // 2. Tweak skill chromosomes (The strategy weights)
+    if (newDNA.skillChromosomes && newDNA.skillChromosomes.length > 0) {
+        const skillIdx = Math.floor(Math.random() * newDNA.skillChromosomes.length);
+        const skillTrait = newDNA.skillChromosomes[skillIdx];
+        if (skillTrait.startsWith("trait:")) {
+            const parts = skillTrait.split(":");
+            const currentWeight = parseFloat(parts[2]);
+            const newWeight = Math.min(1, Math.max(0, currentWeight + (Math.random() * 2 - 1) * intensity));
+            newDNA.skillChromosomes[skillIdx] = `${parts[0]}:${parts[1]}:${newWeight.toFixed(2)}`;
+        }
+    }
 
     const mutationRecord = {
       id: mutationId,
       timestamp: new Date().toISOString(),
-      traitModified: `chromosome[${traitIndex}]`,
-      impactDelta: (Math.random() * 2 - 1) * intensity, // Random delta between -intensity and +intensity
+      traitModified: `hybrid_mutation`,
+      impactDelta: (Math.random() * 2 - 1) * intensity,
     };
 
     newDNA.mutations.push(mutationRecord);

@@ -1,0 +1,8 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running SecretLint to check for exposed API keys..."
+npx secretlint "**/*"
+
+echo "🧹 Running lint-staged (formatting and linting)..."
+npx lint-staged

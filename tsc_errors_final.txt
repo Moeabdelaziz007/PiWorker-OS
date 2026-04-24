@@ -1,0 +1,53 @@
+app/components/error-boundary.tsx(4,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/market-hub.tsx(3,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/market-hub.tsx(4,69): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/omni-terminal.tsx(4,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/omni-terminal.tsx(5,54): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/robot-viewport.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/robot-viewport.tsx(4,45): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/ui/pi-logo.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/robotic-fleet-status.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/robotic-fleet-status.tsx(4,49): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/visualizers/sovereign-audit-log.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/sovereign-audit-log.tsx(4,60): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/dashboard/page.tsx(4,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/dashboard/page.tsx(6,34): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/dashboard/page.tsx(7,49): error TS2307: Cannot find module '@/app/lib/sovereign-mock-provider' or its corresponding type declarations.
+app/marketplace/page.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/marketplace/page.tsx(4,79): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/marketplace/page.tsx(49,42): error TS2339: Property 'user' does not exist on type 'PiUser'.
+app/marketplace/page.tsx(49,67): error TS2339: Property 'user' does not exist on type 'PiUser'.
+app/marketplace/page.tsx(56,43): error TS18047: 'user' is possibly 'null'.
+app/page.tsx(3,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/page.tsx(5,103): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/page.tsx(11,46): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+core/brain/embedding-engine.ts(2,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+core/brain/gemini-multimodal-oracle.ts(1,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+core/engine/mas-orchestrator.ts(110,31): error TS2339: Property 'predictedRoi' does not exist on type 'SimulationResult'.
+core/engine/mas-orchestrator.ts(139,37): error TS2304: Cannot find name 'NeuralMemoryMesh'.
+core/engine/mas-orchestrator.ts(146,95): error TS7006: Parameter 'e' implicitly has an 'any' type.
+core/engine/mas-orchestrator.ts(206,7): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; fitnessScore: number; generation: number; mutations: never[]; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+core/engine/mas-orchestrator.ts(216,24): error TS2304: Cannot find name 'EconomicRiskLevel'.
+core/engine/mas-orchestrator.ts(293,16): error TS2339: Property 'predictedRoi' does not exist on type 'SimulationResult'.
+core/engine/prompt-compiler.ts(1,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+core/engine/quantum-mirror.ts(5,30): error TS2307: Cannot find module '../utils/json-hardener' or its corresponding type declarations.
+core/evolution/dna-mutator.ts(55,5): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; mutations: never[]; generation: number; fitnessScore: number; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+core/evolution/scaling-controller.ts(20,29): error TS2345: Argument of type 'AgentInstance' is not assignable to parameter of type '{ id: string; status: "active" | "idle" | "busy" | "offline" | "hibernating" | "terminated"; name: string; role: "ceo" | "executor" | "critic" | "auditor" | "specialist"; publicKey: string; ... 7 more ...; identity?: { ...; } | undefined; }'.
+  Type 'AgentInstance' is missing the following properties from type '{ id: string; status: "active" | "idle" | "busy" | "offline" | "hibernating" | "terminated"; name: string; role: "ceo" | "executor" | "critic" | "auditor" | "specialist"; publicKey: string; ... 7 more ...; identity?: { ...; } | undefined; }': id, name, role, publicKey, and 3 more.
+core/identity/agent-registry.ts(100,7): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; mutations: never[]; generation: number; fitnessScore: number; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+plugins/defi-arbitrage/index.ts(2,31): error TS7006: Parameter 'input' implicitly has an 'any' type.
+plugins/mev-harvester/index.ts(2,31): error TS7006: Parameter 'input' implicitly has an 'any' type.
+scratch/test-minting.ts(17,5): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; fitnessScore: number; generation: number; mutations: never[]; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+scratch/test-minting.ts(30,5): error TS2322: Type '"finance"' is not assignable to type '"gateway" | "core" | "external"'.
+scratch/test-minting.ts(31,5): error TS2322: Type '"stable"' is not assignable to type '"active" | "deprecated" | "experimental" | "locked"'.
+scratch/test-steerability.ts(16,5): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; mutations: never[]; generation: number; fitnessScore: number; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+scratch/test-steerability.ts(27,5): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; mutations: never[]; generation: number; fitnessScore: number; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+scratch/test-steerability.ts(38,5): error TS2741: Property 'skillChromosomes' is missing in type '{ chromosomes: string[]; mutations: never[]; generation: number; fitnessScore: number; }' but required in type '{ chromosomes: string[]; skillChromosomes: string[]; mutations: { id: string; timestamp: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+scratch/v2-deep-test.ts(18,39): error TS2554: Expected 0 arguments, but got 1.
+scratch/v2-deep-test.ts(19,55): error TS2345: Argument of type 'NeuralMemoryMesh' is not assignable to parameter of type 'typeof NeuralMemoryMesh'.
+  Type 'NeuralMemoryMesh' is missing the following properties from type 'typeof NeuralMemoryMesh': prototype, blackboard, activeClaims, postInsight, and 6 more.
+scratch/v2-deep-test.ts(36,75): error TS2353: Object literal may only specify known properties, and 'specialization' does not exist in type '{ id: string; type: "gateway" | "core" | "external"; status: "active" | "deprecated" | "experimental" | "locked"; name: string; capabilities: string[]; version: string; description: string; limits: { ...; }; metadata: { ...; }; }'.
+scratch/v2-deep-test.ts(52,8): error TS2551: Property 'enqueueJob' does not exist on type 'SovereignWorkerPool'. Did you mean 'enqueue'?
+scratch/v2-deep-test.ts(61,21): error TS2339: Property 'getJobs' does not exist on type 'SovereignWorkerPool'.
+scratch/v2-deep-test.ts(75,72): error TS2339: Property 'performance' does not exist on type 'AIXAsset'.
+scratch/verify-p7-logic.ts(14,18): error TS2693: 'AxiomDID' only refers to a type, but is being used as a value here.

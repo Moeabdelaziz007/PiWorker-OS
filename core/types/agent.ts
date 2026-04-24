@@ -27,6 +27,8 @@ export const AgentDNASchema = z.object({
     required_error: "DNA الوكيل يتطلب تعليمات برمجية (chromosomes) صريحة",
   }).min(1, "يجب أن يحتوي الـ DNA على كروموسوم واحد على الأقل"),
   
+  skillChromosomes: z.array(z.string()).default([]), // For Skills to DNA evolution
+  
   mutations: z.array(AgentMutationSchema).default([]),
   
   generation: z.number({
