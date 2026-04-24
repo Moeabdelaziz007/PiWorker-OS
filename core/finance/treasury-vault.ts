@@ -1,30 +1,35 @@
 import crypto from "node:crypto";
+import { TreasuryStorage, TreasuryState } from "./treasury-storage";
 
 /**
  * Amrikyy Treasury Vault
  * The central financial authority of PiWorker-OS.
- * Manages the national wealth (175 Pi) and sovereign tax.
+ * Manages the national wealth and sovereign tax with full persistence.
  */
 export class AmrikyyTreasury {
-  private static RESERVES: Record<string, number> = {
-    "Pi": 175.0,
-    "SOL": 0.0,
-    "ETH": 0.0
-  };
-  private static ESCROWS: Record<string, { amount: number; agentId: string; status: "LOCKED" | "RELEASED" }> = {};
+  private static state: TreasuryState = TreasuryStorage.load();
   private static SOVEREIGN_TAX_RATE = 0.10;
+
+  private static persist() {
+    TreasuryStorage.save(this.state);
+  }
+
+  // Helper for internal use
+  private static get reserves() { return this.state.reserves; }
+  private static get escrows() { return this.state.escrows; }
 
   /**
    * Creates an escrow for a task, locking funds.
    */
   static createEscrow(orderId: string, agentId: string, amount: number) {
-    if (this.RESERVES["Pi"] < amount) {
-      throw new Error(`[TREASURY] ❌ Insufficient reserves for escrow: ${amount} Pi requested, ${this.RESERVES["Pi"]} available.`);
+    if (this.reserves["Pi"] < amount) {
+      throw new Error(`[TREASURY] ❌ Insufficient reserves for escrow: ${amount} Pi requested, ${this.reserves["Pi"]} available.`);
     }
 
-    this.RESERVES["Pi"] -= amount;
-    this.ESCROWS[orderId] = { amount, agentId, status: "LOCKED" };
+    this.reserves["Pi"] -= amount;
+    this.escrows[orderId] = { amount, agentId, status: "LOCKED" };
     
+    this.persist();
     console.log(`[TREASURY] 🔐 Escrow created for Order ${orderId}: ${amount} Pi locked.`);
     return orderId;
   }
@@ -33,13 +38,13 @@ export class AmrikyyTreasury {
    * Releases escrowed funds to an agent after successful task completion.
    */
   static releaseEscrow(orderId: string) {
-    const escrow = this.ESCROWS[orderId];
+    const escrow = this.escrows[orderId];
     if (!escrow || escrow.status !== "LOCKED") {
       throw new Error(`[TREASURY] ❌ No locked escrow found for Order ${orderId}.`);
     }
 
     escrow.status = "RELEASED";
-    // Funds are "released" to the agent's hypothetical wallet (simulated by processInflow if needed)
+    this.persist();
     console.log(`[TREASURY] 🔓 Escrow released for Order ${orderId}: ${escrow.amount} Pi credited to ${escrow.agentId}.`);
     return true;
   }
@@ -48,12 +53,13 @@ export class AmrikyyTreasury {
    * Processes an agent's task profit in a specific currency.
    */
   static processInflow(agentId: string, grossProfit: number, currency: string = "Pi") {
-    if (!this.RESERVES[currency]) this.RESERVES[currency] = 0;
+    if (!this.reserves[currency]) this.reserves[currency] = 0;
     
     const taxAmount = grossProfit * this.SOVEREIGN_TAX_RATE;
     const netProfit = grossProfit - taxAmount;
     
-    this.RESERVES[currency] += taxAmount;
+    this.reserves[currency] += taxAmount;
+    this.persist();
 
     return {
       txId: `tx-tax-${crypto.randomBytes(4).toString("hex")}`,
@@ -62,7 +68,7 @@ export class AmrikyyTreasury {
       taxAmount,
       currency,
       netToAgent: netProfit,
-      newReserve: this.RESERVES[currency],
+      newReserve: this.reserves[currency],
     };
   }
 
@@ -70,7 +76,8 @@ export class AmrikyyTreasury {
    * Deducts a usage fee for plugins and tools.
    */
   static deductUsageFee(agentId: string, amount: number, toolName: string) {
-    this.RESERVES["Pi"] += amount;
+    this.reserves["Pi"] += amount;
+    this.persist();
     console.log(`[TREASURY] 💰 Deducted ${amount} Pi from ${agentId} for ${toolName}.`);
     return true;
   }
@@ -80,10 +87,10 @@ export class AmrikyyTreasury {
    */
   static getStats() {
     return {
-      reserves: this.RESERVES,
+      reserves: this.reserves,
       taxRate: this.SOVEREIGN_TAX_RATE,
       status: "STABLE",
-      lastAudit: new Date().toISOString()
+      lastAudit: this.state.lastUpdate
     };
   }
 }
