@@ -14,6 +14,7 @@ export enum OrchestrationEvent {
   TASK_INITIATED = "task:initiated",
   SIMULATION_PASSED = "simulation:passed",
   EXECUTION_COMPLETED = "execution:completed",
+  PHYSICAL_ACTION_INITIATED = "physical:initiated",
   AUDIT_FAILED = "audit:failed",
   AGENT_MUTATED = "agent:mutated",
   SYSTEM_BETRAYAL = "system:betrayal",
@@ -55,6 +56,13 @@ export class MASOrchestrator extends EventEmitter {
       // 1. مرحلة المحاكاة (Quantum Mirror)
       const simResult = await this.mirror.dryRunTask(executor, skill, taskData);
       this.emit(OrchestrationEvent.SIMULATION_PASSED, simResult);
+
+      // 1.5 تفعيل البروتوكول الفيزيائي إذا لزم الأمر
+      if (skill.metadata.tags?.includes("physical")) {
+        console.log(`[Orchestrator] ⚠️ تفعيل البروتوكول الفيزيائي لـ ${executor.name}...`);
+        this.emit(OrchestrationEvent.PHYSICAL_ACTION_INITIATED, { executor, skill });
+        // هنا يمكن إضافة تأكيد من الـ Critic
+      }
 
       // 2. مرحلة التنفيذ (تخيلية هنا، سيتم ربطها بالمحرك الفعلي لاحقاً)
       const actualRoi = await this.simulateExecution(executor, simResult);
