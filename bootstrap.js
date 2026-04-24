@@ -64,7 +64,13 @@ async function runSovereignBootstrap() {
         if (topAgents.length > 0) {
           const target = topAgents[Math.floor(Math.random() * topAgents.length)];
           const price = 50 + Math.floor(Math.random() * 150);
-          await foundry.AixFoundry.compile(target, price);
+          const compiled = await foundry.AixFoundry.compile(target, price);
+          
+          if (compiled) {
+            // SIMULATED SALE: Inject Pi into treasury after successful compilation
+            console.log(`\x1b[1m\x1b[32m[MARKETPLACE] ASSET SOLD! ${compiled} generated ${price} Pi for the Treasury.\x1b[0m`);
+            treasury.AmrikyyTreasury.processInflow("MARKETPLACE_SALE", price);
+          }
         }
       }
 

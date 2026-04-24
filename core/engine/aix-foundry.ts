@@ -31,8 +31,16 @@ export class AixFoundry {
 
   /**
    * Compiles an active agent instance into a .aix package.
+   * Only proceeds if the agent has demonstrated positive ROI.
    */
-  static async compile(agent: any, pricePi: number): Promise<string> {
+  static async compile(agent: any, pricePi: number): Promise<string | null> {
+    const roi = agent.totalProfit / (agent.piBudget || 1);
+    
+    if (roi < 1.5) {
+      console.log(`[META-FOUNDRY] Skipping compilation for ${agent.agentId}: ROI too low (${roi.toFixed(2)}x)`);
+      return null;
+    }
+
     const fileName = `${agent.specialization.toLowerCase()}_${crypto.randomBytes(2).toString("hex")}.aix`;
     const filePath = path.join(this.ASSET_DIR, fileName);
 
