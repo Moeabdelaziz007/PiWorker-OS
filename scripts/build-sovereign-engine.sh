@@ -14,6 +14,9 @@ export GOARCH=amd64 # Change to arm64 if targeting Pi 4/5 hardware
 
 echo "📦 [Sovereign Build] Compiling Static Binary (SovereignEngine)..."
 
+# Ensure bin directory exists
+mkdir -p ../../bin
+
 # Build command with flags to reduce size and strip debug info
 go build -ldflags="-s -w -extldflags '-static'" -o ../../bin/sovereign-engine main.go
 

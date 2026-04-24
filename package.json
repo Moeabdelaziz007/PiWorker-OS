@@ -10,6 +10,7 @@
     "dev": "next dev",
     "prebuild": "node --loader ts-node/esm scripts/preflight-check.ts",
     "build": "next build",
+    "build:sovereign": "./scripts/sovereign-build.sh",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

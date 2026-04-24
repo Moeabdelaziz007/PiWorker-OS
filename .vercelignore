@@ -1,11 +1,13 @@
 # Vercel Ignore: Sovereign Assets
 sidecar/
+!sidecar/sovereign-engine/proto/
 scripts/
 bin/
-*.go
+# Allow api/ functions
+!api/
 go.mod
 go.sum
-proto/
+!proto/
 .git/
 node_modules/
 .next/

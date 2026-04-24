@@ -1,6 +1,6 @@
 module github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine
 
-go 1.25.6
+go 1.24.0
 
 require (
 	google.golang.org/grpc v1.67.1
