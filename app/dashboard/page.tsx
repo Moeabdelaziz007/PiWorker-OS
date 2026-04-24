@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { OmniTerminal } from '../components/omni-terminal';
+import { MarketHub } from '../components/market-hub';
+import { RobotViewport } from '../components/robot-viewport';
 
 /**
  * AMRIKYY LAB :: SOVEREIGN DASHBOARD V2
@@ -142,17 +144,16 @@ export default function SovereignDashboard() {
             <OmniTerminal />
           </div>
 
-          {/* Detailed Fleet List (Carbon Style) */}
+          {/* Sovereign Agent Roster */}
           <div style={{ 
-            gridColumn: 'span 12', background: '#111', border: '1px solid #222', borderRadius: '24px', padding: '2rem',
-            marginTop: '1rem'
+            gridColumn: 'span 6', background: '#111', border: '1px solid #222', borderRadius: '24px', padding: '2rem',
+            marginTop: '1rem', height: '600px', overflowY: 'auto'
           }}>
             <h3 style={{ margin: '0 0 2rem 0', fontSize: '1.2rem', fontWeight: 700 }}>SOVEREIGN_AGENT_ROSTER</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #222', textAlign: 'left', color: '#555', fontSize: '0.8rem' }}>
                   <th style={{ padding: '1rem' }}>AGENT_ID</th>
-                  <th style={{ padding: '1rem' }}>SPECIALIZATION</th>
                   <th style={{ padding: '1rem' }}>STATUS</th>
                   <th style={{ padding: '1rem' }}>RESERVE</th>
                 </tr>
@@ -161,7 +162,6 @@ export default function SovereignDashboard() {
                 {fleet.agents?.map((agent: any) => (
                   <tr key={agent.agentId} style={{ borderBottom: '1px solid #181818' }}>
                     <td style={{ padding: '1rem', fontWeight: 'bold', color: '#39FF14' }}>{agent.agentId}</td>
-                    <td style={{ padding: '1rem', opacity: 0.7 }}>{agent.specialization}</td>
                     <td style={{ padding: '1rem' }}>
                       <span style={{ 
                         padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold',
@@ -177,6 +177,20 @@ export default function SovereignDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Robot Viewport - Physical Intelligence Link */}
+          <div style={{ 
+            gridColumn: 'span 3', marginTop: '1rem', height: '600px'
+          }}>
+            <RobotViewport />
+          </div>
+
+          {/* AIX Sovereign Marketplace */}
+          <div style={{ 
+            gridColumn: 'span 3', marginTop: '1rem', height: '600px'
+          }}>
+            <MarketHub />
           </div>
 
         </div>

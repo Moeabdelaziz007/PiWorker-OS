@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { Agent } from "../types/agent";
+import { Agent, AgentRole, AgentSpecialization } from "../types/agent";
 import { PiWorkerDID } from "./piworker-did";
+import { EconomicRiskLevel } from "../governance-engine";
 
 const REGISTRY_PATH = path.join(process.cwd(), "core/identity/agents.json");
 
@@ -94,7 +95,7 @@ export class AgentRegistry {
       governance: {
         betrayalThreshold: 0.9,
         minRoiRequirement: 1.0,
-        riskTolerance: "MEDIUM" as any
+        riskTolerance: EconomicRiskLevel.MEDIUM
       },
       dna: {
         chromosomes: [role === "ceo" ? "strategy_node" : "execution_node"],

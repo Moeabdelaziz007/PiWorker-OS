@@ -10,8 +10,8 @@ import { PersistenceEngine } from "@/core/brain/persistence-engine";
 export async function GET() {
   try {
     const treasury = AmrikyyTreasury.getStats();
-    const fleet = fleetManager.getMetrics();
-    const allAgents = fleetManager.getAllAgents();
+    const fleet = await fleetManager.getMetrics();
+    const allAgents = await fleetManager.getAllAgents();
     
     // Load last 5 insights from neural memory
     const insights = await PersistenceEngine.loadInsights();

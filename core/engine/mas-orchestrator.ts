@@ -11,6 +11,9 @@ import { PromptCompiler, PlanStep } from "./prompt-compiler";
 import { AmrikyyTreasury } from "../finance/treasury-vault";
 import { TelemetryLogger } from "../utils/telemetry-logger";
 import { fleetManager } from "../agents/fleet-manager";
+import { AxiomIDResolver } from "../identity/axiomid-resolver";
+import { AssetRegistry, AIXAsset } from "../finance/asset-registry";
+import { OpenPiAdapter } from "../../sidecar/physical-bridge/openpi-adapter";
 
 /**
  * PiWorker-OS MASOrchestrator
@@ -131,8 +134,19 @@ export class MASOrchestrator extends EventEmitter {
     console.log(`[Orchestrator] Using Agents: CEO=${resolvedAgents.ceo.name}, Executor=${resolvedAgents.executor.name}`);
     
     try {
+      // PHASE 6: NEURAL MEMORY RETRIEVAL
+      // Fetch relevant past experiences to inform the plan
+      const pastExperiences = await NeuralMemoryMesh.findSimilar(goal, 2);
+      if (pastExperiences.length > 0) {
+        console.log(`[Orchestrator] 🧠 Recalled ${pastExperiences.length} relevant memories to optimize plan.`);
+      }
+
       // 1. مرحلة التخطيط (Compilation)
-      const plan = await this.compiler.compile(goal);
+      const contextEnhancedGoal = pastExperiences.length > 0 
+        ? `Goal: ${goal}. Context from past experiences: ${JSON.stringify(pastExperiences.map(e => e.data))}`
+        : goal;
+
+      const plan = await this.compiler.compile(contextEnhancedGoal);
       console.log(`[Orchestrator] 📜 Plan Generated with ${plan.length} steps.`);
 
       // 2. حلقة التنفيذ السيادي
@@ -182,17 +196,25 @@ export class MASOrchestrator extends EventEmitter {
 
   private createSyntheticAgent(name: string, role: AgentRole, specialization: any): Agent {
     return {
-      id: `syn-${crypto.randomBytes(4).toString("hex")}`,
+      id: `pw-agt-${crypto.randomBytes(6).toString("hex")}`,
       name,
       role,
       specialization,
       status: "active",
+      publicKey: `pub-${crypto.randomBytes(16).toString("hex")}`,
+      walletAddress: `pi-${crypto.randomBytes(20).toString("hex")}`,
       dna: {
-        traits: ["synthetic", "bootstrap"],
+        chromosomes: ["synthetic", "bootstrap"],
         fitnessScore: 100,
-        generation: 0
+        generation: 0,
+        mutations: []
       },
-      piAddress: `0x${crypto.randomBytes(20).toString("hex")}`
+      capabilities: ["synthetic_execution"],
+      governance: {
+        betrayalThreshold: 0.8,
+        minRoiRequirement: 1.5,
+        riskTolerance: EconomicRiskLevel.MEDIUM
+      }
     };
   }
 
@@ -216,9 +238,18 @@ export class MASOrchestrator extends EventEmitter {
   }
 
   private async executeRobotStep(step: PlanStep, executor: Agent) {
-    console.log(`[Robot] 🤖 Executing VLA Action: ${step.action} with ${JSON.stringify(step.parameters)}`);
+    console.log(`[Robot] 🤖 Dispatched VLA Action: ${step.action}`);
     this.emit(OrchestrationEvent.PHYSICAL_ACTION_INITIATED, { executor, action: step.action, parameters: step.parameters });
-    await new Promise(r => setTimeout(r, 1000));
+    
+    const adapter = OpenPiAdapter.getInstance();
+    const success = await adapter.dispatchTask(step.action, step.action);
+    
+    if (!success) {
+      throw new Error(`[Orchestrator] ❌ Physical Execution Failed for step: ${step.id}`);
+    }
+
+    // محاكاة وقت التنفيذ الفيزيائي
+    await new Promise(r => setTimeout(r, 2000));
   }
 
   private async executeFinanceStep(step: PlanStep) {
@@ -270,5 +301,31 @@ export class MASOrchestrator extends EventEmitter {
       newFitness: agent.dna.fitnessScore,
       reason: `فشل مالي: ROI ${roi.toFixed(2)}`
     });
+  }
+
+  /**
+   * صك الوكيل كأصل سيادي (.aix) متوافق مع بروتوكول AxiomID
+   */
+  public async mintAIX(agent: Agent, skill: Skill): Promise<AIXAsset> {
+    console.log(`[Foundry] ⚒️ Minting AIX Asset for agent: ${agent.name}...`);
+    
+    // 1. توليد الهوية السيادية عبر AxiomID
+    const axiomIdentity = AxiomIDResolver.generateDID(agent.id);
+    
+    // 2. إنشاء الأصل في السجل
+    const asset: AIXAsset = {
+      id: crypto.randomBytes(8).toString('hex'),
+      name: `${agent.name} - ${skill.name}`,
+      did: axiomIdentity,
+      owner_wallet: agent.walletAddress || 'pi-000',
+      price_pi: 500, // السعر الافتراضي للصك
+      status: 'active',
+      manifest_path: `/assets/aix/${agent.id}.aix.json`
+    };
+
+    AssetRegistry.registerAsset(asset);
+    
+    console.log(`[Foundry] ✅ Asset Minted: ${asset.did.did}`);
+    return asset;
   }
 }

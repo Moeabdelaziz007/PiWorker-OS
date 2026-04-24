@@ -9,7 +9,7 @@ import { fleetManager } from "../agents/fleet-manager";
 export async function runSovereignScalingCycle(treasuryBalance: number) {
   console.log(`[SCALING_CTRL] Cycle started. Treasury: ${treasuryBalance} Pi`);
 
-  const metrics = fleetManager.getMetrics();
+  const metrics = await fleetManager.getMetrics();
   const utilization = metrics.total > 0 ? (metrics.active / metrics.total) : 0;
 
   // Scaling Logic: If utilization > 70% and Treasury has > 50 Pi surplus, spawn new worker.

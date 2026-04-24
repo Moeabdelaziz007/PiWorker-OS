@@ -28,8 +28,26 @@ export class PiRobotBridge {
    */
   public connectRobot(robotId: string, serial: string) {
     console.log(`[Robot Bridge] 🔌 محاولة ربط الروبوت ${robotId} (Serial: ${serial})...`);
-    // هنا يتم إنشاء WebSocket connection مع الروبوت الفعلي
-    this.connections.set(robotId, { status: "connected", lastSeen: new Date() });
+    
+    // محاكاة إنشاء WebSocket connection
+    const mockSocket = {
+      send: (data: string) => console.log(`[WS] Sent to ${robotId}: ${data}`),
+      onTelemetry: (cb: (data: any) => void) => {
+        setInterval(() => {
+          cb({
+            joints: [Math.random() * 180, Math.random() * 180, Math.random() * 180],
+            battery: 80 + Math.random() * 20
+          });
+        }, 5000);
+      }
+    };
+
+    this.connections.set(robotId, { 
+      status: "connected", 
+      lastSeen: new Date(),
+      socket: mockSocket 
+    });
+
     return true;
   }
 
@@ -39,14 +57,16 @@ export class PiRobotBridge {
   public async sendCommand(command: RobotCommand): Promise<boolean> {
     const robot = this.connections.get(command.robotId);
     if (!robot) {
-      throw new Error(`[Robot Bridge] ❌ الروبوت ${command.robotId} غير متصل.`);
+      // Auto-connect if not found for demo purposes
+      this.connectRobot(command.robotId, "SERIAL-AUTO-GEN");
     }
 
     // التحقق من التوقيع السيادي (Sovereign Shield)
     console.log(`[Robot Bridge] 🛡️ التحقق من التوقيع للروبوت ${command.robotId}...`);
     
-    // إرسال الأمر عبر البروتوكول الفيزيائي
+    // إرسال الأمر عبر البروتوكول الفيزيائي (VLA)
     console.log(`[Robot Bridge] 🚀 إرسال أمر: ${command.action}`);
+    robot?.socket?.send(JSON.stringify(command));
     
     return true;
   }

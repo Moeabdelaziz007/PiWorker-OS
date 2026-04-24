@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 
 /**
  * Telemetry Logger
@@ -50,6 +51,19 @@ export class TelemetryLogger {
     this.log("INFO", "FISCAL_EVENT", {
       type,
       ...details
+    });
+  }
+
+  /**
+   * Logs physical kinematic data for robotic execution.
+   */
+  static logKinematics(robotId: string, action: string, joints: number[], confidence: number) {
+    this.log("INFO", "ROBOT_KINEMATICS", {
+      robotId,
+      action,
+      joints,
+      confidence,
+      integrityHash: crypto.createHash("sha256").update(JSON.stringify(joints)).digest("hex")
     });
   }
 }

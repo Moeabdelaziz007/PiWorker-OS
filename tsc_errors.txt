@@ -1,0 +1,44 @@
+app/api/sovereign-state/route.ts(29,22): error TS2339: Property 'total' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+app/api/sovereign-state/route.ts(30,23): error TS2339: Property 'active' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+app/api/sovereign-state/route.ts(31,22): error TS2339: Property 'ready' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+app/components/market-hub.tsx(3,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/market-hub.tsx(4,69): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/omni-terminal.tsx(4,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/omni-terminal.tsx(5,97): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/robot-viewport.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/robot-viewport.tsx(4,45): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/ui/pi-logo.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/robotic-fleet-status.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/robotic-fleet-status.tsx(4,49): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/components/visualizers/sovereign-audit-log.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/components/visualizers/sovereign-audit-log.tsx(4,60): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/marketplace/page.tsx(3,24): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/marketplace/page.tsx(4,79): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/marketplace/page.tsx(42,11): error TS2339: Property 'user' does not exist on type 'PiContextType'.
+app/marketplace/page.tsx(42,17): error TS2339: Property 'setUser' does not exist on type 'PiContextType'.
+app/marketplace/page.tsx(49,42): error TS2339: Property 'user' does not exist on type 'PiUser'.
+app/marketplace/page.tsx(49,67): error TS2339: Property 'user' does not exist on type 'PiUser'.
+app/page.tsx(3,41): error TS2307: Cannot find module 'framer-motion' or its corresponding type declarations.
+app/page.tsx(5,103): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+app/page.tsx(11,46): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+core/brain/gemini-multimodal-oracle.ts(1,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+core/engine/mas-orchestrator.ts(194,9): error TS2353: Object literal may only specify known properties, and 'traits' does not exist in type '{ chromosomes: string[]; mutations: { timestamp: string; id: string; traitModified: string; impactDelta: number; }[]; generation: number; fitnessScore: number; }'.
+core/engine/mas-orchestrator.ts(301,27): error TS2339: Property 'piAddress' does not exist on type '{ id: string; status: "active" | "idle" | "busy" | "offline" | "hibernating" | "terminated"; name: string; role: "ceo" | "executor" | "critic" | "auditor" | "specialist"; publicKey: string; ... 7 more ...; identity?: { ...; } | undefined; }'.
+core/engine/prompt-compiler.ts(1,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+core/evolution/scaling-controller.ts(13,31): error TS2339: Property 'total' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+core/evolution/scaling-controller.ts(13,52): error TS2339: Property 'active' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+core/evolution/scaling-controller.ts(13,69): error TS2339: Property 'total' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+core/evolution/scaling-controller.ts(16,36): error TS2339: Property 'total' does not exist on type 'Promise<{ total: number; active: number; ready: number; }>'.
+core/evolution/scaling-controller.ts(20,29): error TS2345: Argument of type 'AgentInstance' is not assignable to parameter of type '{ id: string; status: "active" | "idle" | "busy" | "offline" | "hibernating" | "terminated"; name: string; role: "ceo" | "executor" | "critic" | "auditor" | "specialist"; publicKey: string; ... 7 more ...; identity?: { ...; } | undefined; }'.
+  Type 'AgentInstance' is missing the following properties from type '{ id: string; status: "active" | "idle" | "busy" | "offline" | "hibernating" | "terminated"; name: string; role: "ceo" | "executor" | "critic" | "auditor" | "specialist"; publicKey: string; ... 7 more ...; identity?: { ...; } | undefined; }': id, name, role, publicKey, and 3 more.
+core/finance/asset-registry.ts(3,26): error TS2307: Cannot find module './axiomid-resolver' or its corresponding type declarations.
+core/identity/agent-registry.ts(80,42): error TS2304: Cannot find name 'AgentRole'.
+core/identity/agent-registry.ts(80,94): error TS2304: Cannot find name 'AgentSpecialization'.
+plugins/defi-arbitrage/index.ts(2,31): error TS7006: Parameter 'input' implicitly has an 'any' type.
+plugins/mev-harvester/index.ts(2,31): error TS7006: Parameter 'input' implicitly has an 'any' type.
+scratch/test-fiscal.ts(11,20): error TS2673: Constructor of class 'AgentRegistry' is private and only accessible within the class declaration.
+scratch/test-minting.ts(1,33): error TS2307: Cannot find module './core/engine/mas-orchestrator' or its corresponding type declarations.
+scratch/test-minting.ts(2,23): error TS2307: Cannot find module './core/types/agent' or its corresponding type declarations.
+scratch/test-minting.ts(3,23): error TS2307: Cannot find module './core/types/skill' or its corresponding type declarations.
+tests/e2e/offline-simulation.ts(96,51): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

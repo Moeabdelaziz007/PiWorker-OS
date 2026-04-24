@@ -93,7 +93,7 @@ async function runOfflineSimulation() {
   if (audit.status === "BETRAYAL_DETECTED") {
     console.log(`\x1b[31m[DETECTED] BETRAYAL DETECTED: ${audit.reason}\x1b[0m`);
     console.log(`\x1b[34m[4/5] SANCTION: Applying Profit Vortex Penalties...\x1b[0m`);
-    const result = ProfitVortex.sanction(agentId, audit.reason);
+    const result = ProfitVortex.sanction(agentId, audit.reason || "Unknown betrayal");
     
     // 5. FINAL VERIFICATION
     console.log(`\x1b[34m[5/5] VERIFICATION: Final Agent State Check...\x1b[0m`);

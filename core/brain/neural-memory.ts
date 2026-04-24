@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { PersistenceEngine } from "./persistence-engine";
+import { VectorStore } from "./vector-store";
+import { EmbeddingEngine } from "./embedding-engine";
 
 /**
  * Neural Memory Mesh
@@ -21,21 +23,31 @@ export class NeuralMemoryMesh {
   private static activeClaims: Map<string, { agentId: string, expires: number }> = new Map();
 
   /**
-   * Posts a signed insight to the collective memory.
+   * Posts a signed insight to the collective memory and indexes it for vector search.
    */
   static async postInsight(insight: SovereignInsight) {
     // In production: Verify signature before posting
     this.blackboard.push(insight);
     
-    // PERSISTENCE: Save to disk
+    // 1. PERSISTENCE: Save to disk
     await PersistenceEngine.saveInsight(insight);
     
-    // Maintain a rotating memory of the last 100 insights
+    // 2. VECTOR INDEXING: Generate embedding and add to store
+    const contentToEmbed = `${insight.topic}: ${JSON.stringify(insight.data)}`;
+    const vector = await EmbeddingEngine.generate(contentToEmbed);
+    
+    VectorStore.addEntry({
+        id: insight.id,
+        vector,
+        metadata: insight
+    });
+
+    // Maintain a rotating memory of the last 100 insights in RAM
     if (this.blackboard.length > 100) {
       this.blackboard.shift();
     }
 
-    return { status: "COMMITTED", meshId: insight.id };
+    return { status: "COMMITTED", meshId: insight.id, indexed: true };
   }
 
   /**
@@ -44,6 +56,16 @@ export class NeuralMemoryMesh {
   static query(topic?: string) {
     if (!topic) return this.blackboard.sort((a, b) => b.relevance - a.relevance);
     return this.blackboard.filter(i => i.topic === topic);
+  }
+
+  /**
+   * Semantic Search: Finds insights similar to a natural language query.
+   */
+  static async findSimilar(query: string, limit: number = 3): Promise<SovereignInsight[]> {
+    console.log(`[NEURAL_MESH] Searching for experiences similar to: "${query}"`);
+    const queryVector = await EmbeddingEngine.generate(query);
+    const results = VectorStore.search(queryVector, limit);
+    return results.map(r => r.metadata as SovereignInsight);
   }
 
   /**
