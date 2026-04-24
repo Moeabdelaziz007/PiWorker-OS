@@ -32,7 +32,9 @@ export async function GET() {
         agents: allAgents
       },
       logs: lastLogs
-    });
+    };
+
+    return NextResponse.json({ success: true, state });
   } catch (error) {
     console.error("[API_ERROR]", error);
     return NextResponse.json({ success: false, error: "Failed to fetch sovereign state" }, { status: 500 });

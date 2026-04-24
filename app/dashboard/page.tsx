@@ -141,7 +141,7 @@ export default function SovereignDashboard() {
             <div style={{ marginBottom: '1rem', color: '#39FF14', fontSize: '0.7rem', fontWeight: 'bold' }}>NEURAL_TERMINAL_FEED v1.0</div>
             <div style={{ color: '#555', lineHeight: '1.6' }}>
               {logs.length === 0 ? (
-                <div>> Waiting for neural pulse...</div>
+                <div>{">"} Waiting for neural pulse...</div>
               ) : logs.map((log: any, i: number) => (
                 <div key={log.id} style={{ marginBottom: '0.5rem', borderLeft: '1px solid #222', paddingLeft: '0.5rem' }}>
                   <span style={{ color: '#333' }}>[{new Date(log.timestamp).toLocaleTimeString()}]</span><br/>
