@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { PersistenceEngine } from "./persistence-engine";
 
 /**
  * Neural Memory Mesh
@@ -21,9 +22,12 @@ export class NeuralMemoryMesh {
   /**
    * Posts a signed insight to the collective memory.
    */
-  static postInsight(insight: SovereignInsight) {
+  static async postInsight(insight: SovereignInsight) {
     // In production: Verify signature before posting
     this.blackboard.push(insight);
+    
+    // PERSISTENCE: Save to disk
+    await PersistenceEngine.saveInsight(insight);
     
     // Maintain a rotating memory of the last 100 insights
     if (this.blackboard.length > 100) {
