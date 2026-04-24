@@ -90,3 +90,17 @@
 - **Branch**: hardening-v2-final
 - **Commit**: [PENDING_PUSH]
 - **Timestamp**: 2026-04-24T16:35:00Z
+
+## [2026-04-24] Phase 9: Go Engine & Payment Hardening
+- **Feature**: Zero-Trust Ledger Verification & IDOR Prevention
+- **Status**: INTEGRATED & HARDENED
+- **Git Context**: `PiWorker-OS` | branch:`main` | commit:`45fc293`
+- **Architecture**:
+  - `sidecar/sovereign-engine`: Go-based high-concurrency engine (Quantum Mirror + Ledger Connector).
+  - `app/api/marketplace/purchase`: Hardened with Pi Network Access Token validation and IDOR protection.
+  - `app/api/marketplace/approve`: Implemented missing server-side approval route for Pi SDK integration.
+  - `core/engine/sovereign-bridge.ts`: TypeScript bridge for gRPC communication with the Go sidecar.
+- **Protocol**: 
+  - **Zero-Trust**: Every purchase requires a valid Pi Access Token which is verified against `api.minepi.com/v2/me`.
+  - **Ledger Verification**: Go engine queries Horizon (`api.testnet.minepi.com`) to mathematically prove transaction validity.
+- **Status**: System is ready for production deployment with secure, sovereign payment rails.
