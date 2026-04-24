@@ -11,7 +11,7 @@
   ],
   "functions": {
     "api/*.go": {
-      "runtime": "go"
+      "runtime": "@vercel/go"
     }
   },
   "env": {
