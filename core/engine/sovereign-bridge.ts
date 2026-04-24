@@ -31,6 +31,18 @@ export interface IntentResponse {
   trackingId: string;
 }
 
+export interface VerifyTxRequest {
+  txId: string;
+  expectedReceiver: string;
+  expectedAmount: number;
+}
+
+export interface VerifyTxResponse {
+  verified: boolean;
+  statusMessage: string;
+  senderAddress: string;
+}
+
 /**
  * SovereignBridge (The Diplomatic Channel)
  * Connects the TypeScript Orchestrator to the Go Sovereign Engine.
@@ -131,5 +143,27 @@ export class SovereignBridge {
   public static async lockEscrow(agentId: string, amount: number): Promise<boolean> {
     console.log(`🔒 [Bridge] Requesting Go Escrow Lock: ${amount} Pi for ${agentId}`);
     return true;
+  }
+
+  /**
+   * Verifies a native Pi Network transaction via the Go Engine.
+   */
+  public static async verifyTransaction(req: VerifyTxRequest): Promise<VerifyTxResponse> {
+    console.log(`🔍 [Bridge] Verifying Pi Transaction ${req.txId} via Go Engine...`);
+    const client = this.getClient();
+
+    return new Promise((resolve, reject) => {
+      client.VerifyTransaction({
+        tx_id: req.txId,
+        expected_receiver: req.expectedReceiver,
+        expected_amount: req.expectedAmount
+      }, (error: any, response: any) => {
+        if (error) {
+          console.error("[gRPC] Ledger Verification Error:", error);
+          return reject(error);
+        }
+        resolve(response as VerifyTxResponse);
+      });
+    });
   }
 }

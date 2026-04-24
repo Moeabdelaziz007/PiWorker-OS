@@ -69,3 +69,15 @@ message EscrowResponse {
   bool locked = 1;
   string escrow_address = 2;
 }
+
+message VerifyTxRequest {
+  string tx_id = 1;
+  string expected_receiver = 2;
+  double expected_amount = 3;
+}
+
+message VerifyTxResponse {
+  bool verified = 1;
+  string status_message = 2;
+  string sender_address = 3;
+}

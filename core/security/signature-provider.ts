@@ -14,10 +14,8 @@ export class SignatureProvider {
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
     });
 
-    // Mock Pi Wallet Address generation (using public key hash)
-    // Fix: Ensure  static async signAction(privateKey: string, action: any): Promise<string> {
-    const keyData = typeof privateKey === "string" ? privateKey : String(privateKey);
-    const signer = crypto.createSign("sha256");
+    // ZERO-TRUST FIX: Wallet Address MUST be derived from Public Key, NEVER Private Key.
+    const keyData = typeof publicKey === "string" ? publicKey : String(publicKey);
     const walletAddress = `pi-${crypto.createHash("sha256").update(keyData).digest("hex").slice(0, 32)}`;
 
     return { publicKey, privateKey, walletAddress };

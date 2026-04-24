@@ -56,11 +56,78 @@ export default function SovereignMarketplace() {
 
     setIsProcessing(true);
     const agent = AGENT_PRODUCTS.find(a => a.id === agentId);
-    if (agent) {
+
+    if (!agent) {
+      setIsProcessing(false);
+      return;
+    }
+
+    // 1. Execute Native Pi Payment if SDK is available
+    if (typeof window !== "undefined" && window.Pi) {
+      window.Pi.createPayment({
+        amount: agent.price,
+        memo: `Sovereign Agent Hire: ${agent.name}`,
+        metadata: { agentId }
+      }, {
+        onReadyForServerApproval: async (paymentId: string) => {
+          console.log("[Pi SDK] Payment ready for server approval:", paymentId);
+          try {
+            // 1.5 ZERO-TRUST: Request Backend to double-check price and approve
+            const res = await fetch('/api/marketplace/approve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId, assetId: agentId, type: 'agent' })
+            });
+            if (!res.ok) throw new Error("Sovereign Backend rejected payment approval.");
+            console.log("[Pi SDK] Backend confirmed price. Waiting for user signature...");
+          } catch (err) {
+            console.error("[Pi SDK] ❌ Security Halt:", err);
+            // If approval fails, the Pi SDK will automatically halt the flow
+          }
+        },
+        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          console.log(`[Pi SDK] Payment approved by user! TXID: ${txid}`);
+          try {
+            // 2. Pass the txid to our secure Next.js API -> Go Engine LedgerConnector
+            const res = await fetch('/api/marketplace/purchase', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                assetId: agentId,
+                buyerWallet: currentUser!.uid,
+                txId: txid
+              })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              console.log("[Pi SDK] 👑 Sovereign purchase natively verified via Go!");
+              setCart(prev => [...prev, agentId]);
+            } else {
+              console.error("[Pi SDK] ❌ Verification failed:", data.error);
+            }
+          } catch (error) {
+            console.error("[Pi SDK] ❌ Network error during purchase API call:", error);
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        onCancel: (paymentId: string) => {
+          console.warn("[Pi SDK] ⚠️ Payment cancelled by user:", paymentId);
+          setIsProcessing(false);
+        },
+        onError: (error: any, payment?: any) => {
+          console.error("[Pi SDK] ❌ Payment error:", error);
+          setIsProcessing(false);
+        }
+      });
+    } else {
+      // Fallback logic for local environment without Pi Browser
+      console.warn("[Pi SDK] Not detected. Executing simulated SaaS Order.");
       const order = await ingestSaaSOrder(currentUser.uid, agentId, agent.price);
       setCart([...cart, order.orderId]);
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   return (
