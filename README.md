@@ -189,6 +189,25 @@ Every release **must** publish a scorecard and complete cross-domain review befo
 
 ---
 
+## ✅ Tiered Verification Pipeline
+
+PiWorker-OS uses a 4-tier quality gate so each release validates static quality, correctness, service interoperability, and browser-level behavior in order:
+
+1. **Tier 1 (Static checks):** `npm run typecheck`, `go vet ./...`, and `npm run lint`
+2. **Tier 2 (Unit tests):** `go test ./...` plus Node unit tests when present
+3. **Tier 3 (Integration):** Node↔Go bridge startup and gRPC API handshake
+4. **Tier 4 (E2E):** Playwright sandbox audit as the final release gate
+
+Run everything in order with:
+
+```bash
+npm run test:tiers
+# or
+make tiers
+```
+
+---
+
 ## 🛠️ Getting Started
 ```bash
 # Clone the Sovereign Hub

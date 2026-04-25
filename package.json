@@ -24,7 +24,13 @@
     "contracts:fixtures:check": "node scripts/generate-contract-fixtures.mjs --check",
     "contracts:sync:check": "node scripts/verify-contract-sync.mjs",
     "contracts:check": "npm run contracts:sync:check && npm run contracts:fixtures:check",
-    "test:e2e:critical": "node --test tests/e2e/sovereign-critical-path.e2e.test.mjs"
+    "test:e2e:critical": "node --test tests/e2e/sovereign-critical-path.e2e.test.mjs",
+    "test:unit:node": "node scripts/run-node-unit-tests.mjs",
+    "test:tier1": "npm run typecheck && go vet ./... && npm run lint",
+    "test:tier2": "go test ./... && npm run test:unit:node",
+    "test:tier3": "node scripts/bridge-handshake.mjs",
+    "test:tier4": "npm run playwright:test:sandbox",
+    "test:tiers": "npm run test:tier1 && npm run test:tier2 && npm run test:tier3 && npm run test:tier4"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
