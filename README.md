@@ -189,3 +189,35 @@ cp .env.example .env
 <div align="center">
   <p><strong>Amrikyy Lab :: PiWorker-OS v1.3.0-Sovereign</strong></p>
 </div>
+
+---
+
+## 🔐 CI/CD Workflow Ownership & Required Checks
+
+### Authoritative PR merge gate
+
+The single authoritative branch-protection check for pull requests is:
+
+- **Workflow:** `PR Required Checks`
+- **Job / check name:** `required / build-test-security-baseline`
+
+Configure branch protection to require that exact check name.
+
+### Workflow ownership and intent
+
+| Workflow file | Owner | Trigger | Purpose | PR required gate? |
+| --- | --- | --- | --- | --- |
+| `.github/workflows/ci.yml` | Core platform maintainers | `pull_request`, `push` on `main` | Orchestrates the canonical PR gate via reusable workflow. | **Yes** |
+| `.github/workflows/reusable-required-checks.yml` | Core platform maintainers | `workflow_call` | Shared implementation for build + tests + baseline security checks. | Indirect (called by CI) |
+| `.github/workflows/security.yml` | Security maintainers | `schedule`, `workflow_dispatch` | Deep scheduled security scans (SARIF Trivy + TruffleHog history scan). | No |
+| `.github/workflows/gemini-test.yml` | AI integration maintainers | `schedule`, `workflow_dispatch` | Scheduled external API integration verification for Gemini connectivity. | No |
+| `.github/workflows/deploy.yml` | Release maintainers | `workflow_run` after `PR Required Checks` success | Production deployment workflow. | No |
+| `.github/workflows/nextjs.yml` | Web platform maintainers | `push` on `main`, `workflow_dispatch` | GitHub Pages deployment pipeline. | No |
+
+### Naming convention
+
+- Workflow names use a stable intent prefix (`PR`, `Scheduled`, `Reusable`).
+- Required-gate check names use: `required / <capability-scope>`.
+- Scheduled checks use: `scheduled / <scan-or-test-name>`.
+
+This convention keeps branch-protection targeting predictable and avoids duplicate PR-gating checks.

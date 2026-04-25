@@ -2,7 +2,7 @@ name: PiWorker-OS Sovereign Deployment
 
 on:
   workflow_run:
-    workflows: ["PiWorker-OS Sovereign CI"]
+    workflows: ["PR Required Checks"]
     types:
       - completed
 
