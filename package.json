@@ -16,7 +16,8 @@
     "forge": "go run dev.go",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "profile:slo": "node scripts/profile-slo.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

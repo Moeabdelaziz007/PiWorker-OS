@@ -26,6 +26,9 @@ jobs:
     - name: TypeScript Validation
       run: npx tsc --noEmit
 
+    - name: Targeted Performance SLO Profiling
+      run: npm run profile:slo
+
     # --- Go Sovereign Strategy ---
     - name: Setup Go
       uses: actions/setup-go@v5
