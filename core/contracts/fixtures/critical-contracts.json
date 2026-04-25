@@ -1,0 +1,106 @@
+{
+  "simulation": {
+    "request": {
+      "goalId": "f3f730f0-02f6-4f58-a8b4-cfce44e4eb88",
+      "parallelInstances": 8,
+      "modelVersion": "gemini-1.5-pro",
+      "complexity": 0.65,
+      "personas": [
+        "Bull",
+        "Bear",
+        "Chaos",
+        "Conservative",
+        "Aggressive"
+      ]
+    },
+    "response": {
+      "goalId": "f3f730f0-02f6-4f58-a8b4-cfce44e4eb88",
+      "predictedRoi": 1.37,
+      "riskScore": 0.22,
+      "strategyRecommendation": "Deploy conservative-maker strategy with stop-loss guardrails.",
+      "reasoning": {
+        "logicChain": "Multi-persona analysis converged on positive adjusted Sharpe ratio.",
+        "criticalRisks": [
+          "Market Volatility",
+          "Agent Drift"
+        ],
+        "opportunities": [
+          "Spread capture",
+          "Low-latency settlement path"
+        ],
+        "confidenceScore": "86.5%"
+      },
+      "estimatedRevenueUsd": 912.42
+    }
+  },
+  "pluginExecution": {
+    "request": {
+      "pluginId": "yield-swarm",
+      "sourceCode": "module.exports = () => ({ ok: true });",
+      "envVars": {
+        "REGION": "us-east-1"
+      },
+      "allowedCapabilities": [
+        "http:get",
+        "kv:read"
+      ],
+      "signature": "deadbeefcafebabe"
+    },
+    "response": {
+      "pluginId": "yield-swarm",
+      "success": true,
+      "outputJson": "{\"ok\":true}",
+      "errorMessage": "",
+      "executionTimeMs": 44,
+      "logs": [
+        "sandbox boot",
+        "plugin completed"
+      ]
+    }
+  },
+  "payment": {
+    "request": {
+      "recipientId": "PIWALLET_1234567890",
+      "amountPi": 5.5,
+      "agentAuthToken": "AGENT_SYSTEM_SECRET_TOKEN",
+      "priority": "instant"
+    },
+    "response": {
+      "success": true,
+      "txId": "tx_1715000000000",
+      "explorerUrl": "https://explorer.minepi.com/tx/tx_1715000000000",
+      "errorMessage": ""
+    }
+  },
+  "escrow": {
+    "request": {
+      "txId": "escrow-9f1da2c3",
+      "amountPi": 2.25,
+      "targetWallet": "PI_AGENT_TARGET_12345"
+    },
+    "response": {
+      "locked": true,
+      "escrowAddress": "native-go-escrow-vault"
+    }
+  },
+  "statusHealth": {
+    "response": {
+      "timestamp": "2026-04-25T00:00:00.000Z",
+      "status": "OPERATIONAL",
+      "layers": {
+        "orchestrator": {
+          "status": "ONLINE",
+          "version": "2.0.0"
+        },
+        "sovereign_engine": {
+          "status": "ONLINE",
+          "latency": "41ms"
+        },
+        "pi_network": {
+          "status": "CONNECTED",
+          "network": "testnet"
+        }
+      }
+    }
+  }
+}

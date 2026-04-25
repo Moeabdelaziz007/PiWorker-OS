@@ -26,6 +26,9 @@ jobs:
     - name: TypeScript Validation
       run: npx tsc --noEmit
 
+    - name: Contract Sync Validation
+      run: npm run contracts:check
+
     # --- Go Sovereign Strategy ---
     - name: Setup Go
       uses: actions/setup-go@v5

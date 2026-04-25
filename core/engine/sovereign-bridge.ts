@@ -1,28 +1,18 @@
 import { TelemetryLogger } from "../utils/telemetry-logger";
-import { PaymentSchema, SimulationSchema, PluginSchema } from './validation';
+import {
+  EscrowRequestSchema,
+  EscrowResponseSchema,
+  PaymentRequestSchema,
+  PaymentResponseSchema,
+  PluginRequestSchema,
+  PluginResponseSchema,
+  SimulationRequestSchema,
+  SimulationResponseSchema,
+} from '../contracts/critical-contracts';
 import axios from 'axios';
 
-export interface SimulationRequest {
-  goalId: string;
-  parallelInstances: number;
-  modelVersion: string; // gemini-1.5-pro
-}
-
-export interface GeminiReasoning {
-  logicChain: string;
-  criticalRisks: string[];
-  opportunities: string[];
-  confidenceScore: string;
-}
-
-export interface SimulationResponse {
-  goalId: string;
-  predictedRoi: number;
-  riskScore: number;
-  strategyRecommendation: string;
-  reasoning: GeminiReasoning;
-  estimatedRevenueUsd: number;
-}
+export type SimulationRequest = import("../contracts/critical-contracts").SimulationRequestContract;
+export type SimulationResponse = import("../contracts/critical-contracts").SimulationResponseContract;
 
 export interface EmbodiedIntentRequest {
   intentId: string;
@@ -39,58 +29,24 @@ export interface IntentResponse {
   trackingId: string;
 }
 
-export interface VerifyTxRequest {
+export type VerifyTxRequest = {
   txId: string;
   expectedReceiver: string;
   expectedAmount: number;
-}
+};
 
-export interface VerifyTxResponse {
+export type VerifyTxResponse = {
   verified: boolean;
   statusMessage: string;
   senderAddress: string;
-}
+};
 
-export interface EscrowRequest {
-  txId: string;
-  amountPi: number;
-  targetWallet: string;
-}
-
-export interface EscrowResponse {
-  locked: boolean;
-  escrowAddress: string;
-}
-
-export interface PaymentRequest {
-  recipientId: string;
-  amountPi: number;
-  agentAuthToken: string;
-  priority: string;
-}
-
-export interface PaymentResponse {
-  success: boolean;
-  txId: string;
-  explorerUrl: string;
-  errorMessage?: string;
-}
-
-export interface PluginRequest {
-  pluginId: string;
-  sourceCode: string;
-  envVars: Record<string, string>;
-  allowedCapabilities: string[];
-}
-
-export interface PluginResponse {
-  pluginId: string;
-  success: boolean;
-  outputJson: string;
-  errorMessage: string;
-  executionTimeMs: number;
-  logs: string[];
-}
+export type EscrowRequest = import("../contracts/critical-contracts").EscrowRequestContract;
+export type EscrowResponse = import("../contracts/critical-contracts").EscrowResponseContract;
+export type PaymentRequest = import("../contracts/critical-contracts").PaymentRequestContract;
+export type PaymentResponse = import("../contracts/critical-contracts").PaymentResponseContract;
+export type PluginRequest = import("../contracts/critical-contracts").PluginRequestContract;
+export type PluginResponse = import("../contracts/critical-contracts").PluginResponseContract;
 
 /**
  * SovereignBridge (The Diplomatic Channel)
@@ -131,15 +87,19 @@ export class SovereignBridge {
    */
   public static async requestSimulation(req: SimulationRequest): Promise<SimulationResponse> {
     console.log(`🚀 [Bridge] Delegating Goal ${req.goalId} to Go Sovereign Engine...`);
-    SimulationSchema.parse(req);
+    SimulationRequestSchema.parse(req);
 
     const client = await this.getClient();
     if (!client) {
-      return this.callViaHttp('simulate', {
+      const response = await this.callViaHttp('simulate', {
         goalId: req.goalId,
         instances: req.parallelInstances,
-        modelVersion: req.modelVersion || "gemini-1.5-pro"
+        complexity: req.complexity ?? 0.5,
+        modelVersion: req.modelVersion || "gemini-1.5-pro",
+        personas: req.personas ?? ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"],
       });
+      return SimulationResponseSchema.parse(response);
+
     }
 
     const metadata = await this.getMetadata();
@@ -147,11 +107,12 @@ export class SovereignBridge {
       client.RequestSimulation({
         goalId: req.goalId,
         instances: req.parallelInstances,
+        complexity: req.complexity ?? 0.5,
         modelVersion: req.modelVersion || "gemini-1.5-pro",
-        personas: ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"]
+        personas: req.personas ?? ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"],
       }, metadata, (error: any, response: any) => {
         if (error) return reject(error);
-        resolve(response as SimulationResponse);
+        resolve(SimulationResponseSchema.parse(response));
       });
     });
   }
@@ -178,30 +139,28 @@ export class SovereignBridge {
 
   public static async executePlugin(req: PluginRequest): Promise<PluginResponse> {
     console.log(`🛡️ [Bridge] Delegating Sandbox Execution for ${req.pluginId} to Go...`);
-    PluginSchema.parse(req);
-
-    const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
-    const signature = crypto.createHmac('sha256', secret).update(req.sourceCode).digest('hex');
+    PluginRequestSchema.parse(req);
 
     const client = await this.getClient();
-    if (!client) {
-      return this.callViaHttp('execute', {
-        pluginId: req.pluginId,
-        sourceCode: req.sourceCode,
-        envVars: req.envVars,
-        allowedCapabilities: req.allowedCapabilities,
-        signature: "SIGNED_CLIENT_SIDE" // Simplified for now
-      });
-    }
-
-    const metadata = await this.getMetadata();
-    let signature = "SIGNED_VIA_PROXY";
-
+    let signature = req.signature ?? "SIGNED_VIA_PROXY";
     if (typeof window === 'undefined') {
       const crypto = await import('node:crypto');
       const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
       signature = crypto.createHmac('sha256', secret).update(req.sourceCode).digest('hex');
     }
+
+    if (!client) {
+      const response = await this.callViaHttp('execute', {
+        pluginId: req.pluginId,
+        sourceCode: req.sourceCode,
+        envVars: req.envVars,
+        allowedCapabilities: req.allowedCapabilities,
+        signature,
+      });
+      return PluginResponseSchema.parse(response);
+    }
+
+    const metadata = await this.getMetadata();
 
     return new Promise((resolve, reject) => {
       client.ExecutePlugin({
@@ -212,7 +171,7 @@ export class SovereignBridge {
         signature: signature
       }, metadata, (error: any, response: any) => {
         if (error) return reject(error);
-        resolve(response as PluginResponse);
+        resolve(PluginResponseSchema.parse(response));
       });
     });
   }
@@ -223,16 +182,22 @@ export class SovereignBridge {
   public static async commitPayment(req: PaymentRequest): Promise<PaymentResponse> {
     console.log(`💰 [Bridge] Committing Payment for ${req.recipientId}: ${req.amountPi} Pi...`);
     
+    const normalizedRequest = PaymentRequestSchema.parse({
+      ...req,
+      agentAuthToken: req.agentAuthToken || this.getAuthToken(),
+    });
+
     const client = await this.getClient();
     if (!client) {
-      return this.callViaHttp('payment', req);
+      const response = await this.callViaHttp('payment', normalizedRequest);
+      return PaymentResponseSchema.parse(response);
     }
 
     const metadata = await this.getMetadata();
     return new Promise((resolve, reject) => {
-      client.CommitPayment(req, metadata, (error: any, response: any) => {
+      client.CommitPayment(normalizedRequest, metadata, (error: any, response: any) => {
         if (error) return reject(error);
-        resolve(response as PaymentResponse);
+        resolve(PaymentResponseSchema.parse(response));
       });
     });
   }
@@ -295,22 +260,22 @@ export class SovereignBridge {
     
     const client = await this.getClient();
     const txId = `escrow-${Math.random().toString(16).slice(2, 10)}`;
-    const req: EscrowRequest = {
+    const req: EscrowRequest = EscrowRequestSchema.parse({
       txId,
       amountPi,
-      targetWallet: agentId
-    };
+      targetWallet: agentId,
+    });
 
     if (!client) {
       const response = await this.callViaHttp('lock-escrow', req);
-      return response.locked;
+      return EscrowResponseSchema.parse(response).locked;
     }
 
     const metadata = await this.getMetadata();
     return new Promise((resolve, reject) => {
       client.LockEscrow(req, metadata, (error: any, response: any) => {
         if (error) return reject(error);
-        resolve(response.locked);
+        resolve(EscrowResponseSchema.parse(response).locked);
       });
     });
   }

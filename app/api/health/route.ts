@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SovereignBridge } from '@/core/engine/sovereign-bridge';
+import { HealthStatusSchema } from '@/core/contracts/critical-contracts';
 
 /**
  * AMRIKYY LAB :: SYSTEM HEALTH DIAGNOSTICS
@@ -33,5 +34,5 @@ export async function GET() {
     healthReport.layers.sovereign_engine.error = err instanceof Error ? err.message : "Connection failed";
   }
 
-  return NextResponse.json(healthReport);
+  return NextResponse.json(HealthStatusSchema.parse(healthReport));
 }
