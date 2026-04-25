@@ -33,6 +33,9 @@ jobs:
       - name: Targeted Performance SLO Profiling
         run: npm run profile:slo
 
+      - name: Contract Sync Validation
+        run: npm run contracts:check
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -128,6 +131,7 @@ jobs:
           - ✅ Go build (CLI + sovereign engine)
           - ✅ Security scans (Secretlint + Trivy)
           - ✅ Targeted Performance SLO Profiling
+          - ✅ Contract Sync Validation
           - ✅ Artifact sanity checks
 
           ## Secret/config validation result

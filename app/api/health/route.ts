@@ -6,6 +6,7 @@ import {
   resolveCorrelationContext,
   withCorrelationHeaders,
 } from '@/core/utils/observability';
+import { HealthStatusSchema } from '@/core/contracts/critical-contracts';
 
 export async function GET(request: Request) {
   const context = resolveCorrelationContext(request.headers);
@@ -59,5 +60,6 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json(healthReport, withCorrelationHeaders(undefined, context));
+  const validatedResponse = HealthStatusSchema.parse(healthReport);
+  return NextResponse.json(validatedResponse, withCorrelationHeaders(undefined, context));
 }
