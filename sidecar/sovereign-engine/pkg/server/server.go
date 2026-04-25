@@ -148,6 +148,22 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	logStructured(ctx, "execute_plugin", "INFO", fmt.Sprintf("plugin execute: %s", req.PluginId), "")
 	log.Printf("🛡️ [Sandbox] Executing Plugin: %s", req.PluginId)
 
+	// 🧪 [Input Guard] Reject malformed or partial deploy payloads early.
+	if req.PluginId == "" {
+		return &pb.PluginResponse{
+			PluginId:     req.PluginId,
+			Success:      false,
+			ErrorMessage: "[VALIDATION_ERROR] plugin_id is required.",
+		}, nil
+	}
+	if req.SourceCode == "" {
+		return &pb.PluginResponse{
+			PluginId:     req.PluginId,
+			Success:      false,
+			ErrorMessage: "[DEPLOY_ARTIFACT_MISSING] source_code is empty or missing.",
+		}, nil
+	}
+
 	// 🖋️ [Steel Gate] Verify Source Code Signature
 	secret := os.Getenv("AGENT_SYSTEM_SECRET")
 	h := hmac.New(sha256.New, []byte(secret))
