@@ -39,12 +39,18 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 		return nil, fmt.Errorf("failed to init gemini: %w", err)
 	}
 
-	queue, err := finance.NewFiscalQueue("data/fiscal")
+	dataDir := "data"
+	if os.Getenv("VERCEL") == "1" || os.Getenv("VERCEL") == "true" {
+		dataDir = "/tmp"
+		log.Printf("☁️ [Vercel] Stateless mode active. Using /tmp for transient persistence.")
+	}
+
+	queue, err := finance.NewFiscalQueue(fmt.Sprintf("%s/fiscal", dataDir))
 	if err != nil {
 		log.Printf("⚠️ [Finance] Could not initialize queue: %v", err)
 	}
 
-	jrnl, err := engine.NewSovereignJournal("data/sovereign.journal")
+	jrnl, err := engine.NewSovereignJournal(fmt.Sprintf("%s/sovereign.journal", dataDir))
 	if err != nil {
 		log.Printf("⚠️ [Journal] Could not initialize journal: %v", err)
 	} else {

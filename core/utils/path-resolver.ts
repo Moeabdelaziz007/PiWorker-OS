@@ -17,9 +17,11 @@ export class PathResolver {
    */
   public static resolve(relativePath: string): string {
     if (typeof window !== 'undefined') return relativePath;
+    // Use dynamic import or gated require to prevent browser bundling issues
     const path = require('path');
-    return path.join(this.root, relativePath);
+    return path.join(process.cwd(), relativePath);
   }
+
 
   /**
    * Specialized resolver for Proto files.

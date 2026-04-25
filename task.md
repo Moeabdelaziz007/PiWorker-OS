@@ -1,50 +1,48 @@
-# Task: Phase 16 - Build Hardening & Zero-Defect State
+# Task: Architectural Alignment and Hardening Strategy
 
 ### Goal
-Resolve Vercel build failures (Webpack module not found), synchronize Go/TS contracts, and fix 9 identified points (3 errors, 3 bugs, 3 issues) to achieve a 100% stable production-ready state.
+حل "التنافر المعماري" و "تفكك المستودع الأحادى" (Monorepo Desync) عبر تحويل المحرك إلى نمط عديم الحالة (Stateless)، وتوحيد لغة العقود بين TypeScript و Go، وتعزيز عزل بيئة العميل عن الخادم.
 
 ### Memory Context
-- **Searched Patterns:** `SovereignBridge` imports in `app/page.tsx` causing client-side leakage. `next.config.js` missing `http2` and `dns` fallbacks.
-- **Relevant Namespaces:** frontend (Next.js), backend (Go), orchestration (Bridge).
+- **Searched Patterns:**
+  - تم اكتشاف عدم تطابق في تسمية الحقول بين Zod (camelCase) و Protobuf (snake_case/different names)؛ مثال: `parallelInstances` vs `instances`.
+  - تم فحص `package.json`؛ يفتقر إلى `workspaces` مما يضعف التنسيق بين المكونات.
+  - تم فحص `pi-auth.ts`؛ يعتمد على سياق المتصفح بشكل جيد ولكنه يفتقر إلى عزل صارم للأسرار البرمجية.
+- **Relevant Namespaces:** `/sidecar`, `/core/contracts`, `/core/finance`.
 
 ### Why now
-The user is facing persistent build errors on Vercel. We cannot move forward with the "Sovereign Agent Economy" if the infrastructure cannot be deployed.
+التناقض في تسمية الحقول يؤدي إلى أخطاء صامتة (Silent Failures) في استدعاءات gRPC/HTTP. غياب هيكلية Monorepo حقيقية يجعل أنابيب CI هشة وغير قابلة للتوسع.
 
 ### Scope
-- `core/engine/sovereign-bridge.ts` (Refactor)
-- `next.config.js` (Fallbacks)
-- `sidecar/sovereign-engine/pkg/pb/sovereign.pb.go` (Go registration)
-- `api/index.go` (HTTP fallbacks)
-- `app/page.tsx` (Error handling)
+- `package.json` (إضافة workspaces).
+- `core/contracts/critical-contracts.ts` (مزامنة التسميات مع Proto).
+- `sidecar/sovereign-engine/pkg/server/server.go` (تحويل مسارات البيانات إلى `/tmp`).
+- `SovereignBridge.ts` (تأكيد مسارات الـ API وتوافق الحقول).
 
 ### Out of scope
-- Adding new feature modules.
-- Refactoring the entire Go engine logic.
+- تغيير بروتوكول gRPC في بيئة التطوير المحلية (Local Dev).
 
 ### Risks / Ambiguities / Fragility
-- **Dynamic Imports**: Using `await import` in `SovereignBridge` must be carefully tested in Next.js 15.
-- **Go Mod**: Vercel Go builder might still struggle with root `go.mod` if paths aren't 100% correct.
+- **الخطر:** كسر التوافق مع الأنظمة الخارجية إذا تم تغيير أسماء الحقول دون تحديث كافة المراجع.
+- **الغموض:** هل نعتمد TurboRepo كحل نهائي لإدارة البناء؟
 
 ### Plan
-1. [x] Step 1: Add Webpack fallbacks (`http2`, `dns`, `os`, `stream`) to `next.config.js`.
-2. [x] Step 2: Isolate gRPC logic in `core/engine/grpc-client.ts` and refactor `SovereignBridge` to be isomorphic.
-3. [x] Step 3: Implement missing gRPC service registration in `sovereign.pb.go`.
-4. [x] Step 4: Expand `api/index.go` to support all bridge methods (Payment, Escrow, Verify, Intent).
-5. [x] Step 5: Fix specific bugs: `payload` undefined, empty SSE listener, and `node:crypto` browser errors.
-6. [x] Step 6: Review and merge PRs (`codex/*` and `tactical-dashboard-redesign`).
-7. [ ] Step 7: Re-integrate Sovereign Engine into the redesigned dashboard.
-8. [ ] Step 8: Final build verification and `add-memory` execution.
+1. [Step 1: Monorepo Hardening] إضافة `workspaces` إلى `package.json` لتشمل `core`, `sidecar`, `agents`.
+2. [Step 2: Contract Synchronization] توحيد تسميات الحقول في `critical-contracts.ts` لتطابق `sovereign.proto` (استخدام camelCase في TS مع التحويل المناسب أو مطابقة Proto).
+3. [Step 3: Stateless Adaptation] تحويل المحرك السيادي لاستخدام `/tmp` في Vercel وتأمين المتغيرات البيئية السرية.
+4. [Step 4: Bridge Logic Update] تحديث `SovereignBridge.ts` ليتعامل مع التسميات الجديدة ويوجه الطلبات بدقة إلى `/api/sovereign/*`.
 
 ### Verification
-- [x] 2x `search-memory` calls executed (Checked `openmemory.md` and grepped imports)
+- [x] 2x `search-memory` calls executed before coding
 - [ ] typecheck (`npx tsc --noEmit`)
 - [ ] build (`npm run build`)
-- [ ] 1x `add-memory` call executed (with Git metadata)
+- [ ] targeted test
+- [ ] sandbox security boundary review
+- [x] 1x `add-memory` call executed (with Git metadata) and `openmemory.md` updated if applicable
 
 ### Done when
-- `npm run build` passes locally without "Module not found" errors.
-- Go engine successfully registers the SovereignServiceServer.
-- All bridge methods have verified HTTP/1.1 fallbacks.
+- ينجح أمر `npm run build` مع وجود مزامنة كاملة بين Zod و Protobuf.
+- يتم تشغيل المحرك السيادي في بيئة Vercel المحاكية بنجاح.
 
 ### Commit format
-`fix(build): resolve webpack module errors and synchronize sovereign contracts`
+`refactor(arch): harmonize contracts and harden monorepo structure`

@@ -9,8 +9,7 @@ import { authenticateSovereignWallet } from "@/core/finance/pi-auth";
 import { SovereignAuditLog } from "./components/visualizers/sovereign-audit-log";
 import { RoboticFleetStatus } from "./components/visualizers/robotic-fleet-status";
 import { BrainCircuit, Boxes, Network } from "lucide-react";
-
-import { SovereignBridge } from "@/core/engine/sovereign-bridge";
+import { useSovereignStream } from "./hooks/use-sovereign-stream";
 
 export default function SovereignCommandCenter() {
   const [logs, setLogs] = useState<string[]>([
@@ -25,44 +24,43 @@ export default function SovereignCommandCenter() {
   const [activeIntents, setActiveIntents] = useState(0);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
+  const { lastEvent } = useSovereignStream();
 
-    // 📡 [Real-Time] Connect to Sovereign Event Stream
-    SovereignBridge.listenToEvents((data) => {
+  const fetchStatus = async () => {
+    try {
+      const response = await fetch('/api/status');
+      const stats = await response.json();
+      if (stats.status === "OFFLINE") {
+        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] >> SYSTEM_OFFLINE: Engine not reachable.`]);
+        return;
+      }
+      setLiquidity(stats.pi_balance || 0);
+      setActiveIntents(stats.active_intents || 0);
+    } catch (e: any) {
+      setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] >> STATUS_ERROR: ${e.message}`]);
+    }
+  };
+
+  useEffect(() => {
+    if (lastEvent) {
       const timestamp = new Date().toLocaleTimeString();
-      let logMsg = `[${timestamp}] >> EVENT: ${JSON.stringify(data)}`;
+      let logMsg = `[${timestamp}] >> EVENT: ${JSON.stringify(lastEvent)}`;
       
-      if (data.status === "PENDING") {
-        logMsg = `[${timestamp}] >> 💰 AUTHORIZING: ${data.amount} Pi to ${data.target.slice(-6)}`;
-      } else if (data.status === "CONFIRMED") {
-        logMsg = `[${timestamp}] >> ✅ CONFIRMED: ${data.amount} Pi delivered. SIG::${data.id.slice(-6)}`;
+      if (lastEvent.status === "PENDING") {
+        logMsg = `[${timestamp}] >> 💰 AUTHORIZING: ${lastEvent.amount} Pi to ${lastEvent.target.slice(-6)}`;
+      } else if (lastEvent.status === "CONFIRMED") {
+        logMsg = `[${timestamp}] >> ✅ CONFIRMED: ${lastEvent.amount} Pi delivered. SIG::${lastEvent.id.slice(-6)}`;
       }
       
       setLogs(prev => [...prev.slice(-20), logMsg]);
-      
-      // Refresh status on important events
       fetchStatus();
-    });
+    }
+  }, [lastEvent]);
 
-    // 📊 [Status] Initial fetch and periodic polling
-    const fetchStatus = async () => {
-      try {
-        const stats = await SovereignBridge.getSystemStatus();
-        if (stats.status === "OFFLINE") {
-          setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] >> SYSTEM_OFFLINE: Engine not reachable.`]);
-          return;
-        }
-        setLiquidity(stats.pi_balance || 0);
-        setActiveIntents(stats.active_intents || 0);
-      } catch (e: any) {
-        setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] >> STATUS_ERROR: ${e.message}`]);
-      }
-    };
-
+  useEffect(() => {
+    setMounted(true);
     fetchStatus();
     const statusInterval = setInterval(fetchStatus, 30000); // Sync every 30s
-
     return () => clearInterval(statusInterval);
   }, []);
 

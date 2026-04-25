@@ -54,7 +54,7 @@ export class QuantumMirror {
     // Call the Sovereign Engine through the bridge
     const response = await SovereignBridge.requestSimulation({
       goalId: `sim-${agent.id}-${Date.now()}`,
-      parallelInstances: 30,
+      instances: 30,
       modelVersion: "gemini-1.5-pro"
     });
 

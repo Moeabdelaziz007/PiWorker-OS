@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
+
 	"net"
 	"net/http"
 	"os"
@@ -44,8 +46,10 @@ func resolveContractPath() (string, error) {
 	return "", errors.New("gRPC contract file sovereign.proto not found")
 }
 
-func startHealthServer(grpcAddr string, contractPath string) {
+func startHttpServer(srv *server.SovereignServer, grpcAddr string, contractPath string) {
 	mux := http.NewServeMux()
+
+	// 🏥 Health Endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		report := map[string]any{
@@ -64,10 +68,56 @@ func startHealthServer(grpcAddr string, contractPath string) {
 		_ = json.NewEncoder(w).Encode(report)
 	})
 
+	// 📡 SSE Real-Time Telemetry Endpoint
+	mux.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+			return
+		}
+
+		telemetryChan := make(chan string, 10)
+		srv.Mu.Lock()
+		srv.TelemetryListeners = append(srv.TelemetryListeners, telemetryChan)
+		srv.Mu.Unlock()
+
+		defer func() {
+			srv.Mu.Lock()
+			for i, ch := range srv.TelemetryListeners {
+				if ch == telemetryChan {
+					srv.TelemetryListeners = append(srv.TelemetryListeners[:i], srv.TelemetryListeners[i+1:]...)
+					break
+				}
+			}
+			srv.Mu.Unlock()
+			close(telemetryChan)
+		}()
+
+		ctx := r.Context()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-telemetryChan:
+				fmt.Fprintf(w, "data: %s\n\n", msg)
+				flusher.Flush()
+			case <-time.After(15 * time.Second):
+				// Keep-alive heartbeat
+				fmt.Fprintf(w, ": keep-alive\n\n")
+				flusher.Flush()
+			}
+		}
+	})
+
 	go func() {
-		log.Printf("🩺 Health endpoint listening at http://127.0.0.1:8080/health")
+		log.Printf("🌐 Sovereign HTTP API listening at http://127.0.0.1:8080")
 		if err := http.ListenAndServe(":8080", mux); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("failed to start health server: %v", err)
+			log.Fatalf("failed to start http server: %v", err)
 		}
 	}()
 }
@@ -155,7 +205,7 @@ func main() {
 	reflection.Register(s)
 
 	log.Printf("📡 gRPC Server listening at %v", lis.Addr())
-	startHealthServer(lis.Addr().String(), contractPath)
+	startHttpServer(srv, lis.Addr().String(), contractPath)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

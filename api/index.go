@@ -143,10 +143,56 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		handleIntent(w, r.WithContext(ctx), requestID, correlationID, authContext)
 	case strings.HasSuffix(path, "/status"):
 		handleStatus(w, r.WithContext(ctx), requestID, correlationID, authContext)
+	case strings.HasSuffix(path, "/events"):
+		handleEvents(w, r.WithContext(ctx), requestID, correlationID, authContext)
 	default:
 		emitBridgeLog("router", authContext, requestID, correlationID, "endpoint not found", "VALIDATION")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Endpoint not found: %s", path)
+	}
+}
+
+func handleEvents(w http.ResponseWriter, r *http.Request, reqID, corrID, auth string) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	telemetryChan := make(chan string, 10)
+	srv.Mu.Lock()
+	srv.TelemetryListeners = append(srv.TelemetryListeners, telemetryChan)
+	srv.Mu.Unlock()
+
+	defer func() {
+		srv.Mu.Lock()
+		for i, ch := range srv.TelemetryListeners {
+			if ch == telemetryChan {
+				srv.TelemetryListeners = append(srv.TelemetryListeners[:i], srv.TelemetryListeners[i+1:]...)
+				break
+			}
+		}
+		srv.Mu.Unlock()
+		close(telemetryChan)
+	}()
+
+	ctx := r.Context()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-telemetryChan:
+			fmt.Fprintf(w, "data: %s\n\n", msg)
+			flusher.Flush()
+		case <-time.After(15 * time.Second):
+			// Heartbeat for serverless keep-alive
+			fmt.Fprintf(w, ": heartbeat\n\n")
+			flusher.Flush()
+		}
 	}
 }
 

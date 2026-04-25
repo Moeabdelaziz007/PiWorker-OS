@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const SimulationRequestSchema = z.object({
   goalId: z.string().min(1),
-  parallelInstances: z.number().int().min(1).max(500),
+  instances: z.number().int().min(1).max(500),
   modelVersion: z.string().regex(/^gemini-/),
   complexity: z.number().min(0).max(1).optional(),
   personas: z.array(z.string().min(1)).optional(),

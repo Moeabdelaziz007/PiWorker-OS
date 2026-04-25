@@ -8,28 +8,30 @@ const nextConfig = {
   images: {
     unoptimized: true, // For local-first / static export if needed
   },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        "node:crypto": false,
-        "node:fs": false,
-        "node:path": false,
-        "node:child_process": false,
-        "node:util": false,
-        crypto: false,
-        fs: false,
-        path: false,
-        net: false,
-        tls: false,
-        http2: false,
-        dns: false,
-        os: false,
-        stream: false,
-      };
-    }
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "node:crypto": false,
+      "node:fs": false,
+      "node:path": false,
+      "node:child_process": false,
+      "node:util": false,
+      crypto: false,
+      fs: false,
+      path: false,
+      net: false,
+      tls: false,
+      http2: false,
+      dns: false,
+      os: false,
+      stream: false,
+      "@grpc/grpc-js": false,
+      "@grpc/proto-loader": false,
+      "@vercel/kv": false,
+    };
     return config;
   },
+
 };
 
 export default nextConfig;

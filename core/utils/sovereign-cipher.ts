@@ -1,3 +1,4 @@
+import "server-only";
 // SovereignCipher (AES-256-GCM)
 
 /**

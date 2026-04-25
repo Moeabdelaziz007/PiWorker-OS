@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SovereignBridge } from "@/core/engine/sovereign-bridge";
+// DECOUPLED: Removing direct SovereignBridge import to prevent server-side leak in client bundle.
 
 /**
  * AMRIKYY LAB :: SOVEREIGN STREAM HOOK
@@ -10,15 +10,28 @@ export function useSovereignStream() {
   const [lastEvent, setLastEvent] = useState<any>(null);
 
   useEffect(() => {
-    console.log("🔌 [Hook] Establishing Sovereign Stream connection...");
+    console.log("🔌 [Hook] Establishing Sovereign Stream connection via SSE...");
     
-    SovereignBridge.listenToEvents((data) => {
-      setLastEvent(data);
-      setEvents((prev) => [...prev.slice(-49), data]); // Keep last 50 events
-    });
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const url = `${baseUrl}/api/sovereign/events`;
+    const eventSource = new EventSource(url);
 
-    // Cleanup is handled internally by SovereignBridge if we implemented it, 
-    // but for now, we'll just let it run.
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setLastEvent(data);
+        setEvents((prev) => [...prev.slice(-49), data]);
+      } catch (e) {
+        console.error('❌ [Hook] Failed to parse SSE data:', e);
+      }
+    };
+
+    eventSource.onerror = () => console.warn('⚠️ [Hook] SSE Connection lost. Retrying...');
+
+    return () => {
+      console.log("🔌 [Hook] Closing Sovereign Stream.");
+      eventSource.close();
+    };
   }, []);
 
   return { events, lastEvent };

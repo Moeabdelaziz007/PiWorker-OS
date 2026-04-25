@@ -1,6 +1,14 @@
-import * as fs from 'node:fs';
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
+let fs: any = null;
+let grpc: any = null;
+let protoLoader: any = null;
+
+async function loadGrpcDeps() {
+  if (grpc) return;
+  fs = await import('node:fs');
+  grpc = await import('@grpc/grpc-js');
+  protoLoader = await import('@grpc/proto-loader');
+}
+
 import { PathResolver } from '../utils/path-resolver';
 
 const STARTUP_MAX_RETRIES = Number.parseInt(process.env.SOVEREIGN_GRPC_STARTUP_RETRIES || '6', 10);
@@ -14,7 +22,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function assertProtoContractAvailable(): string {
+async function assertProtoContractAvailable(): Promise<string> {
+  await loadGrpcDeps();
   const protoPath = PathResolver.getProtoPath();
   if (!fs.existsSync(protoPath)) {
     throw new Error(`[CONTRACT_UNAVAILABLE] Proto contract missing at ${protoPath}`);
@@ -22,8 +31,9 @@ function assertProtoContractAvailable(): string {
   return protoPath;
 }
 
-function buildClient(engineUrl: string) {
-  const PROTO_PATH = assertProtoContractAvailable();
+
+async function buildClient(engineUrl: string) {
+  const PROTO_PATH = await assertProtoContractAvailable();
   const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
     keepCase: false,
     longs: String,
@@ -40,6 +50,7 @@ function buildClient(engineUrl: string) {
   });
 }
 
+
 function waitForReadyWithTimeout(grpcClient: any): Promise<void> {
   return new Promise((resolve, reject) => {
     grpcClient.waitForReady(Date.now() + STARTUP_READY_TIMEOUT_MS, (error: Error | null) => {
@@ -55,7 +66,8 @@ function waitForReadyWithTimeout(grpcClient: any): Promise<void> {
 async function initializeClient(engineUrl: string): Promise<any | null> {
   if (typeof window !== 'undefined') return null;
 
-  const grpcClient = buildClient(engineUrl);
+  const grpcClient = await buildClient(engineUrl);
+
 
   for (let attempt = 1; attempt <= STARTUP_MAX_RETRIES; attempt += 1) {
     try {
@@ -110,8 +122,10 @@ export async function getGrpcClient(engineUrl: string) {
   }
 }
 
-export function createMetadata(token: string, correlationId?: string, requestId?: string): grpc.Metadata {
+export async function createMetadata(token: string, correlationId?: string, requestId?: string): Promise<any> {
+  await loadGrpcDeps();
   const metadata = new grpc.Metadata();
+
   metadata.add('x-sovereign-token', token);
 
   if (correlationId) metadata.add('x-correlation-id', correlationId);

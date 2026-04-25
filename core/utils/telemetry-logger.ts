@@ -5,20 +5,18 @@
  * [BROWSER SAFE] Automatically detects environment and performs no-op in browser.
  */
 export class TelemetryLogger {
-  private static getLogPath(): string | null {
+  private static async getLogPath(): Promise<string | null> {
     if (typeof window !== "undefined") return null;
-    // We use a dynamic require or import here if needed, but path.join is standard in Node.
-    // However, to satisfy Webpack, we must ensure this is only called on server.
-    return require("node:path").join(process.cwd(), "telemetry.jsonl");
+    const path = await import("node:path");
+    return path.join(process.cwd(), "telemetry.jsonl");
   }
+
 
   /**
    * Logs a sovereign event to the telemetry moat.
    */
-  static log(level: "INFO" | "WARN" | "ERROR" | "CRITICAL", topic: string, data: any) {
+  static async log(level: "INFO" | "WARN" | "ERROR" | "CRITICAL", topic: string, data: any) {
     if (typeof window !== "undefined") {
-      // Optional: console output in browser for visibility
-      // console.log(`[TELEMETRY_CLIENT] ${level}: ${topic}`, data);
       return;
     }
 
@@ -32,8 +30,8 @@ export class TelemetryLogger {
     const line = JSON.stringify(entry) + "\n";
 
     try {
-      const fs = require("node:fs");
-      const logPath = this.getLogPath();
+      const fs = await import("node:fs");
+      const logPath = await this.getLogPath();
       if (logPath) {
         fs.appendFileSync(logPath, line);
       }
@@ -42,11 +40,12 @@ export class TelemetryLogger {
     }
   }
 
+
   /**
    * Specifically logs an orchestration event.
    */
-  static logOrchestration(intent: string, plan: any, success: boolean, error?: string) {
-    this.log(success ? "INFO" : "ERROR", "GOAL_ORCHESTRATION", {
+  static async logOrchestration(intent: string, plan: any, success: boolean, error?: string) {
+    await this.log(success ? "INFO" : "ERROR", "GOAL_ORCHESTRATION", {
       intent,
       planCount: plan?.length || 0,
       success,
@@ -54,31 +53,33 @@ export class TelemetryLogger {
     });
   }
 
+
   /**
    * Specifically logs a fiscal event.
    */
-  static logFiscal(type: "ESCROW_LOCK" | "ESCROW_RELEASE" | "TAX_INFLOW", details: any) {
-    this.log("INFO", "FISCAL_EVENT", {
+  static async logFiscal(type: "ESCROW_LOCK" | "ESCROW_RELEASE" | "TAX_INFLOW", details: any) {
+    await this.log("INFO", "FISCAL_EVENT", {
       type,
       ...details
     });
   }
 
+
   /**
    * Logs physical kinematic data for robotic execution.
    */
-  static logKinematics(robotId: string, action: string, joints: number[], confidence: number) {
+  static async logKinematics(robotId: string, action: string, joints: number[], confidence: number) {
     let integrityHash = "UNAVAILABLE_ON_CLIENT";
     if (typeof window === "undefined") {
         try {
-            const crypto = require("node:crypto");
+            const crypto = await import("node:crypto");
             integrityHash = crypto.createHash("sha256").update(JSON.stringify(joints)).digest("hex");
         } catch (e) {
             // Fallback
         }
     }
 
-    this.log("INFO", "ROBOT_KINEMATICS", {
+    await this.log("INFO", "ROBOT_KINEMATICS", {
       robotId,
       action,
       joints,
@@ -86,4 +87,5 @@ export class TelemetryLogger {
       integrityHash
     });
   }
+
 }

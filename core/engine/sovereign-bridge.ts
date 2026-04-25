@@ -107,8 +107,9 @@ export class SovereignBridge {
   private static async getMetadata(context?: BridgeCallContext): Promise<any> {
     const { createMetadata } = await import('./grpc-client');
     const resolved = await this.makeContext(context);
-    return createMetadata(this.getAuthToken(), resolved.correlationId, resolved.requestId);
+    return await createMetadata(this.getAuthToken(), resolved.correlationId, resolved.requestId);
   }
+
 
   private static async getClient() {
     if (typeof window !== 'undefined' || process.env.VERCEL) return null;
@@ -157,8 +158,7 @@ export class SovereignBridge {
 
     if (!client) {
       const response = await this.callViaHttp('simulate', {
-        goalId: req.goalId,
-        instances: req.parallelInstances,
+        ...req,
         complexity: req.complexity ?? 0.5,
         modelVersion: req.modelVersion || "gemini-1.5-pro",
         personas: req.personas ?? ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"],
@@ -169,8 +169,7 @@ export class SovereignBridge {
     const metadata = await this.getMetadata(resolved);
     return new Promise((resolve, reject) => {
       client.RequestSimulation({
-        goalId: req.goalId,
-        instances: req.parallelInstances,
+        ...req,
         complexity: req.complexity ?? 0.5,
         modelVersion: req.modelVersion || "gemini-1.5-pro",
         personas: req.personas ?? ["Bull", "Bear", "Chaos", "Conservative", "Aggressive"],
@@ -344,13 +343,14 @@ export class SovereignBridge {
         message: error.message,
       });
 
-      TelemetryLogger.log('ERROR', 'BRIDGE_HTTP_FALLBACK_FAILURE', {
+      await TelemetryLogger.log('ERROR', 'BRIDGE_HTTP_FALLBACK_FAILURE', {
         error_code: code,
         method,
         requestId: context.requestId,
         correlationId: context.correlationId,
       });
       throw error;
+
     }
   }
 

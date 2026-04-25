@@ -73,7 +73,7 @@ export class MASOrchestrator extends EventEmitter {
       // Delegating to Go to prevent Node.js event loop collapse during 30-persona simulation
       const simResult = await SovereignBridge.requestSimulation({
         goalId: `task_${Date.now()}`,
-        parallelInstances: 30,
+        instances: 30,
         modelVersion: "gemini-1.5-pro"
       });
 

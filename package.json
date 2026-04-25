@@ -3,6 +3,13 @@
   "version": "2.0.0",
   "type": "module",
   "private": true,
+  "workspaces": [
+    "core",
+    "agents",
+    "sidecar",
+    "sandbox",
+    "plugins"
+  ],
   "engines": {
     "node": ">=22.x"
   },
