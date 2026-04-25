@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-04-25T00:00:00Z",
+  "notes": "Baseline for targeted profiling gates in CI.",
+  "metrics": {
+    "simulationFanOut": {
+      "p95LatencyMs": 14,
+      "errorRatePct": 0
+    },
+    "pluginExecutionLatency": {
+      "p95LatencyMs": 1.2,
+      "errorRatePct": 0
+    },
+    "sidecarStartupWarmPath": {
+      "coldStartMs": 320,
+      "warmPathMs": 8,
+      "errorRatePct": 0
+    },
+    "httpFallbackUnderLoad": {
+      "p95LatencyMs": 170,
+      "errorRatePct": 0
+    }
+  }
+}
