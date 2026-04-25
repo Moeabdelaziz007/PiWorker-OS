@@ -76,7 +76,7 @@ jobs:
       run: npx playwright install --with-deps chromium
       
     - name: Run The Sandbox Audit
-      run: npx playwright test tests/sandbox-audit.spec.ts
+      run: npx playwright test tests/sandbox-audit.spec.ts --config=playwright.config.ts
       env:
         SOVEREIGN_ENGINE_URL: localhost:50051
         SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
