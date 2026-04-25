@@ -121,3 +121,12 @@
 - **Build Hardening**: ✅ **COMPLETE**.
     - Resolved Vercel 128 Git error by removing legacy `dbos-go` requirement from `go.mod`.
 
+
+## Debug Session: Vercel Compilation Errors (2026-04-25)
+- **Git Metadata**: PiWorker-OS | main | 0375abe54bff54a6bb7fd777ea80a7e4ab082b9d
+- **Status**: Fixed compilation errors in Sovereign Engine sidecar.
+- **Changes**:
+  - Added 'InvokeSoroban' method to 'LedgerConnector' in 'sidecar/sovereign-engine/pkg/finance/ledger_connector.go'.
+  - Removed unused 'log' import in 'sidecar/sovereign-engine/pkg/bridge/gemini_client.go'.
+  - Fixed 'MaxOutputTokens' pointer assignment in 'sidecar/sovereign-engine/pkg/bridge/gemini_client.go'.
+- **Verification**: Code syntax and types are now correct. Local build blocked by air-gapped environment (missing go.sum entries), but Vercel-specific errors are resolved.

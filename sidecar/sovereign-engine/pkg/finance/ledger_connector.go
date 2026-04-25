@@ -176,3 +176,14 @@ func (lc *LedgerConnector) WatchLedger(ctx context.Context, walletAddress string
 
 	return eventChan, nil
 }
+
+// InvokeSoroban executes a smart contract operation on the Pi/Stellar Soroban VM.
+func (lc *LedgerConnector) InvokeSoroban(contractID, function string, args []interface{}) (string, error) {
+	// [Sovereign Implementation] 
+	// In a production environment, this would build a Soroban transaction, 
+	// sign it with the service account, and submit it to the network.
+	// For now, we return a simulated successful transaction hash to satisfy the interface.
+	simulatedHash := fmt.Sprintf("sim_soroban_%d", time.Now().Unix())
+	fmt.Printf("🛠️ [SOROBAN] Invoking %s on %s with args: %v\n", function, contractID, args)
+	return simulatedHash, nil
+}

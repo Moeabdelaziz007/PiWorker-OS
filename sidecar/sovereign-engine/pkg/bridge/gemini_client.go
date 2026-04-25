@@ -3,7 +3,6 @@ package bridge
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/google/generative-ai-go/genai"
@@ -35,7 +34,8 @@ func NewGeminiClient(ctx context.Context, modelName string) (*GeminiClient, erro
 	model.SetTemperature(0.7)
 	model.SetTopP(0.95)
 	model.SetTopK(40)
-	model.MaxOutputTokens = 2048
+	maxTokens := int32(2048)
+	model.MaxOutputTokens = &maxTokens
 
 	return &GeminiClient{
 		client: client,
