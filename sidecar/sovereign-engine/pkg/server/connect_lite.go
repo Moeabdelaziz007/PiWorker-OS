@@ -84,6 +84,18 @@ func (s *SovereignServer) ConnectLiteHandler() http.Handler {
 		return s.QueryMemory(ctx, req)
 	}))
 
+	mux.HandleFunc(prefix+"EvaluateVortex", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
+		var req map[string]interface{}
+		if err := json.Unmarshal(body, &req); err != nil {
+			return nil, err
+		}
+		return s.EvaluateVortex(ctx, req)
+	}))
+
+	mux.HandleFunc(prefix+"GetTreasury", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
+		return s.GetTreasury(ctx, nil)
+	}))
+
 	return mux
 }
 

@@ -80,6 +80,14 @@ export class SovereignClient {
   async queryMemory(req: any) {
     return this.call<any, any>("QueryMemory", req);
   }
+
+  async evaluateVortex(req: { agent_id: string; actual_roi: number; min_requirement: number; current_budget: number }) {
+    return this.call<any, any>("EvaluateVortex", req);
+  }
+
+  async getTreasury() {
+    return this.call<any, any>("GetTreasury", {});
+  }
 }
 
 // Singleton instance for global use

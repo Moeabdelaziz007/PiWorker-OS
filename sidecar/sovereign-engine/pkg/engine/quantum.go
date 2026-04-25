@@ -10,13 +10,16 @@ import (
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/bridge"
 )
 
-// Persona types from legacy v1
+// Persona types (Pattern 6: Multi-Persona Quantum Consensus)
 const (
-	PersonaBull         = "Bull"
-	PersonaBear         = "Bear"
-	PersonaChaos        = "Chaos"
-	PersonaConservative = "Conservative"
-	PersonaAggressive   = "Aggressive"
+	PersonaBull         = "The Optimist (Bull)"
+	PersonaBear         = "The Pragmatist (Bear)"
+	PersonaChaos        = "The Disruptor (Chaos)"
+	PersonaConservative = "The Guardian (Conservative)"
+	PersonaAggressive   = "The Hunter (Aggressive)"
+	PersonaCynic        = "The Cynic (Risk-Obsessed)"
+	PersonaEthicist     = "The Ethicist (Boundary-Guard)"
+	PersonaSpeedrunner  = "The Speedrunner (Efficiency-Max)"
 )
 
 type SimulationResult struct {
@@ -43,10 +46,13 @@ func (qm *QuantumMirror) Simulate(ctx context.Context, goal string, instances in
 	resultChan := make(chan SimulationResult, instances)
 	errChan := make(chan error, instances)
 	
-	personas := []string{PersonaBull, PersonaBear, PersonaChaos, PersonaConservative, PersonaAggressive}
+	personas := []string{
+		PersonaBull, PersonaBear, PersonaChaos, PersonaConservative, PersonaAggressive,
+		PersonaCynic, PersonaEthicist, PersonaSpeedrunner,
+	}
 
-	// Dynamic Concurrency Control
-	maxWorkers := 10 // Restricted for AI calls to prevent rate limiting
+	// Dynamic Concurrency Control (Pattern 6: High-Fidelity Concurrency)
+	maxWorkers := 20
 	if instances < maxWorkers {
 		maxWorkers = instances
 	}

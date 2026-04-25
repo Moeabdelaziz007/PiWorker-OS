@@ -1,11 +1,14 @@
+"use server";
 import "server-only";
 import { Agent, AgentDNA } from "../types/agent";
 import { PiAdapter } from "../finance/pi-adapter";
 import { ROITracker } from "../evolution/roi-tracker";
+import { sovereignClient } from "./sovereign-client";
 
 /**
  * PiWorker-OS ProfitVortex
  * Financial Lifeblood & Budget Cannibalism Logic (Digital Darwinism)
+ * Refactored: Delegated to Go Sovereign Muscle for Pattern 4 Hardening.
  */
 
 export class ROICollapseException extends Error {
@@ -21,11 +24,10 @@ export interface FinancialHealth {
   remainingBudget: number;
   actionTaken: "none" | "warn" | "cannibalize" | "terminate" | "awakening";
   updatedDNA?: AgentDNA;
+  sovereignTreasury?: number;
 }
 
 export class ProfitVortex {
-  private sovereignTreasury: number = 0;
-
   /**
    * تقييم العائد الفعلي وتنفيذ "أكل الميزانية" أو "المكافأة السيادية"
    * Logic: Digital Darwinism & Economic Cannibalism
@@ -37,92 +39,43 @@ export class ProfitVortex {
   ): Promise<FinancialHealth> {
     const minRequirement = agent.governance.minRoiRequirement;
     
-    // 1. Digital Darwinism: Evolution through performance
+    // 1. Digital Darwinism: Evolution through performance (Local Brain Sync)
     const updatedDNA = ROITracker.trackAndEvolve(agent, actualRoi >= minRequirement, actualRoi);
 
     console.log(`[ProfitVortex] Agent ${agent.id} | Actual ROI: ${actualRoi} | Generation: ${updatedDNA.generation}`);
 
-    // 2. 10x Sovereign Awakening
-    if (actualRoi >= 10.0) {
-      console.log(`\x1b[35m[ProfitVortex] 👑 SOVEREIGN AWAKENING: Agent ${agent.id} achieved 10x!\x1b[0m`);
-      // Tax exemption and grant reward
-      const rewardAmount = currentBudget * 2; // Double the original budget as a grant
-      if (agent.walletAddress) {
-        await PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardAmount);
-      }
-      return { 
-        isSolvent: true, 
-        cannibalizedAmount: 0, 
-        remainingBudget: currentBudget + rewardAmount, 
-        actionTaken: "awakening",
-        updatedDNA
-      };
-    }
+    // 2. Delegate Fiscal Enforcement to Sovereign Muscle (Pattern 4)
+    const vortexRes = await sovereignClient.evaluateVortex({
+      agent_id: agent.id,
+      actual_roi: actualRoi,
+      min_requirement: minRequirement,
+      current_budget: currentBudget
+    });
 
-    // 3. Economic Cannibalism Check
-    const severity = (minRequirement - actualRoi) / minRequirement;
-    if (actualRoi < minRequirement) {
-      // Trigger Cannibalism if ROI is below requirement
-      return {
-        ...this.executeCannibalism(agent, actualRoi, currentBudget, severity),
-        updatedDNA
-      };
-    }
-
-    // 4. Standard Profit Distribution
-    const profit = currentBudget * (actualRoi - 1);
-    if (profit > 0) {
-      const taxAmount = profit * 0.1; // 10% Sovereign Tax for the Treasury
-      const rewardAmount = profit - taxAmount;
-      this.sovereignTreasury += taxAmount;
-      
+    // 3. Sync with Finance Adapters if action is required
+    if (vortexRes.action === "awakening" && agent.walletAddress) {
+      const rewardGrant = vortexRes.remaining_budget - currentBudget;
+      await PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardGrant);
+    } else if (vortexRes.action === "none" && actualRoi > 1.0) {
+      const profit = currentBudget * (actualRoi - 1.0);
+      const rewardAmount = profit * 0.9; // 90% to agent (10% tax handled in Muscle)
       if (agent.walletAddress) {
         await PiAdapter.getInstance().transferRewards(agent.walletAddress, rewardAmount);
       }
     }
 
     return {
-      isSolvent: true,
-      cannibalizedAmount: 0,
-      remainingBudget: currentBudget,
-      actionTaken: "none",
-      updatedDNA
+      isSolvent: vortexRes.is_solvent,
+      cannibalizedAmount: vortexRes.cannibalized_amt,
+      remainingBudget: vortexRes.remaining_budget,
+      actionTaken: vortexRes.action as any,
+      updatedDNA,
+      sovereignTreasury: vortexRes.sovereign_treasury
     };
   }
 
-  private executeCannibalism(
-    agent: Agent,
-    actualRoi: number,
-    currentBudget: number,
-    severity: number
-  ): Omit<FinancialHealth, "updatedDNA"> {
-    // إذا كان الانهيار المالي كارثياً (> 50% من المتطلب)
-    if (severity > 0.5) {
-      console.error(`\x1b[31m[PROFIT_VORTEX] 💀 CANNIBALISM: Agent ${agent.id} budget confiscated to Treasury.\x1b[0m`);
-      this.sovereignTreasury += currentBudget;
-      return {
-        isSolvent: false,
-        cannibalizedAmount: currentBudget,
-        remainingBudget: 0,
-        actionTaken: "terminate"
-      };
-    }
-
-    // أكل ميزانية جزئي (Partial Rejection)
-    const cannibalizedAmount = currentBudget * severity;
-    this.sovereignTreasury += cannibalizedAmount;
-
-    console.warn(`[PROFIT_VORTEX] ⚠️ Partial Cannibalism for ${agent.id}: ${cannibalizedAmount.toFixed(4)} Pi reclaimed.`);
-
-    return {
-      isSolvent: true,
-      cannibalizedAmount,
-      remainingBudget: currentBudget - cannibalizedAmount,
-      actionTaken: "cannibalize",
-    };
-  }
-
-  public getTreasuryBalance(): number {
-    return this.sovereignTreasury;
+  public async getTreasuryBalance(): Promise<number> {
+    const res = await sovereignClient.getTreasury();
+    return res.balance;
   }
 }

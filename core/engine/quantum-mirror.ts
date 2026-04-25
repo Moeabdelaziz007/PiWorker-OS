@@ -1,3 +1,4 @@
+"use server";
 import "server-only";
 import { Agent } from "../types/agent";
 import { Skill } from "../types/skill";

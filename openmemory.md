@@ -338,3 +338,26 @@
 - Repo: Moeabdelaziz007/PiWorker-OS
 - Branch: main
 - Author: MAS-ZERO (Antigravity)
+341: 
+342: ## Phase 25: Client/Server Boundary Hardening (2026-04-25)
+343: - **Boundary Enforcement**: ✅ **COMPLETE**.
+344:     - Applied `"use server"` and `import "server-only"` to all core engine and security files (`mas-orchestrator.ts`, `sovereign-worker-pool.ts`, etc.).
+345:     - Updated `next.config.js` with strict Webpack fallbacks to block Node.js modules (`fs`, `tls`, `net`, `crypto`) in client bundles.
+346: - **Topological Decoupling**: ✅ **IMPLEMENTED**.
+347:     - Created `Dockerfile.muscle` for independent deployment of the Go Sovereign Muscle.
+348:     - Configured `docker-compose.yml` for unified local orchestration of the Brain-Muscle mesh.
+349: 
+350: ## Phase 26: Quantum & Vortex Hardening (2026-04-25)
+351: - **Profit Vortex (Pattern 4)**: ✅ **DEEPENED**.
+352:     - Offloaded fiscal punishment and budget cannibalism logic to Go (`vortex.go`).
+353:     - Implemented thread-safe `GlobalTreasury` in Go for reclaimed asset management.
+354: - **Quantum Mirror (Pattern 6)**: ✅ **EXPANDED**.
+355:     - Introduced high-fidelity personas: 'The Cynic' (Risk), 'The Ethicist' (Boundaries), and 'The Speedrunner' (Efficiency).
+356:     - Doubled simulation concurrency (20 workers) in the Go Muscle for deeper multi-persona consensus.
+357: 
+358: **Status**: 🛡️💪 **SOVEREIGN ARCHITECTURE HARDENED**. The PiWorker-OS is now ready for decoupled, production-grade deployment with enforced boundaries and deep economic survival logic.
+359: 
+360: **Git Metadata**:
+361: - Repo: Moeabdelaziz007/PiWorker-OS
+362: - Branch: main
+363: - Author: MAS-ZERO (Antigravity)

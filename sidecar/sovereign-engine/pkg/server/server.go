@@ -24,6 +24,7 @@ import (
 type SovereignServer struct {
 	pb.UnimplementedSovereignServiceServer
 	QuantumMirror      *engine.QuantumMirror
+	Vortex             *engine.ProfitVortex
 	GeminiClient       *bridge.GeminiClient
 	SandboxEngine      *sandbox.NeuralSandbox
 	FiscalQueue        *finance.FiscalQueue
@@ -74,6 +75,7 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 
 	return &SovereignServer{
 		QuantumMirror:      engine.NewQuantumMirror(gc),
+		Vortex:             &engine.ProfitVortex{},
 		GeminiClient:       gc,
 		SandboxEngine:      sandbox.NewNeuralSandbox(5 * time.Second),
 		FiscalQueue:        queue,
@@ -390,5 +392,35 @@ func (s *SovereignServer) QueryMemory(ctx context.Context, req interface{}) (int
 
 	return map[string]interface{}{
 		"insights": insights,
+	}, nil
+}
+
+// 5. Profit Vortex (Pattern 4: Digital Darwinism)
+
+func (s *SovereignServer) EvaluateVortex(ctx context.Context, req interface{}) (interface{}, error) {
+	m, ok := req.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid vortex request type")
+	}
+
+	agentId := fmt.Sprintf("%v", m["agent_id"])
+	roi := m["actual_roi"].(float64)
+	minReq := m["min_requirement"].(float64)
+	budget := m["current_budget"].(float64)
+
+	res := s.Vortex.EvaluatePerformance(agentId, roi, minReq, budget)
+
+	return map[string]interface{}{
+		"is_solvent":         res.IsSolvent,
+		"cannibalized_amt":   res.CannibalizedAmt,
+		"remaining_budget":   res.RemainingBudget,
+		"action":             string(res.Action),
+		"sovereign_treasury": res.SovereignTreasury,
+	}, nil
+}
+
+func (s *SovereignServer) GetTreasury(ctx context.Context, req interface{}) (interface{}, error) {
+	return map[string]interface{}{
+		"balance": engine.GlobalTreasury.GetBalance(),
 	}, nil
 }
