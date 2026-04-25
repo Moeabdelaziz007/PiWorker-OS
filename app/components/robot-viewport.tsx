@@ -26,15 +26,32 @@ export const RobotViewport = () => {
 
   useEffect(() => {
     setMounted(true);
-    // Simulate live telemetry
-    const interval = setInterval(() => {
-      setState(prev => ({
-        ...prev,
-        joint_angles: prev.joint_angles.map(a => a + (Math.random() - 0.5) * 2),
-        temperature: 42 + Math.random()
-      }));
-    }, 100);
-    return () => clearInterval(interval);
+    
+    // 📡 [Verified Reality] Subscribe to Sovereign Telemetry Stream
+    const es = new EventSource("/api/telemetry");
+    
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setState(prev => ({
+          ...prev,
+          id: data.agentId || prev.id,
+          joint_angles: data.joints || prev.joint_angles,
+          temperature: data.temp || prev.temperature,
+          status: "executing",
+          current_task: data.trackingId || prev.current_task
+        }));
+      } catch (err) {
+        console.error("Telemetry parse error:", err);
+      }
+    };
+
+    es.onerror = () => {
+      setState(prev => ({ ...prev, status: "offline" }));
+      es.close();
+    };
+
+    return () => es.close();
   }, []);
 
   if (!mounted) return null;

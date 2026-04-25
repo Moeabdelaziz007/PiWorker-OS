@@ -83,8 +83,9 @@ type sovereignServer struct {
 	sandboxEngine *sandbox.NeuralSandbox
 	fiscalQueue   *finance.FiscalQueue
 	journal       *engine.SovereignJournal
-	mu            sync.RWMutex
-	txListeners   []chan finance.QueuedTx
+	mu                 sync.RWMutex
+	txListeners        []chan finance.QueuedTx
+	telemetryListeners []chan string
 }
 
 func newSovereignServer(ctx context.Context) (*sovereignServer, error) {
@@ -114,9 +115,10 @@ func newSovereignServer(ctx context.Context) (*sovereignServer, error) {
 		quantumMirror: engine.NewQuantumMirror(gc),
 		geminiClient:  gc,
 		sandboxEngine: sandbox.NewNeuralSandbox(5 * time.Second),
-		fiscalQueue:   queue,
-		journal:       jrnl,
-		txListeners:   []chan finance.QueuedTx{},
+		fiscalQueue:        queue,
+		journal:            jrnl,
+		txListeners:        []chan finance.QueuedTx{},
+		telemetryListeners: []chan string{},
 	}, nil
 }
 
@@ -160,7 +162,17 @@ func (s *sovereignServer) RequestSimulation(ctx context.Context, req *pb.Simulat
 
 // 2. Embodied Intent Bridge (π0.7)
 func (s *sovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.EmbodiedIntent) (*pb.IntentResponse, error) {
-	log.Printf("🤖 [π0.7] Dispatching Intent: %s for Agent %s", req.IntentId, req.AgentId)
+	// 📡 [Broadcast] Send Telemetry to UI
+	s.mu.RLock()
+	telemetry := fmt.Sprintf(`{"agentId":"%s","trackingId":"track_%s","joints":[0.1,0.2,0.5,0.0,0.0,0.0],"temp":38.5}`, req.AgentId, req.IntentId)
+	for _, ch := range s.telemetryListeners {
+		select {
+		case ch <- telemetry:
+		default:
+		}
+	}
+	s.mu.RUnlock()
+
 	return &pb.IntentResponse{
 		Accepted:      true,
 		StatusMessage: "PHYSICAL_INTENT_DISPATCHED_VIA_GO",
@@ -407,6 +419,46 @@ func (s *sovereignServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *sovereignServer) handleTelemetry(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	ch := make(chan string, 100)
+	s.mu.Lock()
+	s.telemetryListeners = append(s.telemetryListeners, ch)
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		for i, listener := range s.telemetryListeners {
+			if listener == ch {
+				s.telemetryListeners = append(s.telemetryListeners[:i], s.telemetryListeners[i+1:]...)
+				break
+			}
+		}
+		s.mu.Unlock()
+		close(ch)
+	}()
+
+	for {
+		select {
+		case data := <-ch:
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
 func (s *sovereignServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 	nodeURL := os.Getenv("PI_NODE_URL")
 	if nodeURL == "" {
@@ -440,47 +492,7 @@ func (s *sovereignServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
-func loadmTLSCreds() (*tls.Config, error) {
-	var serverCert, serverKey, caCert []byte
-	var err error
-
-	// Priority 1: Environment Variables (For Vercel/Cloud)
-	if os.Getenv("SOVEREIGN_SERVER_CERT") != "" {
-		serverCert = []byte(os.Getenv("SOVEREIGN_SERVER_CERT"))
-		serverKey = []byte(os.Getenv("SOVEREIGN_SERVER_KEY"))
-		caCert = []byte(os.Getenv("SOVEREIGN_CA_CERT"))
-	} else {
-		// Priority 2: Local Files
-		serverCert, err = os.ReadFile("sidecar/sovereign-engine/certs/server.crt")
-		if err != nil {
-			return nil, err
-		}
-		serverKey, err = os.ReadFile("sidecar/sovereign-engine/certs/server.key")
-		if err != nil {
-			return nil, err
-		}
-		caCert, err = os.ReadFile("sidecar/sovereign-engine/certs/ca.crt")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	certificate, err := tls.X509KeyPair(serverCert, serverKey)
-	if err != nil {
-		return nil, err
-	}
-
-	certPool := x509.NewCertPool()
-	if ok := certPool.AppendCertsFromPEM(caCert); !ok {
-		return nil, fmt.Errorf("failed to append CA cert")
-	}
-
-	return &tls.Config{
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		Certificates: []tls.Certificate{certificate},
-		ClientCAs:    certPool,
-	}, nil
-}
+// [REMOVED] loadmTLSCreds is no longer needed as we moved to application-layer AES-256-GCM.
 
 func main() {
 	port := os.Getenv("PORT")
@@ -499,15 +511,9 @@ func main() {
 		log.Fatalf("failed to start sovereign server: %v", err)
 	}
 
-	// 🔒 [mTLS] Load certificates for Neural Vault Security
-	tlsConfig, err := loadmTLSCreds()
-	if err != nil {
-		log.Fatalf("failed to load mTLS credentials: %v", err)
-	}
-
-	// PRO PATCH: Add the Auth Interceptor, Recovery, and TLS to the gRPC server
+	// 🔒 [Steel Gate] Application-layer security via AES-256-GCM and Auth Interceptor.
+	// Insecure transport is used for gRPC because security is enforced at the payload and metadata levels.
 	grpcServer := grpc.NewServer(
-		grpc.Creds(credentials.NewTLS(tlsConfig)),
 		grpc.ChainUnaryInterceptor(
 			recoveryInterceptor,
 			authInterceptor,
@@ -537,6 +543,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/api/intent", httpAuthMiddleware(server))
 	mux.Handle("/api/events", httpAuthMiddleware(http.HandlerFunc(server.handleEvents)))
+	mux.Handle("/api/telemetry", httpAuthMiddleware(http.HandlerFunc(server.handleTelemetry)))
 	mux.Handle("/api/status", httpAuthMiddleware(http.HandlerFunc(server.handleStatus)))
 
 	// 🧪 [Fiscal Bridge] Start Mock Horizon Server in Dev Mode

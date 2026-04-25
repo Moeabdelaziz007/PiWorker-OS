@@ -22,7 +22,7 @@ export interface SovereignState {
   logs: string[];
 }
 
-export const fetchSovereignStateWithFallback = async (): Promise<{ data: SovereignState; isSimulated: boolean }> => {
+export const fetchSovereignStateWithFallback = async (): Promise<{ data: SovereignState | null; isSimulated: boolean; error?: string }> => {
   try {
     const res = await fetch('/api/sovereign/state', {
       method: 'GET',
@@ -36,34 +36,18 @@ export const fetchSovereignStateWithFallback = async (): Promise<{ data: Soverei
       const liveData = await res.json();
       return { data: liveData, isSimulated: false };
     }
-  } catch (err) {
-    console.warn("[BRIDGE] Live Sovereign Engine unreachable. Engaging Tactical Fallback.");
+    
+    return { 
+      data: null, 
+      isSimulated: false, 
+      error: `Engine Status: ${res.status}` 
+    };
+  } catch (err: any) {
+    console.error("[BRIDGE] Critical failure: Sovereign Engine unreachable.");
+    return { 
+      data: null, 
+      isSimulated: false, 
+      error: "SOVEREIGN_ENGINE_OFFLINE" 
+    };
   }
-
-  const mockData: SovereignState = {
-    treasury: {
-      reserves: 125840.42,
-      status: 'SHIELDED',
-    },
-    fleet: {
-      count: 32,
-      active: 28,
-      ready: 4,
-      agents: [
-        { agentId: 'AGENT-ZERO', status: 'EXECUTING', performance: 0.99 },
-        { agentId: 'AGENT-PRIME', status: 'OBSERVING', performance: 0.94 },
-        { agentId: 'AGENT-GOPHER', status: 'SYNCING', performance: 0.91 },
-      ],
-    },
-    logs: [
-      '[SYSTEM] Neural bridge established.',
-      '[π0.7] Physical layer heartbeat detected.',
-      '[GO] Sovereign engine compiled successfully.',
-    ],
-  };
-
-  return {
-    data: mockData,
-    isSimulated: true,
-  };
 };

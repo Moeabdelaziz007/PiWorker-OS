@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { AmrikyyTreasury } from "./treasury-vault";
+import { PriceOracle } from "./price-oracle";
 
 /**
  * Sovereign Fiscal Bridge
@@ -12,14 +13,7 @@ export class FiscalBridge {
    * Fetches real-time prices from a sovereign oracle or public API.
    */
   private static async getPrice(currency: string): Promise<number> {
-    // In production, this calls a Price Oracle (Pyth/Chainlink or CoinGecko)
-    // For now, we use a more stable benchmark than pure mocks.
-    const benchmarks: Record<string, number> = {
-      "Pi": 314.15, // Fixed Sovereign Valuation
-      "SOL": 145.0,
-      "ETH": 3500.0
-    };
-    return benchmarks[currency] || 1;
+    return await PriceOracle.getUSDPrice(currency);
   }
 
   /**

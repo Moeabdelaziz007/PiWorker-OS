@@ -12,6 +12,7 @@ export class SovereignCipher {
 
   /**
    * Encrypts a payload for secure transmission to the Go Engine.
+   * Protocol: [Nonce(12b)][Ciphertext][Tag(16b)] - Matches Go gcm.Seal
    */
   public static encrypt(plaintext: string, secret: string): string {
     const key = Buffer.alloc(32);
@@ -20,21 +21,19 @@ export class SovereignCipher {
     const iv = crypto.randomBytes(this.IV_LENGTH);
     const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv);
 
-    let encrypted = cipher.update(plaintext, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, 'utf8'),
+      cipher.final()
+    ]);
 
     const authTag = cipher.getAuthTag();
 
-    // Protocol: [IV(12b)][AuthTag(16b)][Ciphertext]
-    return Buffer.concat([
-      iv,
-      authTag,
-      Buffer.from(encrypted, 'base64')
-    ]).toString('base64');
+    return Buffer.concat([iv, encrypted, authTag]).toString('base64');
   }
 
   /**
    * Decrypts a payload received from the Go Engine.
+   * Protocol: [Nonce(12b)][Ciphertext][Tag(16b)]
    */
   public static decrypt(encodedPayload: string, secret: string): string {
     const key = Buffer.alloc(32);
@@ -42,9 +41,9 @@ export class SovereignCipher {
 
     const data = Buffer.from(encodedPayload, 'base64');
 
-    const iv = data.slice(0, this.IV_LENGTH);
-    const authTag = data.slice(this.IV_LENGTH, this.IV_LENGTH + this.AUTH_TAG_LENGTH);
-    const ciphertext = data.slice(this.IV_LENGTH + this.AUTH_TAG_LENGTH);
+    const iv = data.subarray(0, this.IV_LENGTH);
+    const authTag = data.subarray(data.length - this.AUTH_TAG_LENGTH);
+    const ciphertext = data.subarray(this.IV_LENGTH, data.length - this.AUTH_TAG_LENGTH);
 
     const decipher = crypto.createDecipheriv(this.ALGORITHM, key, iv);
     decipher.setAuthTag(authTag);

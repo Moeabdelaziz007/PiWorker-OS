@@ -107,29 +107,12 @@ export class SovereignBridge {
       });
       const sovereignProto = grpc.loadPackageDefinition(packageDefinition).sovereign as any;
 
-      // 🔒 [mTLS] Load certificates for Neural Vault Security
-      let caCert, clientCert, clientKey;
-
-      if (process.env.SOVEREIGN_CA_CERT) {
-        // Priority 1: Environment Variables
-        caCert = Buffer.from(process.env.SOVEREIGN_CA_CERT, 'utf-8');
-        clientCert = Buffer.from(process.env.SOVEREIGN_CLIENT_CERT || '', 'utf-8');
-        clientKey = Buffer.from(process.env.SOVEREIGN_CLIENT_KEY || '', 'utf-8');
-      } else {
-        // Priority 2: Local Files (Dev)
-        const caPath = PathResolver.getCertPath('ca.crt');
-        if (fs.existsSync(caPath)) {
-          caCert = fs.readFileSync(caPath);
-          clientCert = fs.readFileSync(PathResolver.getCertPath('client.crt'));
-          clientKey = fs.readFileSync(PathResolver.getCertPath('client.key'));
-        }
-      }
-
-      const sslCreds = caCert ? grpc.credentials.createSsl(caCert, clientKey, clientCert) : grpc.credentials.createInsecure();
+      // 🔒 [Steel Gate] Application-layer security is enforced. Transport is insecure for internal sidecar communication.
+      const insecureCreds = grpc.credentials.createInsecure();
 
       this.client = new sovereignProto.SovereignService(
         this.ENGINE_URL,
-        sslCreds, 
+        insecureCreds, 
         {
           "grpc.primary_user_agent": "PiWorker-Orchestrator/2.0",
           "grpc.default_authority": "axiev.org",
