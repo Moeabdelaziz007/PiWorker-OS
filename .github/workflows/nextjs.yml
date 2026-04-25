@@ -73,11 +73,25 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Validate required build paths
+        run: |
+          set -euo pipefail
+          REQUIRED_PATHS=(
+            "package.json"
+            "next.config.js"
+          )
+          for path in "${REQUIRED_PATHS[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "::error::Required path not found: $path"
+              exit 1
+            fi
+          done
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Resolve Pages artifact path
         id: resolve-artifact
         run: |
+          set -euo pipefail
           # Static export flow (`output: "export"`) produces ./out.
           if [ -d "./out" ]; then
             echo "path=./out" >> "$GITHUB_OUTPUT"
@@ -90,7 +104,7 @@ jobs:
             exit 0
           fi
 
-          echo "Neither ./out nor ./.next exists after build."
+          echo "::error::Neither ./out nor ./.next exists after build."
           exit 1
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

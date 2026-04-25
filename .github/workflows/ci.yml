@@ -74,7 +74,22 @@ jobs:
       
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps chromium
+
+    - name: Validate required audit paths
+      run: |
+        set -euo pipefail
+        REQUIRED_PATHS=(
+          "playwright.config.ts.bak"
+          "tests.bak/sandbox-audit.spec.ts"
+        )
+        for path in "${REQUIRED_PATHS[@]}"; do
+          if [ ! -e "$path" ]; then
+            echo "::error::Required path not found: $path"
+            exit 1
+          fi
+        done
       
+    - name: Run The Sandbox Audit
     - name: Run The Sandbox Audit
       run: npx playwright test tests/sandbox-audit.spec.ts --config=playwright.config.ts
       env:

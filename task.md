@@ -31,7 +31,9 @@ The user is facing persistent build errors on Vercel. We cannot move forward wit
 3. [x] Step 3: Implement missing gRPC service registration in `sovereign.pb.go`.
 4. [x] Step 4: Expand `api/index.go` to support all bridge methods (Payment, Escrow, Verify, Intent).
 5. [x] Step 5: Fix specific bugs: `payload` undefined, empty SSE listener, and `node:crypto` browser errors.
-6. [ ] Step 6: Final build verification and `add-memory` execution.
+6. [x] Step 6: Review and merge PRs (`codex/*` and `tactical-dashboard-redesign`).
+7. [ ] Step 7: Re-integrate Sovereign Engine into the redesigned dashboard.
+8. [ ] Step 8: Final build verification and `add-memory` execution.
 
 ### Verification
 - [x] 2x `search-memory` calls executed (Checked `openmemory.md` and grepped imports)
