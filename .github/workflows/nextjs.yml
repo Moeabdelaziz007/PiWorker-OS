@@ -73,8 +73,28 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Validate required build paths
+        run: |
+          set -euo pipefail
+          REQUIRED_PATHS=(
+            "package.json"
+            "next.config.js"
+          )
+          for path in "${REQUIRED_PATHS[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "::error::Required path not found: $path"
+              exit 1
+            fi
+          done
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Validate generated Pages artifact
+        run: |
+          set -euo pipefail
+          if [ ! -d "out" ]; then
+            echo "::error::Expected static export directory 'out' was not generated. Ensure Next.js static export is configured."
+            exit 1
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

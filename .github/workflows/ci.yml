@@ -32,7 +32,7 @@ jobs:
       with:
         go-version: '1.24'
         cache: true
-        cache-dependency-path: sidecar/sovereign-engine/go.sum
+        cache-dependency-path: go.sum
 
     - name: Build Sovereign Engine (Static Binary)
       run: |
@@ -74,9 +74,23 @@ jobs:
       
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps chromium
+
+    - name: Validate required audit paths
+      run: |
+        set -euo pipefail
+        REQUIRED_PATHS=(
+          "playwright.config.ts.bak"
+          "tests.bak/sandbox-audit.spec.ts"
+        )
+        for path in "${REQUIRED_PATHS[@]}"; do
+          if [ ! -e "$path" ]; then
+            echo "::error::Required path not found: $path"
+            exit 1
+          fi
+        done
       
     - name: Run The Sandbox Audit
-      run: npx playwright test tests/sandbox-audit.spec.ts
+      run: npx playwright test -c playwright.config.ts.bak tests.bak/sandbox-audit.spec.ts
       env:
         SOVEREIGN_ENGINE_URL: localhost:50051
         SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}

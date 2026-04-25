@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Config for Next.js 15
+  output: "export",
   experimental: {
     // any experimental features can be added here
   },

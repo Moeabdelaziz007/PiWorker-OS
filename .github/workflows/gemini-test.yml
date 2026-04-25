@@ -23,6 +23,19 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Validate required test paths
+        run: |
+          set -euo pipefail
+          REQUIRED_PATHS=(
+            "scripts/test-gemini-connection.js"
+          )
+          for path in "${REQUIRED_PATHS[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "::error::Required path not found: $path"
+              exit 1
+            fi
+          done
+
       - name: Test Gemini API Connection
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
