@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Moeabdelaziz007/PiWorker-OS/sovereign-engine/internal/bridge"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/bridge"
 )
 
 // Persona types from legacy v1

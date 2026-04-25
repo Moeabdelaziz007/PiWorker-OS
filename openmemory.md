@@ -31,9 +31,17 @@
 ## Cybersecurity Mapping (Five-Ring Defense Audit)
 - **Ring 1 (Identity)**: ✅ Verified (Deterministic Signature Sorting).
 - **Ring 2 (Capability)**: ✅ Verified (gRPC Auth Tokens & Metadata).
-- **Ring 3 (Sandbox)**: ⚠️ **In Progress** (Logical isolation initialized in `/sandbox/executor.ts`).
+- **Ring 3 (Sandbox)**: ✅ **VERIFIED** (Neural-Isolated Sandbox implemented with whitelist strategy and log capturing).
 - **Ring 4 (Quantum Mirror)**: ✅ Verified (Simulation security hardened in Go core).
 - **Ring 5 (Adversarial)**: ✅ Initialized (Steel Gate Interceptors).
+
+## Phase 11: Ring 3 Neural Isolation (2026-04-25)
+- **Whitelisting**: ✅ **IMPLEMENTED**.
+  - Otto VM now uses a strict whitelist strategy. Global objects like `os`, `fs`, and `process` are explicitly nil-ed.
+- **Log Capturing**: ✅ **IMPLEMENTED**.
+  - `console.log` is bridged from Otto to Go to TypeScript, allowing real-time audit logs of plugin execution.
+- **Structured Response**: ✅ **IMPLEMENTED**.
+  - `PluginResponse` now includes `logs` array for dashboard visualization.
 
 ## Critical Vulnerabilities (Resolved)
 - **VULN-001**: ✅ [PATCHED] Steel Gate Authorization in `CommitPayment`.
