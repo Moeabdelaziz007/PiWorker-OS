@@ -16,9 +16,11 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
+      # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'

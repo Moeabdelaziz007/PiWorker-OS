@@ -14,10 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner in fs mode
-        uses: aquasecurity/trivy-action@master
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: 'fs'
           ignore-unfixed: true
@@ -26,6 +28,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security tab
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'

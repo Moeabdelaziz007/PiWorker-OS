@@ -13,15 +13,18 @@ jobs:
 
     steps:
       - name: Checkout code
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/checkout@v4
 
       - name: Setup Node.js
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
           cache: npm
 
       - name: Setup Go
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-go@v5
         with:
           go-version: "1.24.x"
@@ -48,6 +51,7 @@ jobs:
         run: npx secretlint "**/*"
 
       - name: Vulnerability scan (Trivy)
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: fs
@@ -131,6 +135,7 @@ jobs:
           EOF
 
       - name: Upload release checklist artifact
+        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/upload-artifact@v4
         with:
           name: release-checklist
