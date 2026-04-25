@@ -1,0 +1,91 @@
+# --- PiWorker-OS Sovereign Ignore List ---
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+jspm_packages/
+
+# Next.js Build
+.next/
+out/
+build/
+
+# Go Build & Binaries
+sidecar/sovereign-engine/bin/
+sidecar/sovereign-engine/pkg/pb/*.go
+!sidecar/sovereign-engine/pkg/pb/sovereign.pb.go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Python & AI
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS/IDEs
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vercel
+.vercel
+
+# Debug/Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+telemetry.json
+
+# Scratch/Temporary
+scratch/
+data/
+.system_generated/
+tmp/
+.go-cache/
+sidecar/sovereign-engine/.go-cache/
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs and Build Errors
+*.txt
+!README.md
+!LICENSE
+!SECURITY.md
+!ARCHITECTURE.md
+!SECURITY_HARDENING.md
+!ARCHITECTURE_MASTER_PLAN.md
+!openmemory.md
+!next-env.d.ts
+!package.json
+!tsconfig.json
+!package-lock.json
+# Security Certificates (Neural Vault)
+*.key
+*.pem
+infra/certs/
+sidecar/sovereign-engine/certs/
