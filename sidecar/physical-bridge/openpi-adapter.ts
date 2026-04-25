@@ -4,6 +4,9 @@
  */
 
 import { verifyPhysicalTask } from "../../core/brain/gemini-multimodal-oracle";
+import { SovereignBridge } from "../../core/engine/sovereign-bridge";
+import { AmrikyyTreasury } from "../../core/finance/treasury-vault";
+import crypto from "node:crypto";
 
 export interface VLAAction {
   delta_pose: number[]; // [dx, dy, dz, dr, dp, dy]
@@ -17,13 +20,13 @@ export interface PhysicalTaskPayload {
   torque_limits: number[];
   task_objective: string;
   visual_goal_grounding?: string; // Base64 or URL for goal frame
+  visual_subgoals?: Buffer[];
   timestamp: string;
   priority: "emergency" | "standard" | "low";
 }
 
 export class OpenPiAdapter {
   private static instance: OpenPiAdapter;
-  private endpoint: string = process.env.OPENPI_INFERENCE_URL || "http://localhost:8080/v1/vla";
 
   private constructor() {}
 
@@ -38,7 +41,12 @@ export class OpenPiAdapter {
    * Formats a neural intent into a physical task payload and transmits it.
    * Dispatches VLA (Vision-Language-Action) kinematics to the robot.
    */
-  public async dispatchTask(intent: string, objective: string): Promise<boolean> {
+  public async dispatchTask(
+    intent: string, 
+    objective: string, 
+    agentId: string = "MAS-ZERO",
+    visualSubgoals: Buffer[] = []
+  ): Promise<{ success: boolean; trackingId?: string }> {
     console.log(`[OpenPi] 🧠 Translating intent: "${intent}" to VLA Kinematics...`);
 
     // In a real implementation, this would call a VLA model (like π0.7)
@@ -52,19 +60,37 @@ export class OpenPiAdapter {
       },
       torque_limits: [10.5, 10.5, 8.0, 5.0, 5.0, 3.0], 
       task_objective: objective,
+      visual_subgoals: visualSubgoals,
       timestamp: new Date().toISOString(),
       priority: "standard"
     };
 
-    console.log(`[OpenPi] 🚀 Transmitting VLA payload to OpenPi node:`, JSON.stringify(payload, null, 2));
-
+    console.log(`[OpenPi] 🚀 Transmitting VLA payload to Sovereign Bridge...`);
+    
     try {
-      // Simulate High-Performance RPC
-      // const response = await axios.post(this.endpoint, payload);
-      return true;
+      const response = await SovereignBridge.sendEmbodiedIntent({
+        intentId: `intent_${crypto.randomBytes(4).toString("hex")}`,
+        agentId: agentId,
+        subtaskLanguage: intent,
+        executionMetadata: {
+          objective: objective,
+          action_space: payload.action_space,
+          priority: payload.priority
+        },
+        controlMode: "autonomous",
+        visualSubgoals: visualSubgoals
+      });
+
+      if (!response.accepted) {
+        console.error(`[OpenPi] ❌ Sovereign Engine rejected intent: ${response.statusMessage}`);
+        return { success: false };
+      }
+
+      console.log(`[OpenPi] ✅ Intent accepted by Go Engine. Tracking ID: ${response.trackingId}`);
+      return { success: true, trackingId: response.trackingId };
     } catch (err) {
-      console.error("[OpenPi] ❌ VLA Transmission failed:", err);
-      return false;
+      console.error("[OpenPi] ❌ Sovereign Bridge Transmission failed:", err);
+      return { success: false };
     }
   }
 
@@ -93,6 +119,29 @@ export class OpenPiAdapter {
     // 2. Trigger Sovereign Settlement
     console.log(`[OpenPi] 💰 Releasing fiscal payload for escrow ${escrowId}...`);
     
-    return true;
+    try {
+      // Release the local escrow first
+      await AmrikyyTreasury.releaseEscrow(escrowId);
+      
+      // In a real sovereign flow, the treasury would already have the recipientId 
+      // from the escrow state. For this hardening, we simulate the payment commitment.
+      const paymentResponse = await SovereignBridge.commitPayment({
+        recipientId: "physical-node-01", // Targeted robot wallet
+        amountPi: 50.0, // Standard task reward
+        agentAuthToken: process.env.SOVEREIGN_AUTH_TOKEN || "SOVEREIGN_DEV_TOKEN",
+        priority: "standard"
+      });
+
+      if (paymentResponse.success) {
+        console.log(`[OpenPi] ✅ Settlement COMPLETE. Tx: ${paymentResponse.txId}`);
+        return true;
+      } else {
+        console.error(`[OpenPi] ❌ Sovereign Payment failed: ${paymentResponse.errorMessage}`);
+        return false;
+      }
+    } catch (err) {
+      console.error(`[OpenPi] ❌ Sovereign Settlement CRITICAL FAILURE:`, err);
+      return false;
+    }
   }
 }

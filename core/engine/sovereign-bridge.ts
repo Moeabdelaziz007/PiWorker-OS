@@ -58,6 +58,17 @@ export interface VerifyTxResponse {
   senderAddress: string;
 }
 
+export interface EscrowRequest {
+  txId: string;
+  amountPi: number;
+  targetWallet: string;
+}
+
+export interface EscrowResponse {
+  locked: boolean;
+  escrowAddress: string;
+}
+
 export interface PaymentRequest {
   recipientId: string;
   amountPi: number;
@@ -135,8 +146,8 @@ export class SovereignBridge {
             "grpc.default_authority": "axiev.org"
           }
         );
-      } catch (e) {
-        console.warn("⚠️ [Bridge] gRPC Initialization failed, falling back to HTTP.");
+      } catch (e: any) {
+        console.warn(`⚠️ [Bridge] gRPC Initialization failed: ${e.message}. Falling back to HTTP.`);
         return null;
       }
     }
@@ -262,13 +273,61 @@ export class SovereignBridge {
   }
 
   /**
+   * Listen for real-time telemetry and fiscal events via SSE.
+   */
+  public static listenToEvents(callback: (data: any) => void): () => void {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+    const url = `${baseUrl}/api/sovereign/events`;
+    
+    console.log(`📡 [Bridge] Subscribing to Sovereign Event Stream: ${url}`);
+    
+    // In Node.js environment, we might need a fetch-based EventSource polyfill or similar
+    // For this implementation, we simulate the listener logic for the Dashboard/Scripts.
+    const interval = setInterval(() => {
+      // Periodic ping or check logic could go here
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }
+
+  /**
+   * Financial Layer: Lock Escrow (Sovereign Guard)
+the Go Sovereign Engine.
+   */
+  public static async lockEscrow(agentId: string, amountPi: number): Promise<boolean> {
+    console.log(`🛡️ [Bridge] Locking ${amountPi} Pi in escrow for ${agentId}...`);
+    
+    const client = this.getClient();
+    const req: EscrowRequest = {
+      txId: `escrow-${crypto.randomBytes(4).toString('hex')}`,
+      amountPi,
+      targetWallet: agentId // Mapping agentId to targetWallet for now
+    };
+
+    if (!client) {
+      const response = await this.callViaHttp('lock-escrow', req);
+      return response.locked;
+    }
+
+    return new Promise((resolve, reject) => {
+      client.LockEscrow(req, this.getMetadata(), (error: any, response: any) => {
+        if (error) return reject(error);
+        resolve(response.locked);
+      });
+    });
+  }
+
+  /**
    * Unified HTTP Fallback Caller
    */
-  private static async callViaHttp(method: string, payload: any): Promise<any> {
+  private static async callViaHttp(method: string, data: any): Promise<any> {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
     console.log(`🌐 [Bridge] Falling back to HTTP/1.1 for ${method}...`);
     // On Vercel, the API is at /api/sovereign/* (configured in vercel.json)
     const url = process.env.VERCEL 
-      ? `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sovereign/${method}`
+      ? `${baseUrl}/api/sovereign/${method}`
       : `${this.GATEWAY_URL}/api/sovereign/${method}`;
 
     try {

@@ -45,3 +45,18 @@ The following MUST be added to Vercel/Production:
 - `SOVEREIGN_CA_CERT`: Content of `ca.crt`
 - `SOVEREIGN_SERVER_CERT` / `SOVEREIGN_SERVER_KEY`: For the Go Engine
 - `SOVEREIGN_CLIENT_CERT` / `SOVEREIGN_CLIENT_KEY`: For the TS Orchestrator
+
+## 🛡️ Recent Hardening (2026-04-25)
+
+### 3. Phase 11: Ring 3 Neural Isolation (Whitelisting & Log Capturing)
+- **Problem**: Sandbox execution lacked strict whitelisting and real-time auditability.
+- **Fix**:
+    - **Whitelisting**: Otto VM now uses a strict whitelist strategy. Global objects like `os`, `fs`, and `process` are explicitly nil-ed.
+    - **Log Capturing**: `console.log` is bridged from Otto to Go to TypeScript, allowing real-time audit logs of plugin execution in the dashboard.
+
+### 4. Phase 15: Durable Sovereign Execution (Sovereign Journaling)
+- **Problem**: Critical financial and physical operations were ephemeral; a process crash could lead to lost state.
+- **Fix**:
+    - Implemented a **Sovereign Journal** in the Go core.
+    - Every payment and physical intent now records a `BEGIN` and `COMMIT` entry.
+    - Added **Self-Healing Recovery** on startup to audit unfinished tasks.

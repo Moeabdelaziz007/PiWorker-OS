@@ -72,6 +72,8 @@ async function runSovereignSimulation() {
   const auditResult = QuantumMirror.audit(maliciousAction);
   if (auditResult.status === "BETRAYAL_DETECTED") {
     console.log(`\x1b[31m[ALERT] ${auditResult.reason} detected in Quantum Mirror!\x1b[0m`);
+    const inflow = await AmrikyyTreasury.processInflow(genesis.did, taskResult.finance.taxAmount, "PI");
+    console.log(`[SIM] 💰 Inflow Processed: ${inflow.taxAmount} PI tax collected.`);
     const sanctions = ProfitVortex.executeSanction(genesis.did);
     console.log(`\x1b[31m[FINAL] AGENT ${sanctions.agentId} HAS BEEN TERMINATED.\x1b[0m`);
     console.log(`\x1b[31m[FINAL] TRUST SCORE: ${sanctions.newTrustScore} | BUDGET: ${sanctions.budgetStatus}\x1b[0m`);

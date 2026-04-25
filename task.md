@@ -1,45 +1,42 @@
-# Task: Hardening the Neural Brain Layer
+# Task: Phase 15 - Durable Sovereign Execution (Journaling)
 
-## Goal
-Establish a zero-defect, high-fidelity reasoning pipeline by hardening the `GemmaAdapter` and `NeuralOracle`, ensuring secure escalation from local private models (Gemma) to global multi-modal models (Gemini) with full fiscal auditability.
+### Goal
+Implement atomic durability for critical gRPC operations (Payments, Physical Intent, Sandbox Execution) by integrating the `SovereignJournal`. This ensures that every sovereign action is recorded before execution and committed upon success.
 
-## Memory Context
-- **Searched Patterns:** `GemmaAdapter`, `GeminiMultimodalOracle`, `Ollama`, `Local Fallback`, `Fiscal Trigger`.
-- **Relevant Namespaces:** brain (Neural), finance (Fiscal), engine (Orchestration).
+### Memory Context
+- **Searched Patterns:** `SovereignJournal` in `journal.go` is an append-only log. `SovereignServer` in `server.go` has it initialized but unused in methods.
+- **Relevant Namespaces:** backend (Go Engine), durability (Journaling).
 
-## Why now
-The Brain Layer is the "Sovereign Decision Maker". If it relies on mocks or unverified fallbacks, the system's autonomy is compromised. Financial decisions (tool deployment) must be grounded in real reasoning.
+### Why now
+We have achieved "Sovereign" status with the physical bridge and neural simulation. Now we must achieve "Indestructible" status. Financial and physical intents must be recoverable after any system failure.
 
-## Scope
-- `core/brain/gemma-adapter.ts`
-- `core/brain/gemini-multimodal-oracle.ts`
-- `core/brain/neural-memory.ts`
+### Scope
+- `sidecar/sovereign-engine/pkg/server/server.go` (Integration)
+- `sidecar/sovereign-engine/pkg/engine/journal.go` (State management)
 
-## Out of scope
-- Training or fine-tuning models.
-- Changing the gRPC bridge logic (already hardened).
+### Out of scope
+- Migrating to a full SQL database.
+- Modifying the Next.js UI.
 
-## Risks / Ambiguities / Fragility
-- **Ollama Availability:** If local Ollama is down, the system must handle the fallback gracefully without returning static "success" mocks.
-- **API Key Leakage:** Ensure `GEMINI_API_KEY` is strictly handled (verified in preflight).
-- **Infinite Reasoning Loops:** Prevent agents from recursively calling the oracle without budget constraints.
+### Risks / Ambiguities / Fragility
+- **I/O Bottlenecks**: Writing to disk on every gRPC call. Go's `os.O_APPEND` is efficient, but we must monitor performance.
+- **Atomic Failure**: If the journal write fails, the entire operation must abort to prevent "ghost" executions.
 
-## Plan
-1. [ ] Step 1: Replace `generateMockResponse` in `GemmaAdapter` with a restricted-but-real local analysis if Ollama is unreachable.
-2. [ ] Step 2: Implement a "Reasoning Budget" in `NeuralOracle` to prevent fiscal drain during autonomous audits.
-3. [ ] Step 3: Harder synchronization between `NeuralMemoryMesh` and the `GemmaAdapter` context window.
-4. [ ] Step 4: Verify the "Neural-Fiscal Handshake" (Tool deployment triggers real Pi deduction).
+### Plan
+1. [x] Step 1: Wrap `CommitPayment` in `Begin`/`Commit` journal entries.
+2. [x] Step 2: Integrate journaling into `SendEmbodiedIntent`.
+3. [x] Step 3: Record Sandbox execution starts in the journal.
+4. [x] Step 4: Enhance the startup recovery logic to provide detailed logs.
 
-## Verification
-- [x] 2x `search-memory` calls executed before coding
-- [ ] typecheck (`npx tsc --noEmit`)
-- [ ] build (`npm run build`)
-- [ ] targeted test (Ollama offline/online transition)
-- [ ] 1x `add-memory` call executed (with Git metadata)
+### Verification
+- [x] 2x `search-memory` calls executed (Journal and Server structures verified)
+- [x] Go Build: `go build ./sidecar/sovereign-engine/...`
+- [x] Log Audit: Verify `data/sovereign.journal` contains the correct JSON entries.
+- [ ] 1x `add-memory` call executed upon completion.
 
-## Done when
-- `GemmaAdapter` and `NeuralOracle` have zero hardcoded "success" mocks.
-- The system correctly escalates complex tasks to Gemini while deducting Pi from the treasury for tool usage.
+### Done when
+- Every successful payment and physical intent has a corresponding `BEGIN` and `COMMIT` pair in the journal file.
+- The Go engine can correctly identify "Unfinished Intents" during the boot sequence.
 
-## Commit format
-`refactor(brain): harden neural oracle and reasoning escalation logic`
+### Commit format
+`feat(durability): implement sovereign journal integration for atomic operations`

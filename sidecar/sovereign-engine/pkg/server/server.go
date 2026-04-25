@@ -52,6 +52,10 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 		active, _ := jrnl.Replay()
 		if len(active) > 0 {
 			log.Printf("🦾 [Journal] Found %d unfinished intents. Recovery initiated.", len(active))
+			for _, entry := range active {
+				log.Printf("   -> [RECOVERY_REQUIRED] ID: %s | Namespace: %s | Started: %s", 
+					entry.ID, entry.Namespace, entry.Timestamp.Format(time.RFC3339))
+			}
 		}
 	}
 
@@ -106,6 +110,13 @@ func (s *SovereignServer) RequestSimulation(ctx context.Context, req *pb.Simulat
 
 // 2. Embodied Intent Bridge (π0.7)
 func (s *SovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.EmbodiedIntent) (*pb.IntentResponse, error) {
+	log.Printf("🤖 [Sovereign Engine] Physical Intent BEGIN: %s", req.IntentId)
+	
+	// 📓 [Durability] Log BEGIN entry
+	if err := s.Journal.Begin(req.IntentId, "physical_intent", req); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to record journal: %v", err)
+	}
+
 	// 📡 [Broadcast] Send Telemetry to UI
 	s.Mu.RLock()
 	telemetry := fmt.Sprintf(`{"agentId":"%s","trackingId":"track_%s","joints":[0.1,0.2,0.5,0.0,0.0,0.0],"temp":38.5}`, req.AgentId, req.IntentId)
@@ -116,6 +127,11 @@ func (s *SovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.Embodi
 		}
 	}
 	s.Mu.RUnlock()
+
+	// 📓 [Durability] Log COMMIT entry
+	if err := s.Journal.Commit(req.IntentId, "physical_intent"); err != nil {
+		log.Printf("⚠️ [Journal] Commit failed for intent %s: %v", req.IntentId, err)
+	}
 
 	return &pb.IntentResponse{
 		Accepted:      true,
@@ -142,12 +158,19 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 			ErrorMessage: "[SEC_ERROR] Plugin signature verification failed. Tampering detected.",
 		}, nil
 	}
+
+	// 📓 [Durability] Log BEGIN entry
+	if err := s.Journal.Begin(req.PluginId, "sandbox_plugin", req.PluginId); err != nil {
+		log.Printf("⚠️ [Journal] Failed to record plugin start: %v", err)
+	}
 	
 	start := time.Now()
 	res, err := s.SandboxEngine.Execute(ctx, req.SourceCode, req.EnvVars, req.AllowedCapabilities)
 	duration := time.Since(start).Milliseconds()
 
 	if err != nil {
+		// 📓 [Durability] Log FAIL entry
+		_ = s.Journal.Fail(req.PluginId, "sandbox_plugin", err.Error())
 		return &pb.PluginResponse{
 			PluginId:         req.PluginId,
 			Success:          false,
@@ -156,6 +179,9 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 			Logs:             res.Logs,
 		}, nil
 	}
+
+	// 📓 [Durability] Log COMMIT entry
+	_ = s.Journal.Commit(req.PluginId, "sandbox_plugin")
 
 	return &pb.PluginResponse{
 		PluginId:         req.PluginId,
@@ -232,6 +258,12 @@ func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 			Timestamp: time.Now(),
 			Status:    "PENDING",
 		}
+
+		// 📓 [Durability] Log BEGIN entry
+		if err := s.Journal.Begin(tx.ID, "payment", tx); err != nil {
+			log.Printf("⚠️ [Journal] Failed to record payment start: %v", err)
+		}
+
 		s.FiscalQueue.Push(tx)
 
 		s.Mu.RLock()
@@ -242,6 +274,15 @@ func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 			}
 		}
 		s.Mu.RUnlock()
+
+		// 📓 [Durability] Log COMMIT entry
+		_ = s.Journal.Commit(tx.ID, "payment")
+
+		return &pb.PaymentResponse{
+			Success:     true,
+			TxId:        tx.ID,
+			ExplorerUrl: "https://minepi.com/blockexplorer",
+		}, nil
 	}
 
 	return &pb.PaymentResponse{

@@ -25,8 +25,8 @@ export class AmrikyyTreasury {
       if (lockedOnMuscle) {
         console.log(`[TREASURY] ✅ Go Muscle confirmed escrow lock for ${agentId}.`);
       }
-    } catch (err) {
-      console.warn(`[TREASURY] ⚠️ Go Muscle unreachable. Falling back to local sovereign vault.`);
+    } catch (err: any) {
+      console.warn(`[TREASURY] ⚠️ Go Muscle unreachable: ${err.message}. Falling back to local sovereign vault.`);
     }
 
     // 2. Local Persistent Fallback (Priority 2)
@@ -73,6 +73,8 @@ export class AmrikyyTreasury {
     
     state.reserves[currency] += taxAmount;
     await this.storage.save(state);
+
+    console.log(`[TREASURY] 📥 Processed inflow for ${agentId}: Gross=${grossProfit} ${currency}, Net=${netProfit}, Tax=${taxAmount}`);
 
     return {
       txId: `tx-tax-${crypto.randomBytes(4).toString("hex")}`,

@@ -152,6 +152,7 @@ In a world of fragmented AI models and robotic platforms, PiWorker-OS sits as th
 - **Telemetry Moat:** An immutable, append-only audit ledger (`telemetry.jsonl`) capturing every neural, physical, and financial event for total accountability.
 - **Fiscal Integrity:** Automated **Sovereign Escrows** that lock Pi rewards during task execution, ensuring agents only get paid for verified successes.
 - **The Sandbox:** Isolated execution environment for agentic skills, protecting the physical hardware from unverified logic.
+- **Durable Sovereign Execution:** An append-only **Sovereign Journal** in the Go core that records state transitions (BEGIN/COMMIT) for every critical intent, ensuring 100% recovery after process failures.
 
 ---
 

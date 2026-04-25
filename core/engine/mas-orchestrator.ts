@@ -272,30 +272,25 @@ export class MASOrchestrator extends EventEmitter {
     ];
 
     try {
-      const response = await SovereignBridge.sendEmbodiedIntent({
-        intentId: `intent_${crypto.randomBytes(4).toString("hex")}`,
-        agentId: executor.id,
-        subtaskLanguage: step.action,
-        executionMetadata: {
-          speed: "0.8",
-          precision: "high",
-          safety_protocol: "active"
-        },
-        controlMode: "autonomous",
-        visualSubgoals: visualData
-      });
+      const adapter = OpenPiAdapter.getInstance();
+      const { success, trackingId } = await adapter.dispatchTask(
+        step.action,
+        step.action,
+        executor.id,
+        visualData
+      );
 
-      if (!response.accepted) {
-        throw new Error(`[π0.7] Intent Rejected: ${response.statusMessage}`);
+      if (!success) {
+        throw new Error(`[π0.7] Intent Rejected or Bridge Failure`);
       }
 
-      console.log(`[π0.7] ✅ Intent Accepted by Go Engine. Tracking: ${response.trackingId}`);
+      console.log(`[π0.7] ✅ Intent Accepted by Sovereign Bridge. Tracking: ${trackingId}`);
 
       // Emit event for UI synchronization
       this.emit(OrchestrationEvent.PHYSICAL_ACTION_INITIATED, {
         executor,
         action: step.action,
-        trackingId: response.trackingId
+        trackingId: trackingId || `track_${crypto.randomBytes(2).toString('hex')}`
       });
 
     } catch (error) {

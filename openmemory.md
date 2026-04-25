@@ -144,3 +144,28 @@
   - `core/engine/sovereign-bridge.ts`: Cross-language bridge logic.
   - `sidecar/sovereign-engine/pkg/finance/ledger_connector.go`: Blockchain connection layer.
 - **System State**: Hybrid Next.js/Go architecture, focusing on autonomous financial agents and sovereign infrastructure.
+### Task: Hardening the Neural Brain Layer\n- **Logic**: Replaced static mocks in `GemmaAdapter` with a dynamic 'Restricted Mode'.\n- **Security**: Added `REASONING_BUDGET_LIMIT` to `NeuralOracle` to prevent fiscal drain.\n- **Fiscal**: Hardened the neural-fiscal handshake with real treasury deductions and error handling.\n- **Context**: Verified for Next.js 15 Server-side execution.\n- **Git**: PiWorker-OS | main | 4966981
+
+## Phase 14: Physical Layer Hardening (2026-04-25)
+- **OpenPi Hardening**: ✅ **COMPLETE**.
+  - Refactored `OpenPiAdapter` to use `SovereignBridge.sendEmbodiedIntent` for all physical task dispatches.
+  - Synchronized `visualSubgoals` (Buffer array) between TypeScript and Go.
+- **Sovereign Settlement**: ✅ **COMPLETE**.
+  - Integrated `AmrikyyTreasury.releaseEscrow` and `SovereignBridge.commitPayment` into the PoPW (Proof of Physical Work) flow.
+- **Bridge Completion**: ✅ **COMPLETE**.
+  - Added missing `lockEscrow` method and types to `SovereignBridge.ts` to align with the Go proto.
+- **Git Metadata**: 
+  - Repo: https://github.com/Moeabdelaziz007/PiWorker-OS.git
+  - Branch: main
+  - Hash: 4966981 (Post-hardening commit)
+
+## Phase 15: Durable Sovereign Execution (2026-04-25)
+- **Sovereign Journaling**: ✅ **COMPLETE**.
+  - Integrated `SovereignJournal` into `CommitPayment`, `SendEmbodiedIntent`, and `ExecutePlugin`.
+  - Every critical operation now has a `BEGIN` and `COMMIT` (or `FAIL`) lifecycle recorded on disk.
+- **Self-Healing Startup**: ✅ **COMPLETE**.
+  - Enhanced boot sequence to scan for unfinished intents and log them for recovery auditing.
+- **Git Metadata**:
+  - Repo: https://github.com/Moeabdelaziz007/PiWorker-OS.git
+  - Branch: main
+  - Hash: 4966981 (Durable state integration)

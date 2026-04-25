@@ -23,6 +23,7 @@ PiWorker-OS is an independent digital state governed by **Amrikyy Lab**.
     - `QuantumMirror`: 30+ parallel persona simulations.
     - `LedgerConnector`: Native Pi/Stellar/Soroban bridge.
     - `EscrowManager`: Zero-trust financial settlement (Physical-to-Digital).
+    - `SovereignJournal`: Durable, append-only log for crash recovery and intent auditing.
 
 ### Layer C: The Physical Layer (Robot Pi / π0.7)
 - **π0.7 Embodied Intent**: A multimodal control protocol where MASOrchestrator dispatches visual subgoals and tactical instructions.

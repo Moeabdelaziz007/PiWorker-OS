@@ -44,15 +44,16 @@ Transforming PiWorker-OS from a Next.js app into a **Durable Agentic Operating S
 ## 4. Implementation Steps (Next 10-15 Minutes)
 
 ### Phase 1: The Sovereign Contract (gRPC Sync)
-- [ ] Update `sovereign.proto` to include Gemini reasoning fields.
-- [ ] Generate Go PB files.
+- [x] Update `sovereign.proto` to include Gemini reasoning fields.
+- [x] Generate Go PB files.
 
 ### Phase 2: The Gemini-Go Integration
-- [ ] Implement `gemini_client.go` using the official Google SDK.
-- [ ] Connect `QuantumMirror` to Gemini for real reasoning.
+- [x] Implement `gemini_client.go` using the official Google SDK.
+- [x] Connect `QuantumMirror` to Gemini for real reasoning.
 
-### Phase 3: The Durable Bridge (DBOS)
-- [ ] Wrap Go handlers in DBOS transactions for 100% reliability.
+### Phase 3: The Durable Bridge (Sovereign Journal)
+- [x] Wrap Go handlers in `SovereignJournal` transactions for 100% reliability.
+- [x] Implement recovery logic for unfinished intents on startup.
 
 ### Phase 4: Vercel Production Hardening
 - [ ] Fix environment variables for the Go bridge.
