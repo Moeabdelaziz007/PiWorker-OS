@@ -12,6 +12,7 @@
     "build": "next build",
     "build:sovereign": "./scripts/sovereign-build.sh",
     "build:cli": "go build -o bin/piworker-cli cmd/piworker/main.go",
+    "ci": "make ci",
     "start": "next start",
     "forge": "go run dev.go",
     "lint": "next lint",

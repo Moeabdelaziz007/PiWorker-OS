@@ -3,6 +3,10 @@ PROTO_DIR=sidecar/sovereign-engine/proto
 gen:
 	protoc --go_out=. --go-grpc_out=. $(PROTO_DIR)/*.proto
 
+node-ci:
+	npm run typecheck
+	npm run build
+
 prebuild: gen tidy verify
 
 tidy:
@@ -15,7 +19,13 @@ verify:
 build: prebuild
 	go build -ldflags "-s -w" ./...
 
-ci: build test
+go-ci: verify
+	go test ./...
+	npm run build:cli
+	chmod +x scripts/build-sovereign-engine.sh
+	./scripts/build-sovereign-engine.sh
+
+ci: node-ci go-ci
 
 test:
 	go test ./...
