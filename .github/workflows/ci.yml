@@ -30,7 +30,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24'
+        go-version: '1.24.x'
         cache: true
         cache-dependency-path: sidecar/sovereign-engine/go.sum
 
@@ -73,10 +73,10 @@ jobs:
       run: npm install --legacy-peer-deps
       
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps chromium
+      run: npm run playwright:install:chromium
       
     - name: Run The Sandbox Audit
-      run: npx playwright test tests/sandbox-audit.spec.ts
+      run: npm run playwright:test:sandbox
       env:
         SOVEREIGN_ENGINE_URL: localhost:50051
         SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
