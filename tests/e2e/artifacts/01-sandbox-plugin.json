@@ -1,0 +1,30 @@
+{
+  "scenario": "sandbox_plugin_execution",
+  "startedAt": "2026-04-25T05:54:44.528Z",
+  "endedAt": "2026-04-25T05:54:44.638Z",
+  "deterministicData": {
+    "goalId": "goal-e2e-0001",
+    "pluginId": "plugin-e2e-0001",
+    "paymentRecipientId": "agent-e2e-0001",
+    "escrowAgentId": "agent-e2e-escrow-01",
+    "sourceCode": "export default async () => ({ ok: true, version: 1 });"
+  },
+  "events": [
+    {
+      "at": "2026-04-25T05:54:44.607Z",
+      "message": "gateway_request",
+      "detail": {
+        "url": "/api/sovereign/execute",
+        "token": "token-e2e-fixed"
+      }
+    },
+    {
+      "at": "2026-04-25T05:54:44.633Z",
+      "message": "gateway_request",
+      "detail": {
+        "url": "/api/sovereign/execute",
+        "token": "bad-token-fixed"
+      }
+    }
+  ]
+}

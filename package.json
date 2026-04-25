@@ -23,7 +23,8 @@
     "contracts:fixtures": "node scripts/generate-contract-fixtures.mjs",
     "contracts:fixtures:check": "node scripts/generate-contract-fixtures.mjs --check",
     "contracts:sync:check": "node scripts/verify-contract-sync.mjs",
-    "contracts:check": "npm run contracts:sync:check && npm run contracts:fixtures:check"
+    "contracts:check": "npm run contracts:sync:check && npm run contracts:fixtures:check",
+    "test:e2e:critical": "node --test tests/e2e/sovereign-critical-path.e2e.test.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

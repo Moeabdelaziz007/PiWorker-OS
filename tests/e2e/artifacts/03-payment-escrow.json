@@ -1,0 +1,23 @@
+{
+  "scenario": "payment_escrow_critical_path",
+  "startedAt": "2026-04-25T05:54:44.718Z",
+  "endedAt": "2026-04-25T05:54:44.767Z",
+  "deterministicData": {
+    "goalId": "goal-e2e-0001",
+    "pluginId": "plugin-e2e-0001",
+    "paymentRecipientId": "agent-e2e-0001",
+    "escrowAgentId": "agent-e2e-escrow-01",
+    "sourceCode": "export default async () => ({ ok: true, version: 1 });"
+  },
+  "events": [
+    {
+      "at": "2026-04-25T05:54:44.728Z",
+      "message": "lock_escrow",
+      "detail": {
+        "txId": "escrow-fixed-id-0001",
+        "amountPi": 7.5,
+        "targetWallet": "agent-e2e-escrow-01"
+      }
+    }
+  ]
+}

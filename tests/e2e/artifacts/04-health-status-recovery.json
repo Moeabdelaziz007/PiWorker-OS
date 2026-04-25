@@ -1,0 +1,13 @@
+{
+  "scenario": "health_status_recovery",
+  "startedAt": "2026-04-25T05:54:44.771Z",
+  "endedAt": "2026-04-25T05:54:44.793Z",
+  "deterministicData": {
+    "goalId": "goal-e2e-0001",
+    "pluginId": "plugin-e2e-0001",
+    "paymentRecipientId": "agent-e2e-0001",
+    "escrowAgentId": "agent-e2e-escrow-01",
+    "sourceCode": "export default async () => ({ ok: true, version: 1 });"
+  },
+  "events": []
+}
