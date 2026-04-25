@@ -130,3 +130,17 @@
   - Removed unused 'log' import in 'sidecar/sovereign-engine/pkg/bridge/gemini_client.go'.
   - Fixed 'MaxOutputTokens' pointer assignment in 'sidecar/sovereign-engine/pkg/bridge/gemini_client.go'.
 - **Verification**: Code syntax and types are now correct. Local build blocked by air-gapped environment (missing go.sum entries), but Vercel-specific errors are resolved.
+
+## Codebase Indexing (2026-04-25)
+- **Git Metadata**: PiWorker-OS | main | 83a67d5deb6fdb42b932baf307adf05fbd44c9b6
+- **Architecture Overview**:
+  - `/core`: Contains the MAS-ZERO Engine, AI Brain (Gemini), Evolution logic, and Financial adapters (Pi).
+  - `/sidecar`: The Go-based sovereign engine responsible for low-level execution and blockchain interaction.
+  - `/app`: Next.js 15 App Router interface for dashboard and marketplace management.
+  - `/plugins`: Specialized tools for bounty scraping, MEV harvesting, and DeFi arbitrage.
+  - `/sandbox`: Secure execution environment for untrusted operations.
+- **Key Files Indexed**:
+  - `core/brain/gemini-multimodal-oracle.ts`: AI reasoning core.
+  - `core/engine/sovereign-bridge.ts`: Cross-language bridge logic.
+  - `sidecar/sovereign-engine/pkg/finance/ledger_connector.go`: Blockchain connection layer.
+- **System State**: Hybrid Next.js/Go architecture, focusing on autonomous financial agents and sovereign infrastructure.
