@@ -14,6 +14,7 @@ import (
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/bridge"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/engine"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/memory"
 	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/pb"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/sandbox"
 	"google.golang.org/grpc/codes"
@@ -27,6 +28,7 @@ type SovereignServer struct {
 	SandboxEngine      *sandbox.NeuralSandbox
 	FiscalQueue        *finance.FiscalQueue
 	Journal            *engine.SovereignJournal
+	Memory             *memory.MemoryStore
 	Mu                 sync.RWMutex
 	TxListeners        []chan finance.QueuedTx
 	TelemetryListeners []chan string
@@ -65,12 +67,18 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 		}
 	}
 
+	mem, err := memory.NewMemoryStore(fmt.Sprintf("%s/neural.memory.jsonl", dataDir))
+	if err != nil {
+		log.Printf("⚠️ [Memory] Could not initialize memory: %v", err)
+	}
+
 	return &SovereignServer{
 		QuantumMirror:      engine.NewQuantumMirror(gc),
 		GeminiClient:       gc,
 		SandboxEngine:      sandbox.NewNeuralSandbox(5 * time.Second),
 		FiscalQueue:        queue,
 		Journal:            jrnl,
+		Memory:             mem,
 		TxListeners:        []chan finance.QueuedTx{},
 		TelemetryListeners: []chan string{},
 	}, nil
@@ -322,5 +330,65 @@ func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 		Success:     true,
 		TxId:        fmt.Sprintf("tx_%d", time.Now().Unix()),
 		ExplorerUrl: "https://minepi.com/blockexplorer",
+	}, nil
+}
+
+// 4. Memory Layer (Pattern 7: Neural Memory Mesh)
+
+func (s *SovereignServer) StoreMemory(ctx context.Context, req interface{}) (interface{}, error) {
+	// We use interface{} because the pb types aren't generated yet
+	// Connect-Lite will pass us a map or a struct if we decode it manually
+	
+	m, ok := req.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid memory request type")
+	}
+
+	insight := memory.SovereignInsight{
+		ID:        fmt.Sprintf("%v", m["id"]),
+		AgentID:   fmt.Sprintf("%v", m["agent_id"]),
+		Topic:     fmt.Sprintf("%v", m["topic"]),
+		Data:      m["data_json"],
+		Signature: fmt.Sprintf("%v", m["signature"]),
+		Timestamp: fmt.Sprintf("%v", m["timestamp"]),
+	}
+
+	if err := s.Memory.Store(insight); err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"success":   true,
+		"memory_id": insight.ID,
+	}, nil
+}
+
+func (s *SovereignServer) QueryMemory(ctx context.Context, req interface{}) (interface{}, error) {
+	m, ok := req.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid query request type")
+	}
+
+	topic := fmt.Sprintf("%v", m["topic"])
+	agentId := fmt.Sprintf("%v", m["agent_id"])
+
+	results := s.Memory.Query(topic, agentId)
+	
+	// Convert results to map for JSON response
+	insights := []map[string]interface{}{}
+	for _, res := range results {
+		insights = append(insights, map[string]interface{}{
+			"id":        res.ID,
+			"agent_id":  res.AgentID,
+			"topic":     res.Topic,
+			"data_json": res.Data,
+			"signature": res.Signature,
+			"timestamp": res.Timestamp,
+			"relevance": res.Relevance,
+		})
+	}
+
+	return map[string]interface{}{
+		"insights": insights,
 	}, nil
 }

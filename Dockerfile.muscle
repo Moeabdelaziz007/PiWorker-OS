@@ -1,0 +1,51 @@
+# MAS-ZERO :: SOVEREIGN MUSCLE (GO ENGINE)
+# Multi-stage build for production-grade, minimal footprint deployment.
+
+# Stage 1: Build
+FROM golang:1.25-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy root dependency manifests
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the entire monorepo source
+# Required for resolving github.com/Moeabdelaziz007/PiWorker-OS/sidecar/...
+COPY . .
+
+# Build the Sovereign Muscle
+# CGO_ENABLED=0 ensures a static binary for minimal alpine images
+RUN CGO_ENABLED=0 GOOS=linux go build -o /sovereign-muscle sidecar/sovereign-engine/main.go
+
+# Stage 2: Final Runtime
+FROM alpine:latest
+
+# Install runtime essentials (ca-certs for HTTPS/Gemini API)
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /root/
+
+# Copy the compiled binary
+COPY --from=builder /sovereign-muscle .
+
+# Copy Protobuf definitions for reflection and auditing
+COPY --from=builder /app/sidecar/sovereign-engine/proto ./proto
+
+# Secure Data Directory (Neural Memory Mesh Persistence)
+RUN mkdir -p /data
+ENV SOVEREIGN_DATA_DIR=/data
+VOLUME /data
+
+# Deployment Config
+ENV PORT=8080
+ENV GRPC_PORT=50051
+
+EXPOSE 8080
+EXPOSE 50051
+
+# Run the Muscle
+CMD ["./sovereign-muscle"]

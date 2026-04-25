@@ -19,6 +19,10 @@ service SovereignService {
 
   // Ring 3: Neural-Isolated Sandbox Execution
   rpc ExecutePlugin(PluginRequest) returns (PluginResponse);
+
+  // Pattern 7: Neural Memory Mesh (Collective Intelligence)
+  rpc StoreMemory(MemoryInsight) returns (MemoryResponse);
+  rpc QueryMemory(MemoryQuery) returns (MemoryList);
 }
 
 // --- Simulation Logic ---
@@ -119,5 +123,29 @@ message PluginResponse {
   string output_json = 3;
   string error_message = 4;
   int64 execution_time_ms = 5;
-  repeated string logs = 6;
+// --- Memory Layer ---
+
+message MemoryInsight {
+  string id = 1;
+  string agent_id = 2;
+  string topic = 3;
+  string data_json = 4;
+  string signature = 5;
+  string timestamp = 6;
+  float relevance = 7;
+}
+
+message MemoryResponse {
+  bool success = 1;
+  string memory_id = 2;
+}
+
+message MemoryQuery {
+  string topic = 1;
+  string agent_id = 2;
+  string semantic_query = 3;
+}
+
+message MemoryList {
+  repeated MemoryInsight insights = 1;
 }

@@ -114,6 +114,9 @@ func startHttpServer(srv *server.SovereignServer, grpcAddr string, contractPath 
 		}
 	})
 
+	// 🔗 [Connect-Lite] High-Compatibility JSON Bridge
+	mux.Handle("/sovereign.SovereignService/", srv.ConnectLiteHandler())
+
 	go func() {
 		log.Printf("🌐 Sovereign HTTP API listening at http://127.0.0.1:8080")
 		if err := http.ListenAndServe(":8080", mux); err != nil && !errors.Is(err, http.ErrServerClosed) {

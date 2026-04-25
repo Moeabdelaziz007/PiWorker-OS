@@ -1,7 +1,8 @@
+import "server-only";
 import crypto from "node:crypto";
-import { PersistenceEngine } from "./persistence-engine";
 import { VectorStore } from "./vector-store";
 import { EmbeddingEngine } from "./embedding-engine";
+import { sovereignClient } from "../engine/sovereign-client";
 
 /**
  * Neural Memory Mesh
@@ -23,30 +24,54 @@ export class NeuralMemoryMesh {
   private static activeClaims: Map<string, { agentId: string, expires: number }> = new Map();
 
   /**
-   * Restores the collective intelligence state from disk.
+   * Restores the collective intelligence state from the Sovereign Muscle.
    */
   static async initialize() {
-    console.log(`[NEURAL_MESH] Restoring collective memory...`);
+    console.log(`[NEURAL_MESH] Synchronizing collective memory with Sovereign Muscle...`);
     
-    // 1. Load Insights
-    const insights = await PersistenceEngine.loadInsights();
-    this.blackboard = insights.slice(-100); // Last 100 for RAM
+    try {
+        const response = await sovereignClient.queryMemory({ topic: "", agent_id: "" });
+        if (response && response.insights) {
+            this.blackboard = response.insights.map((i: any) => ({
+                id: i.id,
+                agentId: i.agent_id,
+                topic: i.topic,
+                data: JSON.parse(i.data_json || "{}"),
+                signature: i.signature,
+                timestamp: i.timestamp,
+                relevance: i.relevance
+            })).slice(-100);
+        }
+    } catch (err) {
+        console.warn(`⚠️ [NEURAL_MESH] Could not sync with Muscle. Falling back to local state.`);
+    }
     
-    // 2. Initialize Vector Store
+    // 2. Initialize Vector Store (Still local to Brain for semantic reasoning)
     await VectorStore.initialize();
     
     console.log(`[NEURAL_MESH] Memory Mesh synchronized with ${this.blackboard.length} active insights.`);
   }
 
   /**
-   * Posts a signed insight to the collective memory and indexes it for vector search.
+   * Posts a signed insight to the collective memory (Sovereign Muscle).
    */
   static async postInsight(insight: SovereignInsight) {
-    // In production: Verify signature before posting
     this.blackboard.push(insight);
     
-    // 1. PERSISTENCE: Save to disk
-    await PersistenceEngine.saveInsight(insight);
+    // 1. SOVEREIGN PERSISTENCE: Send to Go Muscle
+    try {
+        await sovereignClient.storeMemory({
+            id: insight.id,
+            agent_id: insight.agentId,
+            topic: insight.topic,
+            data_json: JSON.stringify(insight.data),
+            signature: insight.signature,
+            timestamp: insight.timestamp,
+            relevance: insight.relevance
+        });
+    } catch (err) {
+        console.error(`❌ [NEURAL_MESH] Sovereign store failure:`, err);
+    }
     
     // 2. VECTOR INDEXING: Generate embedding and add to store
     const contentToEmbed = `${insight.topic}: ${JSON.stringify(insight.data)}`;
@@ -58,7 +83,6 @@ export class NeuralMemoryMesh {
         metadata: insight
     });
 
-    // Maintain a rotating memory of the last 100 insights in RAM
     if (this.blackboard.length > 100) {
       this.blackboard.shift();
     }
@@ -104,7 +128,7 @@ export class NeuralMemoryMesh {
   }
 
   /**
-   * Claims a task for an agent. Returns true if claim successful.
+   * Claims a task for an agent.
    */
   static claimTask(taskId: string, agentId: string, durationMs: number = 300000): boolean {
     const now = Date.now();
@@ -129,19 +153,5 @@ export class NeuralMemoryMesh {
       this.activeClaims.delete(taskId);
       console.log(`[NEURAL_MEMORY] Task ${taskId} released by ${agentId}`);
     }
-  }
-
-  /**
-   * Generates a "Bounty" task for other agents to pick up.
-   */
-  static createBounty(taskName: string, rewardPi: number) {
-    const bountyId = `bnty-${crypto.randomBytes(4).toString("hex")}`;
-    return {
-      id: bountyId,
-      task: taskName,
-      reward: rewardPi,
-      status: "OPEN",
-      issuedAt: new Date().toISOString()
-    };
   }
 }

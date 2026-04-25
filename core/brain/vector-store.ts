@@ -1,9 +1,5 @@
-
-/**
- * MAS-ZERO :: SOVEREIGN VECTOR STORE
- * Mission: Provide ultra-fast local vector search for agent experiences.
- * Uses Cosine Similarity for semantic retrieval.
- */
+import "server-only";
+import { sovereignClient } from "../engine/sovereign-client";
 
 export interface VectorEntry {
     id: string;
@@ -11,27 +7,47 @@ export interface VectorEntry {
     metadata: any;
 }
 
-import { PersistenceEngine } from "./persistence-engine";
-
 export class VectorStore {
     private static entries: VectorEntry[] = [];
 
     /**
-     * Initializes the vector store by loading existing entries from disk.
+     * Initializes the vector store by loading existing entries from the Sovereign Muscle.
      */
     static async initialize() {
-        console.log(`[VECTOR_STORE] Initializing semantic memory...`);
-        const stored = await PersistenceEngine.loadVectorEntries();
-        this.entries = stored;
-        console.log(`[VECTOR_STORE] ${this.entries.length} semantic embeddings loaded.`);
+        console.log(`[VECTOR_STORE] Synchronizing semantic memory with Sovereign Muscle...`);
+        try {
+            const response = await sovereignClient.queryMemory({ topic: "vector_index", agent_id: "system" });
+            if (response && response.insights) {
+                this.entries = response.insights.map((i: any) => ({
+                    id: i.id,
+                    vector: JSON.parse(i.data_json || "[]"),
+                    metadata: {} // Metadata is reconstructed from insights mesh
+                }));
+            }
+        } catch (err) {
+            console.warn(`⚠️ [VECTOR_STORE] Could not sync vectors with Muscle. Starting fresh.`);
+        }
+        console.log(`[VECTOR_STORE] ${this.entries.length} semantic embeddings active.`);
     }
 
     /**
-     * Adds an entry to the vector store and persists it.
+     * Adds an entry to the vector store and persists it in the Sovereign Muscle.
      */
     static async addEntry(entry: VectorEntry) {
         this.entries.push(entry);
-        await PersistenceEngine.saveVectorEntry(entry);
+        
+        try {
+            await sovereignClient.storeMemory({
+                id: entry.id,
+                agent_id: "system",
+                topic: "vector_index",
+                data_json: JSON.stringify(entry.vector),
+                signature: "SIG_VECTOR",
+                timestamp: new Date().toISOString()
+            });
+        } catch (err) {
+            console.error(`❌ [VECTOR_STORE] Failed to persist vector:`, err);
+        }
     }
 
     /**

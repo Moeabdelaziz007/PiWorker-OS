@@ -1,4 +1,6 @@
-import crypto from "crypto";
+"use server";
+import "server-only";
+import crypto from "node:crypto";
 
 /**
  * MAS-ZERO Sovereign Signature Provider
