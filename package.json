@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "engines": {
-    "node": ">=20.0.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -16,7 +16,9 @@
     "forge": "go run dev.go",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "playwright:install:chromium": "npx playwright@1.41.2 install --with-deps chromium",
+    "playwright:test:sandbox": "npx playwright@1.41.2 test tests/sandbox-audit.spec.ts --reporter=line"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

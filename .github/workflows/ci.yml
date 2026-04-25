@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.24.x"
           cache: true
 
       - name: Install dependencies
@@ -58,18 +58,14 @@ jobs:
           exit-code: 1
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npm run playwright:install:chromium
 
       - name: Run critical E2E suite
-        run: |
-          if [ -f tests/sandbox-audit.spec.ts ]; then
-            npx playwright test tests/sandbox-audit.spec.ts --config=playwright.config.ts
-          elif [ -f tests.bak/sandbox-audit.spec.ts ]; then
-            npx playwright test tests.bak/sandbox-audit.spec.ts --config=playwright.config.ts.bak
-          else
-            echo "No critical E2E suite found at tests/sandbox-audit.spec.ts or tests.bak/sandbox-audit.spec.ts"
-            exit 1
-          fi
+        run: npm run playwright:test:sandbox
+        env:
+          SOVEREIGN_ENGINE_URL: localhost:50051
+          SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
+          AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}
 
       - name: Artifact sanity checks
         run: |
