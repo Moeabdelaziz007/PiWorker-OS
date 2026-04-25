@@ -1,0 +1,9 @@
+version: v1
+name: buf.build/moeabdelaziz007/piworker-os
+deps: []
+lint:
+  use:
+    - DEFAULT
+breakage:
+  use:
+    - DEFAULT

@@ -1,0 +1,17 @@
+version: v1
+plugins:
+  # Go
+  - plugin: buf.build/protocolbuffers/go
+    out: sidecar/sovereign-engine/pkg/pb
+    opt: paths=source_relative
+  - plugin: buf.build/connectrpc/go
+    out: sidecar/sovereign-engine/pkg/pb
+    opt: paths=source_relative
+
+  # TypeScript
+  - plugin: buf.build/bufbuild/es
+    out: core/engine/gen
+    opt: target=ts
+  - plugin: buf.build/connectrpc/es
+    out: core/engine/gen
+    opt: target=ts
