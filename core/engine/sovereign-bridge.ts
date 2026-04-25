@@ -58,6 +58,20 @@ export interface VerifyTxResponse {
   senderAddress: string;
 }
 
+export interface PaymentRequest {
+  recipientId: string;
+  amountPi: number;
+  agentAuthToken: string;
+  priority: string;
+}
+
+export interface PaymentResponse {
+  success: boolean;
+  txId: string;
+  explorerUrl: string;
+  errorMessage?: string;
+}
+
 export interface PluginRequest {
   pluginId: string;
   sourceCode: string;
@@ -205,6 +219,44 @@ export class SovereignBridge {
       }, this.getMetadata(), (error: any, response: any) => {
         if (error) return reject(error);
         resolve(response as PluginResponse);
+      });
+    });
+  }
+
+  /**
+   * Authorizes and commits a Pi payment via the Sovereign Engine.
+   */
+  public static async commitPayment(req: PaymentRequest): Promise<PaymentResponse> {
+    console.log(`💰 [Bridge] Committing Payment for ${req.recipientId}: ${req.amountPi} Pi...`);
+    
+    const client = this.getClient();
+    if (!client) {
+      return this.callViaHttp('payment', req);
+    }
+
+    return new Promise((resolve, reject) => {
+      client.CommitPayment(req, this.getMetadata(), (error: any, response: any) => {
+        if (error) return reject(error);
+        resolve(response as PaymentResponse);
+      });
+    });
+  }
+
+  /**
+   * Verifies a Pi transaction on the ledger.
+   */
+  public static async verifyTransaction(req: VerifyTxRequest): Promise<VerifyTxResponse> {
+    console.log(`🔍 [Bridge] Verifying Transaction ${req.txId}...`);
+    
+    const client = this.getClient();
+    if (!client) {
+      return this.callViaHttp('verify-tx', req);
+    }
+
+    return new Promise((resolve, reject) => {
+      client.VerifyTransaction(req, this.getMetadata(), (error: any, response: any) => {
+        if (error) return reject(error);
+        resolve(response as VerifyTxResponse);
       });
     });
   }
