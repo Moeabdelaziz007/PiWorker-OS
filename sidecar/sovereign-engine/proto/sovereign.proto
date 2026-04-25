@@ -23,9 +23,10 @@ service SovereignService {
   // Pattern 7: Neural Memory Mesh (Collective Intelligence)
   rpc StoreMemory(MemoryInsight) returns (MemoryResponse);
   rpc QueryMemory(MemoryQuery) returns (MemoryList);
-
-  // Pattern 4: Digital Darwinism & Economic Cannibalism
-  rpc EvaluateVortex(VortexRequest) returns (VortexResponse);
+  
+  // Pi-402 Agentic Payment Protocol
+  rpc AuthorizeAgentSubWallet(SubWalletRequest) returns (SubWalletResponse);
+  rpc ProcessAgentPayment(AgentPaymentRequest) returns (AgentPaymentResponse);
 }
 
 // --- Simulation Logic ---
@@ -126,34 +127,6 @@ message PluginResponse {
   string output_json = 3;
   string error_message = 4;
   int64 execution_time_ms = 5;
-  repeated string logs = 6;
-}
-
-message AgentDNA {
-  float greed = 1;
-  float cunning = 2;
-  float cognition = 3;
-  float risk_appetite = 4;
-  int32 generation = 5;
-  float fitness_score = 6;
-}
-
-message VortexRequest {
-  string agent_id = 1;
-  double actual_roi = 2;
-  double min_requirement = 3;
-  double current_budget = 4;
-  AgentDNA dna = 5;
-}
-
-message VortexResponse {
-  bool is_solvent = 1;
-  double cannibalized_amt = 2;
-  double remaining_budget = 3;
-  string action = 4;
-  double sovereign_treasury = 5;
-}
-
 // --- Memory Layer ---
 
 message MemoryInsight {
@@ -175,6 +148,34 @@ message MemoryQuery {
   string topic = 1;
   string agent_id = 2;
   string semantic_query = 3;
+}
+
+// --- Pi-402 Agentic Payment Layer ---
+
+message SubWalletRequest {
+  string agent_id = 1;
+  bytes master_seed_cipher = 2; // AES-256-GCM encrypted master seed
+}
+
+message SubWalletResponse {
+  string agent_id = 1;
+  string sub_wallet_address = 2;
+  string public_key_hex = 3;
+}
+
+message AgentPaymentRequest {
+  string source_agent_id = 1;
+  string target_id = 2; // Can be another agent or a service address
+  double amount_pi = 3;
+  string memo = 4;
+  string signature = 5; // Signed by agent's session key
+}
+
+message AgentPaymentResponse {
+  bool success = 1;
+  string tx_hash = 2;
+  string error_message = 3;
+  double remaining_balance = 4;
 }
 
 message MemoryList {
