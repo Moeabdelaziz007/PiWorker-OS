@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PiWorker Agent DNA Manifest",
+  "description": "Foundational schema for Agent DNA including chromosomes and mutation history.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["2.0"]
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "publicKey": { "type": "string" },
+        "generation": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["name", "publicKey", "generation"]
+    },
+    "dna": {
+      "type": "object",
+      "properties": {
+        "chromosomes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Core instructions and base logic prompts."
+        },
+        "mutations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "traitModified": { "type": "string" },
+              "impactDelta": { "type": "number" }
+            },
+            "required": ["id", "timestamp", "traitModified", "impactDelta"]
+          }
+        },
+        "fitnessScore": {
+          "type": "number",
+          "description": "Current ROI/Performance score for hybridization selection."
+        }
+      },
+      "required": ["chromosomes", "fitnessScore"]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "CBAC permission identifiers."
+    }
+  },
+  "required": ["version", "identity", "dna"]
+}
