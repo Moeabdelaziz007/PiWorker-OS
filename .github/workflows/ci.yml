@@ -6,9 +6,12 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
-  release-gate:
-    name: Release Gate (build, security, e2e, artifacts)
+  build:
+    name: Build & Security Audit
     runs-on: ubuntu-latest
 
     steps:
@@ -21,14 +24,26 @@ jobs:
           node-version: "22.x"
           cache: npm
 
+      - name: Verify npm lockfile integrity
+        run: npm ci --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+
+      - name: Enforce npm audit policy (fail on high/critical)
+        run: npm audit --audit-level=high --omit=dev
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.x"
           cache: true
+          cache-dependency-path: go.sum
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Verify Go module integrity
+        run: go mod verify
+
+      - name: Enforce Go vulnerability policy
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
 
       - name: Typecheck (Node)
         run: npm run typecheck
@@ -56,16 +71,6 @@ jobs:
           ignore-unfixed: true
           format: table
           exit-code: 1
-
-      - name: Install Playwright browsers
-        run: npm run playwright:install:chromium
-
-      - name: Run critical E2E suite
-        run: npm run playwright:test:sandbox
-        env:
-          SOVEREIGN_ENGINE_URL: localhost:50051
-          SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
-          AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}
 
       - name: Artifact sanity checks
         run: |
@@ -119,7 +124,6 @@ jobs:
           - ✅ Node build
           - ✅ Go build (CLI + sovereign engine)
           - ✅ Security scans (Secretlint + Trivy)
-          - ✅ Critical E2E suite
           - ✅ Artifact sanity checks
 
           ## Secret/config validation result
@@ -136,3 +140,44 @@ jobs:
           name: release-checklist
           path: release-checklist.md
           if-no-files-found: error
+
+  sandbox-audit:
+    name: Sandbox & E2E Audit
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Sovereign Engine Container
+        run: docker build -t sovereign-engine:latest sidecar/sovereign-engine/
+
+      - name: Run Sovereign Engine Container
+        run: |
+          docker run -d \
+            --name engine \
+            -p 50051:50051 \
+            -e SOVEREIGN_AUTH_TOKEN=${{ secrets.SOVEREIGN_AUTH_TOKEN }} \
+            -e AGENT_SYSTEM_SECRET=${{ secrets.AGENT_SYSTEM_SECRET }} \
+            sovereign-engine:latest
+          sleep 5 # Allow engine to wake up
+
+      - name: Install Playwright browsers
+        run: npm run playwright:install:chromium
+
+      - name: Run The Sandbox Audit
+        run: npm run playwright:test:sandbox
+        env:
+          SOVEREIGN_ENGINE_URL: localhost:50051
+          SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
+          AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}

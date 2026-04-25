@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: '0 0 * * *' # Run daily
 
+permissions:
+  contents: read
+
 jobs:
   test-gemini:
     runs-on: ubuntu-latest
@@ -20,8 +23,11 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - name: Verify npm lockfile integrity
+        run: npm ci --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+
+      - name: Enforce npm audit policy (fail on high/critical)
+        run: npm audit --audit-level=high --omit=dev
 
       - name: Validate required test paths
         run: |
