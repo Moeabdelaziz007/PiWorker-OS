@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/server"
-	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/pb"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/server"
+	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/pb"
 )
 
 var srv *server.SovereignServer

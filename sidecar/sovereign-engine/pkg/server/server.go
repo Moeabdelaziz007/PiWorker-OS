@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/bridge"
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/engine"
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/finance"
-	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/pb"
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/sandbox"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/bridge"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/engine"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
+	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/pb"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/sandbox"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

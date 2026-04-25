@@ -13,8 +13,8 @@ build/
 
 # Go Build & Binaries
 sidecar/sovereign-engine/bin/
-sidecar/sovereign-engine/internal/pb/*.go
-!sidecar/sovereign-engine/internal/pb/sovereign.pb.go
+sidecar/sovereign-engine/pkg/pb/*.go
+!sidecar/sovereign-engine/pkg/pb/sovereign.pb.go
 *.exe
 *.exe~
 *.dll

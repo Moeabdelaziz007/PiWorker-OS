@@ -6,8 +6,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/server"
-	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/internal/pb"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/server"
+	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
