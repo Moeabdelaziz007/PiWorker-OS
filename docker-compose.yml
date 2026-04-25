@@ -1,0 +1,51 @@
+# PiWorker-OS :: DECOUPLED DEPLOYMENT TOPOLOGY
+# Orchestrates the Brain (Next.js) and Muscle (Go Engine) as independent, sovereign services.
+
+services:
+  # 🦾 SOVEREIGN MUSCLE: The high-security Go execution engine
+  # Deploy this on persistent infrastructure (e.g., AWS EC2, Fargate, Railway)
+  muscle:
+    build:
+      context: .
+      dockerfile: Dockerfile.muscle
+    container_name: sovereign-muscle
+    restart: always
+    environment:
+      - SOVEREIGN_AUTH_TOKEN=${SOVEREIGN_AUTH_TOKEN:-SOVEREIGN_DEV_TOKEN}
+      - AGENT_SYSTEM_SECRET=${AGENT_SYSTEM_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8080
+      - GRPC_PORT=50051
+    volumes:
+      - muscle_data:/data
+    ports:
+      - "8080:8080"   # Connect-Lite HTTP Bridge
+      - "50051:50051" # Native gRPC
+    networks:
+      - piworker-mesh
+
+  # 🧠 COORDINATING BRAIN: The Next.js 15 Orchestrator
+  # Deploy this on Vercel or as a container
+  brain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coordinating-brain
+    depends_on:
+      - muscle
+    environment:
+      - SOVEREIGN_ENGINE_URL=http://muscle:8080
+      - SOVEREIGN_AUTH_TOKEN=${SOVEREIGN_AUTH_TOKEN:-SOVEREIGN_DEV_TOKEN}
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - piworker-mesh
+
+networks:
+  piworker-mesh:
+    driver: bridge
+
+volumes:
+  muscle_data:
+    driver: local

@@ -1,0 +1,54 @@
+name: Gemini API Integration Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * *' # Run daily
+
+permissions:
+  contents: read
+
+jobs:
+  test-gemini:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Verify npm lockfile integrity
+        run: npm ci --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+
+      - name: Enforce npm audit policy (fail on high/critical)
+        run: npm audit --audit-level=high --omit=dev
+
+      - name: Validate required test paths
+        run: |
+          set -euo pipefail
+          REQUIRED_PATHS=(
+            "scripts/test-gemini-connection.js"
+          )
+          for path in "${REQUIRED_PATHS[@]}"; do
+            if [ ! -e "$path" ]; then
+              echo "::error::Required path not found: $path"
+              exit 1
+            fi
+          done
+
+      - name: Test Gemini API Connection
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY secret is not set. Skipping real API test."
+          else
+            echo "Testing Gemini API connection..."
+            node scripts/test-gemini-connection.js
+          fi

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Optimized by MAS-ZERO for High Performance
+echo "🔍 Running SecretLint on staged files..."
+# Only scan staged files to avoid scanning node_modules/cache
+git diff --cached --name-only | xargs npx secretlint
+
+echo "🧹 Running lint-staged (formatting and linting)..."
+npx lint-staged
