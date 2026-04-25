@@ -2,30 +2,27 @@ import { NextResponse } from 'next/server';
 import { SovereignBridge } from '@/core/engine/sovereign-bridge';
 import { AmrikyyTreasury } from '@/core/finance/treasury-vault';
 import { fleetManager } from '@/core/agents/fleet-manager';
+import {
+  logStructured,
+  mapUnknownError,
+  resolveCorrelationContext,
+  withCorrelationHeaders,
+} from '@/core/utils/observability';
 
-/**
- * AMRIKYY LAB :: SOVEREIGN STATE BRIDGE API
- * ROUTE: /api/sovereign/state
- * PURPOSE: Bridges the Dashboard (UI) to the internal core and Go engine.
- * VERIFIABILITY: NO MOCK DATA.
- */
+export async function GET(request: Request) {
+  const context = resolveCorrelationContext(request.headers);
 
-export async function GET() {
   try {
-    // 1. Fetch Real Treasury Data (Durable Storage)
     const treasuryStats = await AmrikyyTreasury.getStats();
-
-    // 2. Fetch Real Fleet Metrics (Agent Registry)
     const fleetMetrics = await fleetManager.getMetrics();
     const allAgents = await fleetManager.getAllAgents();
 
-    // 3. Heartbeat: Verify Go Engine Connectivity
     let engineStatus = 'ONLINE';
     let engineHealth: any = null;
-    
+
     try {
-      engineHealth = await SovereignBridge.getSystemStatus();
-    } catch (err) {
+      engineHealth = await SovereignBridge.getSystemStatus(context);
+    } catch {
       engineStatus = 'DEGRADED';
     }
 
@@ -40,12 +37,12 @@ export async function GET() {
         count: fleetMetrics.total,
         active: fleetMetrics.active,
         ready: fleetMetrics.ready,
-        agents: allAgents.map(a => ({
+        agents: allAgents.map((a) => ({
           agentId: a.id,
           name: a.name,
           status: a.status.toUpperCase(),
           performance: a.dna.fitnessScore / 100,
-          role: a.role
+          role: a.role,
         })),
       },
       engine: {
@@ -57,12 +54,30 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(sovereignState);
-  } catch (err: any) {
-    console.error("[API_BRIDGE_ERROR] Sovereign State Aggregation Failed:", err.message);
-    return NextResponse.json(
-      { error: "Sovereign State Error", message: err.message },
-      { status: 500 }
-    );
+    logStructured({
+      component: 'NEXT_API',
+      operation: 'sovereign_state',
+      auth_context: context.authContext,
+      request_id: context.requestId,
+      correlation_id: context.correlationId,
+      message: 'State aggregation successful',
+    });
+
+    return NextResponse.json(sovereignState, withCorrelationHeaders(undefined, context));
+  } catch (error: unknown) {
+    const structured = mapUnknownError(error);
+
+    logStructured({
+      level: 'ERROR',
+      component: 'NEXT_API',
+      operation: 'sovereign_state',
+      auth_context: context.authContext,
+      request_id: context.requestId,
+      correlation_id: context.correlationId,
+      error_code: structured.category,
+      message: structured.message,
+    });
+
+    return NextResponse.json(structured.toResponseBody(context), withCorrelationHeaders({ status: structured.status }, context));
   }
 }

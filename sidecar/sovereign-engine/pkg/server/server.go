@@ -22,11 +22,11 @@ import (
 
 type SovereignServer struct {
 	pb.UnimplementedSovereignServiceServer
-	QuantumMirror *engine.QuantumMirror
-	GeminiClient  *bridge.GeminiClient
-	SandboxEngine *sandbox.NeuralSandbox
-	FiscalQueue   *finance.FiscalQueue
-	Journal       *engine.SovereignJournal
+	QuantumMirror      *engine.QuantumMirror
+	GeminiClient       *bridge.GeminiClient
+	SandboxEngine      *sandbox.NeuralSandbox
+	FiscalQueue        *finance.FiscalQueue
+	Journal            *engine.SovereignJournal
 	Mu                 sync.RWMutex
 	TxListeners        []chan finance.QueuedTx
 	TelemetryListeners []chan string
@@ -53,16 +53,16 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 		if len(active) > 0 {
 			log.Printf("🦾 [Journal] Found %d unfinished intents. Recovery initiated.", len(active))
 			for _, entry := range active {
-				log.Printf("   -> [RECOVERY_REQUIRED] ID: %s | Namespace: %s | Started: %s", 
+				log.Printf("   -> [RECOVERY_REQUIRED] ID: %s | Namespace: %s | Started: %s",
 					entry.ID, entry.Namespace, entry.Timestamp.Format(time.RFC3339))
 			}
 		}
 	}
 
 	return &SovereignServer{
-		QuantumMirror: engine.NewQuantumMirror(gc),
-		GeminiClient:  gc,
-		SandboxEngine: sandbox.NewNeuralSandbox(5 * time.Second),
+		QuantumMirror:      engine.NewQuantumMirror(gc),
+		GeminiClient:       gc,
+		SandboxEngine:      sandbox.NewNeuralSandbox(5 * time.Second),
 		FiscalQueue:        queue,
 		Journal:            jrnl,
 		TxListeners:        []chan finance.QueuedTx{},
@@ -72,11 +72,13 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 
 // 1. Quantum Mirror Simulation (Gemini-Powered)
 func (s *SovereignServer) RequestSimulation(ctx context.Context, req *pb.SimulationRequest) (*pb.SimulationResponse, error) {
+	logStructured(ctx, "request_simulation", "INFO", fmt.Sprintf("simulation start: %s", req.GoalId), "")
 	log.Printf("🚀 [Sovereign Engine] High-Fidelity Simulation Start: %s", req.GoalId)
 
 	results, err := s.QuantumMirror.Simulate(ctx, req.GoalId, int(req.Instances))
 	if err != nil {
 		log.Printf("❌ Simulation failed: %v", err)
+		logStructured(ctx, "request_simulation", "ERROR", err.Error(), ErrorDependency)
 		return nil, status.Errorf(codes.Internal, "simulation failure: %w", err)
 	}
 
@@ -101,8 +103,8 @@ func (s *SovereignServer) RequestSimulation(ctx context.Context, req *pb.Simulat
 		StrategyRecommendation: "Execution path verified via Gemini 1.5 Pro.",
 		EstimatedRevenueUsd:    avgRevenue,
 		Reasoning: &pb.GeminiReasoning{
-			LogicChain:    reasoningChain,
-			CriticalRisks: []string{"Market Volatility", "Agent Drift"},
+			LogicChain:      reasoningChain,
+			CriticalRisks:   []string{"Market Volatility", "Agent Drift"},
 			ConfidenceScore: fmt.Sprintf("%.2f%%", avgScore*100),
 		},
 	}, nil
@@ -110,8 +112,9 @@ func (s *SovereignServer) RequestSimulation(ctx context.Context, req *pb.Simulat
 
 // 2. Embodied Intent Bridge (π0.7)
 func (s *SovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.EmbodiedIntent) (*pb.IntentResponse, error) {
+	logStructured(ctx, "send_embodied_intent", "INFO", fmt.Sprintf("intent begin: %s", req.IntentId), "")
 	log.Printf("🤖 [Sovereign Engine] Physical Intent BEGIN: %s", req.IntentId)
-	
+
 	// 📓 [Durability] Log BEGIN entry
 	if err := s.Journal.Begin(req.IntentId, "physical_intent", req); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to record journal: %v", err)
@@ -142,8 +145,9 @@ func (s *SovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.Embodi
 
 // 2.5 Ring 3: Neural-Isolated Sandbox Execution
 func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginRequest) (*pb.PluginResponse, error) {
+	logStructured(ctx, "execute_plugin", "INFO", fmt.Sprintf("plugin execute: %s", req.PluginId), "")
 	log.Printf("🛡️ [Sandbox] Executing Plugin: %s", req.PluginId)
-	
+
 	// 🖋️ [Steel Gate] Verify Source Code Signature
 	secret := os.Getenv("AGENT_SYSTEM_SECRET")
 	h := hmac.New(sha256.New, []byte(secret))
@@ -152,6 +156,7 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 
 	if req.Signature != expectedSig {
 		log.Printf("⚠️ [SEC_ALERT] Plugin Signature Mismatch! ID: %s", req.PluginId)
+		logStructured(ctx, "execute_plugin", "ERROR", "plugin signature mismatch", ErrorAuth)
 		return &pb.PluginResponse{
 			PluginId:     req.PluginId,
 			Success:      false,
@@ -163,7 +168,7 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	if err := s.Journal.Begin(req.PluginId, "sandbox_plugin", req.PluginId); err != nil {
 		log.Printf("⚠️ [Journal] Failed to record plugin start: %v", err)
 	}
-	
+
 	start := time.Now()
 	res, err := s.SandboxEngine.Execute(ctx, req.SourceCode, req.EnvVars, req.AllowedCapabilities)
 	duration := time.Since(start).Milliseconds()
@@ -171,12 +176,13 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	if err != nil {
 		// 📓 [Durability] Log FAIL entry
 		_ = s.Journal.Fail(req.PluginId, "sandbox_plugin", err.Error())
+		logStructured(ctx, "execute_plugin", "ERROR", err.Error(), ErrorBuild)
 		return &pb.PluginResponse{
-			PluginId:         req.PluginId,
-			Success:          false,
-			ErrorMessage:     fmt.Sprintf("sandbox failure: %v", err),
-			ExecutionTimeMs:  duration,
-			Logs:             res.Logs,
+			PluginId:        req.PluginId,
+			Success:         false,
+			ErrorMessage:    fmt.Sprintf("sandbox failure: %v", err),
+			ExecutionTimeMs: duration,
+			Logs:            res.Logs,
 		}, nil
 	}
 
@@ -184,11 +190,11 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	_ = s.Journal.Commit(req.PluginId, "sandbox_plugin")
 
 	return &pb.PluginResponse{
-		PluginId:         req.PluginId,
-		Success:          true,
-		OutputJson:       res.Data,
-		ExecutionTimeMs:  duration,
-		Logs:             res.Logs,
+		PluginId:        req.PluginId,
+		Success:         true,
+		OutputJson:      res.Data,
+		ExecutionTimeMs: duration,
+		Logs:            res.Logs,
 	}, nil
 }
 
@@ -202,6 +208,7 @@ func (s *SovereignServer) LockEscrow(ctx context.Context, req *pb.EscrowRequest)
 }
 
 func (s *SovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyTxRequest) (*pb.VerifyTxResponse, error) {
+	logStructured(ctx, "verify_transaction", "INFO", fmt.Sprintf("verify tx: %s", req.TxId), "")
 	log.Printf("🔍 [Ledger] Verifying Transaction %s", req.TxId)
 	nodeURL := os.Getenv("PI_NODE_URL")
 	if nodeURL == "" {
@@ -210,22 +217,26 @@ func (s *SovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyT
 	connector := finance.NewLedgerConnector(nodeURL)
 	verified, sender, err := connector.VerifyPiTransaction(req.TxId, req.ExpectedReceiver, req.ExpectedAmount)
 	if err != nil {
+		logStructured(ctx, "verify_transaction", "ERROR", err.Error(), ErrorNetwork)
 		return &pb.VerifyTxResponse{Verified: false, StatusMessage: err.Error()}, nil
 	}
 	return &pb.VerifyTxResponse{Verified: verified, StatusMessage: "VERIFIED", SenderAddress: sender}, nil
 }
 
 func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequest) (*pb.PaymentResponse, error) {
+	logStructured(ctx, "commit_payment", "INFO", fmt.Sprintf("authorizing payment to %s", req.RecipientId), "")
 	log.Printf("💰 [Sovereign Maker] Authorizing Payment: %.4f Pi to %s", req.AmountPi, req.RecipientId)
-	
+
 	expectedAgentToken := os.Getenv("AGENT_SYSTEM_SECRET")
 	if expectedAgentToken == "" {
 		log.Printf("❌ [FATAL] AGENT_SYSTEM_SECRET is not set. Payments disabled.")
+		logStructured(ctx, "commit_payment", "ERROR", "payment system misconfigured", ErrorDependency)
 		return &pb.PaymentResponse{Success: false, ErrorMessage: "PAYMENT_SYSTEM_MISCONFIGURED"}, nil
 	}
 
 	if req.AgentAuthToken == "" || req.AgentAuthToken != expectedAgentToken {
 		log.Printf("⚠️ [SEC_ALERT] Unauthorized Payment Attempt! Recipient: %s, Amount: %.2f", req.RecipientId, req.AmountPi)
+		logStructured(ctx, "commit_payment", "ERROR", "unauthorized payment attempt", ErrorAuth)
 		return &pb.PaymentResponse{
 			Success: false,
 			TxId:    "REJECTED_UNAUTHORIZED",

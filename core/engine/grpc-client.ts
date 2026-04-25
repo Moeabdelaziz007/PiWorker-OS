@@ -36,8 +36,12 @@ export function getGrpcClient(engineUrl: string) {
   return client;
 }
 
-export function createMetadata(token: string): grpc.Metadata {
+export function createMetadata(token: string, correlationId?: string, requestId?: string): grpc.Metadata {
   const metadata = new grpc.Metadata();
   metadata.add('x-sovereign-token', token);
+
+  if (correlationId) metadata.add('x-correlation-id', correlationId);
+  if (requestId) metadata.add('x-request-id', requestId);
+
   return metadata;
 }
