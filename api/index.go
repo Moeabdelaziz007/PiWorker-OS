@@ -38,10 +38,92 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		handleExecute(w, r)
 	case strings.HasSuffix(path, "/simulate"):
 		handleSimulate(w, r)
+	case strings.HasSuffix(path, "/payment"):
+		handlePayment(w, r)
+	case strings.HasSuffix(path, "/verify-tx"):
+		handleVerifyTx(w, r)
+	case strings.HasSuffix(path, "/lock-escrow"):
+		handleLockEscrow(w, r)
+	case strings.HasSuffix(path, "/intent"):
+		handleIntent(w, r)
+	case strings.HasSuffix(path, "/status"):
+		handleStatus(w, r)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Endpoint not found")
+		fmt.Fprintf(w, "Endpoint not found: %s", path)
 	}
+}
+
+func handleStatus(w http.ResponseWriter, r *http.Request) {
+	// For now, return a generic status. In a full implementation, query the server.
+	res := map[string]interface{}{
+		"status":         "ONLINE",
+		"pi_balance":     175.4291,
+		"active_intents": 14,
+		"mode":           "SOVEREIGN",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func handlePayment(w http.ResponseWriter, r *http.Request) {
+	var req pb.PaymentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := srv.CommitPayment(r.Context(), &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func handleVerifyTx(w http.ResponseWriter, r *http.Request) {
+	var req pb.VerifyTxRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := srv.VerifyTransaction(r.Context(), &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func handleLockEscrow(w http.ResponseWriter, r *http.Request) {
+	var req pb.EscrowRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := srv.LockEscrow(r.Context(), &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func handleIntent(w http.ResponseWriter, r *http.Request) {
+	var req pb.EmbodiedIntent
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	res, err := srv.SendEmbodiedIntent(r.Context(), &req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
 
 func handleExecute(w http.ResponseWriter, r *http.Request) {

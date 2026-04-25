@@ -343,7 +343,7 @@ export class SovereignBridge {
   // Simplified existing methods to use the same pattern if needed
   public static async getSystemStatus(): Promise<any> {
     const url = process.env.VERCEL 
-      ? `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/status`
+      ? `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/sovereign/status`
       : `${this.GATEWAY_URL}/api/status`;
     
     try {
