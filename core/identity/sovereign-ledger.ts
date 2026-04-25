@@ -7,8 +7,6 @@ import "server-only";
  */
 
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import path from "node:path";
 
 export interface CausalTrace {
   timestamp: string;
@@ -20,13 +18,14 @@ export interface CausalTrace {
   causalLink: string; // Hash of the previous entry
 }
 
-const LEDGER_PATH = path.join(process.cwd(), "core/identity/sovereign-ledger.jsonl");
+import { TreasuryStorageFactory } from "../finance/treasury-storage";
 
 export class SovereignLedger {
   private static lastHash: string = "GENESIS_ROOT_VOID";
+  private static journal = TreasuryStorageFactory.getJournal();
 
   /**
-   * Etches a causal trace into the append-only ledger.
+   * Etches a causal trace into the distributed, durable ledger.
    */
   static async etch(trace: Omit<CausalTrace, "timestamp" | "causalLink">): Promise<string> {
     const entry: CausalTrace = {
@@ -35,15 +34,14 @@ export class SovereignLedger {
       causalLink: this.lastHash
     };
 
-    const entryString = JSON.stringify(entry) + "\n";
+    const entryString = JSON.stringify(entry);
     const entryHash = crypto.createHash("sha256").update(entryString).digest("hex");
     
-    // Ensure directory exists and append to file
-    await fs.mkdir(path.dirname(LEDGER_PATH), { recursive: true });
-    await fs.appendFile(LEDGER_PATH, entryString);
+    // Durable append to the distributed journal
+    await this.journal.append("sovereign_ledger", { ...entry, entryHash });
     
     this.lastHash = entryHash;
-    console.log(`[LEDGER] Trace Etched: ${entry.action} | Link: ${entry.causalLink.slice(0, 8)}...`);
+    console.log(`[LEDGER] Trace Etched (Durable): ${entry.action} | Hash: ${entryHash.slice(0, 8)}...`);
     
     return entryHash;
   }

@@ -4,16 +4,13 @@
  * Stores all system events in a structured JSONL format (Data Moat).
  * [BROWSER SAFE] Automatically detects environment and performs no-op in browser.
  */
-export class TelemetryLogger {
-  private static async getLogPath(): Promise<string | null> {
-    if (typeof window !== "undefined") return null;
-    const path = await import("node:path");
-    return path.join(process.cwd(), "telemetry.jsonl");
-  }
+import { TreasuryStorageFactory } from "../finance/treasury-storage";
 
+export class TelemetryLogger {
+  private static journal = TreasuryStorageFactory.getJournal();
 
   /**
-   * Logs a sovereign event to the telemetry moat.
+   * Logs a sovereign event to the durable, distributed journal.
    */
   static async log(level: "INFO" | "WARN" | "ERROR" | "CRITICAL", topic: string, data: any) {
     if (typeof window !== "undefined") {
@@ -21,22 +18,15 @@ export class TelemetryLogger {
     }
 
     const entry = {
-      timestamp: new Date().toISOString(),
       level,
       topic,
       ...data
     };
 
-    const line = JSON.stringify(entry) + "\n";
-
     try {
-      const fs = await import("node:fs");
-      const logPath = await this.getLogPath();
-      if (logPath) {
-        fs.appendFileSync(logPath, line);
-      }
+      await this.journal.append(`telemetry:${topic.toLowerCase()}`, entry);
     } catch (error) {
-      console.error(`[TELEMETRY_FATAL] Failed to write to moat: ${error}`);
+      console.error(`[TELEMETRY_FATAL] Failed to write to durable journal: ${error}`);
     }
   }
 

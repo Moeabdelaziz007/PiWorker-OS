@@ -29,6 +29,20 @@ export interface FinancialHealth {
 
 export class ProfitVortex {
   /**
+   * Genetic Pre-flight: Determines the 'Sovereign Path' based on Agent DNA.
+   * Ensures the agent's unique behavioral DNA guides the economic outcome.
+   */
+  private preflightGeneticCheck(agent: Agent): { bias: number; multiplier: number } {
+    const dna = agent.dna;
+    // Digital Darwinism: A high 'cognition' and 'riskAppetite' leads to aggressive yield curves
+    const bias = (dna.cognition + dna.riskAppetite) / 2;
+    const multiplier = 1.0 + (dna.greed * 0.5); 
+    
+    console.log(`[Vortex:Genetics] Agent ${agent.id} | Bias: ${bias.toFixed(2)} | Multiplier: ${multiplier.toFixed(2)}`);
+    return { bias, multiplier };
+  }
+
+  /**
    * تقييم العائد الفعلي وتنفيذ "أكل الميزانية" أو "المكافأة السيادية"
    * Logic: Digital Darwinism & Economic Cannibalism
    */

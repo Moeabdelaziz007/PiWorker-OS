@@ -1,3 +1,5 @@
+import "server-only";
+
 let fs: any = null;
 let grpc: any = null;
 let protoLoader: any = null;

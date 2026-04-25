@@ -1,4 +1,7 @@
-// PathResolver (Isomorphic)
+import "server-only";
+import path from "node:path";
+
+// PathResolver (Server-Only)
 
 /**
  * AMRIKYY LAB :: SOVEREIGN PATH RESOLVER
@@ -16,9 +19,6 @@ export class PathResolver {
    * Ensures consistency between local and cloud environments.
    */
   public static resolve(relativePath: string): string {
-    if (typeof window !== 'undefined') return relativePath;
-    // Use dynamic import or gated require to prevent browser bundling issues
-    const path = require('path');
     return path.join(process.cwd(), relativePath);
   }
 

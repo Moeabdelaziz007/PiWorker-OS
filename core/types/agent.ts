@@ -96,7 +96,7 @@ export const AgentSchema = z.object({
     userAgent: z.string(),
   }).optional(),
 
-  status: z.enum(["active", "idle", "busy", "offline", "hibernating", "terminated"]).default("idle"),
+  status: z.enum(["active", "idle", "busy", "offline", "hibernating", "terminated", "error"]).default("idle"),
 }).strict();
 
 export type Agent = z.infer<typeof AgentSchema>;

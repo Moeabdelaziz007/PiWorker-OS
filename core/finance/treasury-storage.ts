@@ -1,3 +1,4 @@
+import "server-only";
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -52,35 +53,69 @@ export class FileSystemAdapter implements ITreasuryStorage {
 }
 
 /**
- * Vercel KV Adapter (MANDATORY for Vercel Production)
- * To use: Install @vercel/kv and set KV_URL environment variables.
+ * Upstash Redis Adapter (MANDATORY for Vercel Production)
  */
 export class VercelKVAdapter implements ITreasuryStorage {
-  // We use dynamic import to avoid failing if @vercel/kv is not installed in dev
   async load(): Promise<TreasuryState> {
     try {
-      // @ts-ignore
-      const { kv } = await import('@vercel/kv');
-      const state = await (kv as any).get('sovereign_treasury');
+      const { Redis } = await import('@upstash/redis');
+      const redis = Redis.fromEnv();
+      const state = await redis.get<TreasuryState>('sovereign_treasury');
       return state || {
         reserves: { "Pi": 175.0, "SOL": 0.0, "ETH": 0.0 },
         escrows: {},
         lastUpdate: new Date().toISOString()
       };
     } catch (e) {
-      console.warn("[TREASURY] Vercel KV not found, falling back to empty state.");
+      console.warn("[TREASURY] Redis/Upstash error, falling back to empty state.", e);
       return { reserves: { "Pi": 175.0 }, escrows: {}, lastUpdate: new Date().toISOString() };
     }
   }
 
   async save(state: TreasuryState): Promise<void> {
     try {
-      // @ts-ignore
-      const { kv } = await import('@vercel/kv');
+      const { Redis } = await import('@upstash/redis');
+      const redis = Redis.fromEnv();
       state.lastUpdate = new Date().toISOString();
-      await kv.set('sovereign_treasury', state);
+      await redis.set('sovereign_treasury', state);
     } catch (e) {
-      console.error("[TREASURY] Failed to save to Vercel KV.");
+      console.error("[TREASURY] Failed to save to Upstash Redis.", e);
+    }
+  }
+}
+
+/**
+ * IDurableJournal - Generic interface for append-only distributed logging
+ */
+export interface IDurableJournal {
+  append(topic: string, entry: any): Promise<void>;
+  query(topic: string, limit?: number): Promise<any[]>;
+}
+
+export class DistributedJournalAdapter implements IDurableJournal {
+  async append(topic: string, entry: any): Promise<void> {
+    try {
+      const { Redis } = await import('@upstash/redis');
+      const redis = Redis.fromEnv();
+      const key = `journal:${topic}`;
+      const timestampedEntry = { ...entry, _ts: new Date().toISOString() };
+      
+      await redis.lpush(key, timestampedEntry);
+      await redis.ltrim(key, 0, 999);
+    } catch (e) {
+      console.error(`[JOURNAL] Failed to append to ${topic}:`, e);
+    }
+  }
+
+  async query(topic: string, limit: number = 100): Promise<any[]> {
+    try {
+      const { Redis } = await import('@upstash/redis');
+      const redis = Redis.fromEnv();
+      const key = `journal:${topic}`;
+      return await redis.lrange(key, 0, limit - 1);
+    } catch (e) {
+      console.error(`[JOURNAL] Failed to query ${topic}:`, e);
+      return [];
     }
   }
 }
@@ -95,5 +130,11 @@ export class TreasuryStorageFactory {
       return new VercelKVAdapter();
     }
     return new FileSystemAdapter();
+  }
+
+  static getJournal(): IDurableJournal {
+    // In dev we could have a FileJournalAdapter, but for now we'll use DistributedJournalAdapter
+    // which falls back gracefully if KV is missing, or we can implement a local fallback.
+    return new DistributedJournalAdapter();
   }
 }
