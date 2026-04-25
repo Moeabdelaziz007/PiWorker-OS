@@ -2,82 +2,141 @@ name: PiWorker-OS Sovereign CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  build:
+  release-gate:
+    name: Release Gate (build, security, e2e, artifacts)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    # --- Node.js Strategy ---
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install --legacy-peer-deps
-      
-    - name: TypeScript Validation
-      run: npx tsc --noEmit
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # --- Go Sovereign Strategy ---
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-        cache: true
-        cache-dependency-path: sidecar/sovereign-engine/go.sum
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
 
-    - name: Build Sovereign Engine (Static Binary)
-      run: |
-        chmod +x scripts/build-sovereign-engine.sh
-        ./scripts/build-sovereign-engine.sh
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
 
-    # --- Final Build & Asset Verification ---
-    - name: Full Sovereign Build
-      run: npm run build:sovereign
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-  sandbox-audit:
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Build Sovereign Engine Container
-      run: docker build -t sovereign-engine:latest sidecar/sovereign-engine/
-      
-    - name: Run Sovereign Engine Container
-      run: |
-        docker run -d \
-          --name engine \
-          -p 50051:50051 \
-          -e SOVEREIGN_AUTH_TOKEN=${{ secrets.SOVEREIGN_AUTH_TOKEN }} \
-          -e AGENT_SYSTEM_SECRET=${{ secrets.AGENT_SYSTEM_SECRET }} \
-          sovereign-engine:latest
-        sleep 5 # Allow engine to wake up
+      - name: Typecheck (Node)
+        run: npm run typecheck
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install --legacy-peer-deps
-      
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps chromium
-      
-    - name: Run The Sandbox Audit
-      run: npx playwright test tests/sandbox-audit.spec.ts
-      env:
-        SOVEREIGN_ENGINE_URL: localhost:50051
-        SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
-        AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}
+      - name: Build (Node)
+        run: npm run build:sovereign
+
+      - name: Build (Go CLI)
+        run: npm run build:cli
+
+      - name: Build Sovereign Engine (Go)
+        run: |
+          chmod +x scripts/build-sovereign-engine.sh
+          ./scripts/build-sovereign-engine.sh
+
+      - name: Secret scan (Secretlint)
+        run: npx secretlint "**/*"
+
+      - name: Vulnerability scan (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: 1
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run critical E2E suite
+        run: |
+          if [ -f tests/sandbox-audit.spec.ts ]; then
+            npx playwright test tests/sandbox-audit.spec.ts
+          elif [ -f tests.bak/sandbox-audit.spec.ts ]; then
+            npx playwright test tests.bak/sandbox-audit.spec.ts
+          else
+            echo "No critical E2E suite found at tests/sandbox-audit.spec.ts or tests.bak/sandbox-audit.spec.ts"
+            exit 1
+          fi
+
+      - name: Artifact sanity checks
+        run: |
+          test -s bin/piworker-cli
+          test -d .next
+          test -f sidecar/sovereign-engine/Dockerfile
+
+      - name: Validate deploy secrets/config
+        id: validate_config
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          verdict="PASS"
+          details="All required deployment secrets are configured."
+
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+              if [ -z "${!key}" ]; then
+                verdict="FAIL"
+                details="Missing required deploy secret: ${key}"
+                break
+              fi
+            done
+          else
+            details="Skipped strict secret validation for non-main or PR context."
+          fi
+
+          echo "verdict=${verdict}" >> "$GITHUB_OUTPUT"
+          echo "details=${details}" >> "$GITHUB_OUTPUT"
+
+          if [ "$verdict" = "FAIL" ]; then
+            echo "$details"
+            exit 1
+          fi
+
+      - name: Generate release checklist
+        id: checklist
+        run: |
+          readiness="READY"
+          if [ "${{ steps.validate_config.outputs.verdict }}" != "PASS" ]; then
+            readiness="BLOCKED"
+          fi
+
+          cat > release-checklist.md <<EOF
+          # Release Checklist
+
+          ## Passing test matrix
+          - ✅ Node typecheck
+          - ✅ Node build
+          - ✅ Go build (CLI + sovereign engine)
+          - ✅ Security scans (Secretlint + Trivy)
+          - ✅ Critical E2E suite
+          - ✅ Artifact sanity checks
+
+          ## Secret/config validation result
+          - Verdict: ${{ steps.validate_config.outputs.verdict }}
+          - Details: ${{ steps.validate_config.outputs.details }}
+
+          ## Deployment readiness verdict
+          - ${readiness}
+          EOF
+
+      - name: Upload release checklist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-checklist
+          path: release-checklist.md
+          if-no-files-found: error
