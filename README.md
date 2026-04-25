@@ -166,6 +166,29 @@ PiWorker-OS operationalizes the **Steerability** of π0.7 through Gemini’s hig
 
 ---
 
+## 📊 Release Scorecard Gate (Required for Production Rollout)
+
+Every release **must** publish a scorecard and complete cross-domain review before production rollout.
+
+### Metrics tracked per release
+- **Build stability** (successful builds / total builds).
+- **E2E pass rate** (passed E2E tests / total E2E tests).
+- **Auth/security defect count** (new defects found in authentication or security controls).
+- **MTTR and rollback frequency** (mean time to recovery and number of rollbacks).
+- **Flaky test ratio** (flaky tests / total automated tests).
+
+### Domain owners
+- **Platform:** Build stability, MTTR, rollback frequency.
+- **Backend:** E2E pass rate, service-level release health.
+- **Security:** Auth/security defect count and remediation validation.
+- **QA:** Flaky test ratio and end-to-end quality sign-off.
+
+### Rollout policy
+- A release **cannot** move to production until the scorecard is reviewed by **Platform, Backend, Security, and QA** owners.
+- Any metric outside agreed thresholds requires an explicit remediation plan and owner before rollout approval.
+
+---
+
 ## 🛠️ Getting Started
 ```bash
 # Clone the Sovereign Hub
