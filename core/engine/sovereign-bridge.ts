@@ -1,6 +1,6 @@
-import { TelemetryLogger } from "../utils/telemetry-logger";
-import { PaymentSchema, SimulationSchema, PluginSchema } from './validation';
 import axios from 'axios';
+import { createHmac } from 'node:crypto';
+import { PluginSchema, SimulationSchema } from './validation';
 
 export interface SimulationRequest {
   goalId: string;
@@ -180,9 +180,6 @@ export class SovereignBridge {
     console.log(`🛡️ [Bridge] Delegating Sandbox Execution for ${req.pluginId} to Go...`);
     PluginSchema.parse(req);
 
-    const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
-    const signature = crypto.createHmac('sha256', secret).update(req.sourceCode).digest('hex');
-
     const client = await this.getClient();
     if (!client) {
       return this.callViaHttp('execute', {
@@ -195,13 +192,8 @@ export class SovereignBridge {
     }
 
     const metadata = await this.getMetadata();
-    let signature = "SIGNED_VIA_PROXY";
-
-    if (typeof window === 'undefined') {
-      const crypto = await import('node:crypto');
-      const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
-      signature = crypto.createHmac('sha256', secret).update(req.sourceCode).digest('hex');
-    }
+    const secret = process.env.AGENT_SYSTEM_SECRET || "TEMP_SIGN_SECRET";
+    const signature = createHmac('sha256', secret).update(req.sourceCode).digest('hex');
 
     return new Promise((resolve, reject) => {
       client.ExecutePlugin({
