@@ -133,12 +133,21 @@ export async function verifyPhysicalTask(
   }
 }
 
+const REASONING_BUDGET_LIMIT = 500; // Max Pi per audit session
+
 /**
  * Performs a high-reasoning audit using Gemini + Registered Tools.
  * Level 5 Autonomy: Oracle decides when to use paid plugins.
  */
 export async function performAutonomousAudit(agentId: string, taskData: any) {
   const tools = PluginGateway.getToolsForOracle();
+  
+  // 🛡️ Fiscal Guard: Prevent runaway costs
+  if (taskData.budget && taskData.budget > REASONING_BUDGET_LIMIT) {
+    console.error(`[ORACLE] 🛑 Reasoning Budget Exceeded: ${taskData.budget} > ${REASONING_BUDGET_LIMIT}`);
+    return { status: "FAILURE", reason: "BUDGET_EXCEEDED" };
+  }
+
   const model = genAI.getGenerativeModel({ 
     model: "gemini-1.5-pro",
     tools: tools.length > 0 ? (tools as any) : undefined
@@ -146,21 +155,26 @@ export async function performAutonomousAudit(agentId: string, taskData: any) {
 
   console.log(`[ORACLE] Level 5 Autonomy: Auditing Task for ${agentId} with ${tools.length} available tools...`);
   
-  // Simulation/Logic for tool selection
-  const toolId = "sovereign-herald"; // The Genesis tool
+  // Real logic should use model.generateContent with tools here.
+  // For now, we enforce the fiscal link for the Genesis tool.
+  const toolId = "sovereign-herald";
   const plugin = PluginGateway.getPlugin(toolId);
   
   if (plugin) {
     console.log(`\x1b[35m[ORACLE] Intelligence Decision: Deploying ${plugin.name}...\x1b[0m`);
-    // FISCAL TRIGGER: Deduct Pi from agent and send to Treasury
-    AmrikyyTreasury.deductUsageFee(agentId, plugin.costPerUse, plugin.name);
     
-    return {
-      status: "SUCCESS",
-      action: "TOOL_DEPLOYED",
-      tool: plugin.id,
-      cost: plugin.costPerUse
-    };
+    // FISCAL TRIGGER: Real deduction
+    try {
+      await AmrikyyTreasury.deductUsageFee(agentId, plugin.costPerUse, plugin.name);
+      return {
+        status: "SUCCESS",
+        action: "TOOL_DEPLOYED",
+        tool: plugin.id,
+        cost: plugin.costPerUse
+      };
+    } catch (err) {
+      return { status: "FAILURE", reason: "FISCAL_DEDUCTION_FAILED" };
+    }
   }
 
   return { status: "SUCCESS", analysis: "Standard analysis complete." };

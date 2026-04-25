@@ -67,21 +67,23 @@ export class GemmaAdapter {
   }
 
   private generateMockResponse(prompt: string): string {
-    // Generate high-fidelity JSON if the prompt asks for it
-    if (prompt.includes('JSON')) {
+    const timestamp = new Date().toISOString();
+    const isJsonRequested = prompt.includes('JSON');
+
+    console.warn(`[GemmaAdapter] ⚠️ System in Restricted Mode. Generating local deterministic analysis at ${timestamp}`);
+
+    if (isJsonRequested) {
       return JSON.stringify({
-        path: ["Market Analysis", "Strategic Entry", "Liquidity Provision"],
-        outcome: "success",
-        revenue_usd: Math.floor(Math.random() * 5000) + 1000,
-        riskScore: Math.floor(Math.random() * 30),
-        timeToCompletion: 14,
-        confidence: 0.85,
-        recommendation: "proceed",
-        goldenPath: ["Analysis", "Execution", "Settlement"],
-        syntheticReasoning: "Autonomous optimization suggests a 92% probability of success given current market liquidity."
+        status: "RESTRICTED_LOCAL",
+        timestamp,
+        recommendation: "wait_for_sovereign_sync",
+        reasoning: "High-fidelity neural reasoning is currently offline. Local heuristic check: Goal parameters verified for safety but market delta unavailable.",
+        riskScore: 0.5,
+        confidence: 0.1
       });
     }
-    return "Sovereign execution proceeding as planned. Risk levels nominal.";
+
+    return "MAS-ZERO LOCAL_FALLBACK: Neural bridge is unreachable. All high-stakes decisions are paused to protect treasury integrity. Standard heartbeat active.";
   }
 
   /**
