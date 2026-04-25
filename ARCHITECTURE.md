@@ -31,6 +31,8 @@ PiWorker-OS is an independent digital state governed by **Amrikyy Lab**.
   - `LedgerConnector`: Native Pi/Stellar/Soroban bridge.
   - `EscrowManager`: Zero-trust financial settlement (Physical-to-Digital).
   - `SovereignJournal`: Durable, append-only log for crash recovery and intent auditing.
+  - `HybridIntelligence`: Multi-model routing (Gemini 3.1 Pro + Gemma 2) for cost-efficient reasoning.
+  - `Pi-402 Protocol`: Agent-to-Agent micro-payment engine with Soroban settlement.
 
 ### Layer C: The Physical Layer (Robot Pi / π0.7)
 
