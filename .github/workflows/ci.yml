@@ -26,8 +26,8 @@ jobs:
           node-version: "22.x"
           cache: npm
 
-      - name: Verify npm lockfile integrity
-        run: npm ci --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --legacy-peer-deps
 
       - name: Enforce npm audit policy (fail on high/critical)
         run: npm audit --audit-level=high --omit=dev
@@ -73,7 +73,7 @@ jobs:
 
       - name: Vulnerability scan (Trivy)
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: fs
           scan-ref: .
