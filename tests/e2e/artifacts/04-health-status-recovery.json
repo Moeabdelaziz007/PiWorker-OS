@@ -1,7 +1,7 @@
 {
   "scenario": "health_status_recovery",
-  "startedAt": "2026-04-25T05:54:44.771Z",
-  "endedAt": "2026-04-25T05:54:44.793Z",
+  "startedAt": "2026-05-02T05:15:36.111Z",
+  "endedAt": "2026-05-02T05:15:36.120Z",
   "deterministicData": {
     "goalId": "goal-e2e-0001",
     "pluginId": "plugin-e2e-0001",

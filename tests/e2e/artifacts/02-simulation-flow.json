@@ -1,7 +1,7 @@
 {
   "scenario": "simulation_grpc_http_fallback",
-  "startedAt": "2026-04-25T05:54:44.652Z",
-  "endedAt": "2026-04-25T05:54:44.710Z",
+  "startedAt": "2026-05-02T05:15:36.029Z",
+  "endedAt": "2026-05-02T05:15:36.067Z",
   "deterministicData": {
     "goalId": "goal-e2e-0001",
     "pluginId": "plugin-e2e-0001",
@@ -11,7 +11,7 @@
   },
   "events": [
     {
-      "at": "2026-04-25T05:54:44.653Z",
+      "at": "2026-05-02T05:15:36.029Z",
       "message": "grpc_request",
       "detail": {
         "goalId": "goal-e2e-0001",
