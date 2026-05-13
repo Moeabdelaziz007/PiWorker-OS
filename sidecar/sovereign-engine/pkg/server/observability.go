@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -32,7 +33,7 @@ type logEvent struct {
 }
 
 func extractTraceContext(ctx context.Context) (requestID string, correlationID string, authContext string) {
-	requestID = "go-request-unknown"
+	requestID = fmt.Sprintf("go-request-%d", time.Now().UTC().UnixNano())
 	correlationID = requestID
 	authContext = "ANONYMOUS"
 

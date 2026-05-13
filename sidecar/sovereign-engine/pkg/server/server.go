@@ -117,10 +117,14 @@ func NewSovereignServer(ctx context.Context) (*SovereignServer, error) {
 
 // 1. Quantum Mirror Simulation (Gemini-Powered)
 func (s *SovereignServer) RequestSimulation(ctx context.Context, req *pb.SimulationRequest) (*pb.SimulationResponse, error) {
+	start := time.Now()
+	failed := false
+	defer func() { recordObservation("request_simulation", time.Since(start), failed, "") }()
 	log.Printf("🚀 [Sovereign Engine] High-Fidelity Simulation Start: %s", req.GoalId)
 
 	results, err := s.QuantumMirror.Simulate(ctx, req.GoalId, int(req.Instances))
 	if err != nil {
+		failed = true
 		log.Printf("❌ Simulation failed: %v", err)
 		return nil, status.Errorf(codes.Internal, "simulation failure: %v", err)
 	}
@@ -196,11 +200,17 @@ func (s *SovereignServer) SendEmbodiedIntent(ctx context.Context, req *pb.Embodi
 
 // 2.5 Ring 3: Neural-Isolated Sandbox Execution
 func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginRequest) (*pb.PluginResponse, error) {
+	opStart := time.Now()
+	finalCategory := ErrorCategory("")
+	failed := false
+	defer func() { recordObservation("execute_plugin", time.Since(opStart), failed, finalCategory) }()
 	logStructured(ctx, "execute_plugin", "INFO", fmt.Sprintf("plugin execute: %s", req.PluginId), "")
 	log.Printf("🛡️ [Sandbox] Executing Plugin: %s", req.PluginId)
 
 	// 🧪 [Input Guard] Reject malformed or partial deploy payloads early.
 	if req.PluginId == "" {
+		failed = true
+		finalCategory = ErrorValidation
 		return &pb.PluginResponse{
 			PluginId:     req.PluginId,
 			Success:      false,
@@ -208,6 +218,8 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 		}, nil
 	}
 	if req.SourceCode == "" {
+		failed = true
+		finalCategory = ErrorValidation
 		return &pb.PluginResponse{
 			PluginId:     req.PluginId,
 			Success:      false,
@@ -222,6 +234,8 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	expectedSig := hex.EncodeToString(h.Sum(nil))
 
 	if req.Signature != expectedSig {
+		failed = true
+		finalCategory = ErrorAuth
 		log.Printf("⚠️ [SEC_ALERT] Plugin Signature Mismatch! ID: %s", req.PluginId)
 		logStructured(ctx, "execute_plugin", "ERROR", "plugin signature mismatch", ErrorAuth)
 		return &pb.PluginResponse{
@@ -241,6 +255,8 @@ func (s *SovereignServer) ExecutePlugin(ctx context.Context, req *pb.PluginReque
 	duration := time.Since(start).Milliseconds()
 
 	if err != nil {
+		failed = true
+		finalCategory = ErrorBuild
 		// 📓 [Durability] Log FAIL entry
 		_ = s.Journal.Fail(req.PluginId, "sandbox_plugin", err.Error())
 		logStructured(ctx, "execute_plugin", "ERROR", err.Error(), ErrorBuild)
@@ -275,6 +291,10 @@ func (s *SovereignServer) LockEscrow(ctx context.Context, req *pb.EscrowRequest)
 }
 
 func (s *SovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyTxRequest) (*pb.VerifyTxResponse, error) {
+	opStart := time.Now()
+	failed := false
+	finalCategory := ErrorCategory("")
+	defer func() { recordObservation("verify_transaction", time.Since(opStart), failed, finalCategory) }()
 	logStructured(ctx, "verify_transaction", "INFO", fmt.Sprintf("verify tx: %s", req.TxId), "")
 	log.Printf("🔍 [Ledger] Verifying Transaction %s", req.TxId)
 	nodeURL := os.Getenv("PI_NODE_URL")
@@ -284,6 +304,8 @@ func (s *SovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyT
 	connector := finance.NewLedgerConnector(nodeURL)
 	verified, sender, err := connector.VerifyPiTransaction(req.TxId, req.ExpectedReceiver, req.ExpectedAmount)
 	if err != nil {
+		failed = true
+		finalCategory = ErrorNetwork
 		logStructured(ctx, "verify_transaction", "ERROR", err.Error(), ErrorNetwork)
 		return &pb.VerifyTxResponse{Verified: false, StatusMessage: err.Error()}, nil
 	}
@@ -291,17 +313,25 @@ func (s *SovereignServer) VerifyTransaction(ctx context.Context, req *pb.VerifyT
 }
 
 func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequest) (*pb.PaymentResponse, error) {
+	opStart := time.Now()
+	failed := false
+	finalCategory := ErrorCategory("")
+	defer func() { recordObservation("commit_payment", time.Since(opStart), failed, finalCategory) }()
 	logStructured(ctx, "commit_payment", "INFO", fmt.Sprintf("authorizing payment to %s", req.RecipientId), "")
 	log.Printf("💰 [Sovereign Maker] Authorizing Payment: %.4f Pi to %s", req.AmountPi, req.RecipientId)
 
 	expectedAgentToken := os.Getenv("AGENT_SYSTEM_SECRET")
 	if expectedAgentToken == "" {
+		failed = true
+		finalCategory = ErrorDependency
 		log.Printf("❌ [FATAL] AGENT_SYSTEM_SECRET is not set. Payments disabled.")
 		logStructured(ctx, "commit_payment", "ERROR", "payment system misconfigured", ErrorDependency)
 		return &pb.PaymentResponse{Success: false, ErrorMessage: "PAYMENT_SYSTEM_MISCONFIGURED"}, nil
 	}
 
 	if req.AgentAuthToken == "" || req.AgentAuthToken != expectedAgentToken {
+		failed = true
+		finalCategory = ErrorAuth
 		log.Printf("⚠️ [SEC_ALERT] Unauthorized Payment Attempt! Recipient: %s, Amount: %.2f", req.RecipientId, req.AmountPi)
 		logStructured(ctx, "commit_payment", "ERROR", "unauthorized payment attempt", ErrorAuth)
 		return &pb.PaymentResponse{
