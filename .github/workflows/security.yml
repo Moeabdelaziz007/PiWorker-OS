@@ -23,7 +23,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner in fs mode
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.24.0
         with:
           scan-type: 'fs'
           ignore-unfixed: true

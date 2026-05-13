@@ -9,6 +9,7 @@ import crypto from "node:crypto";
 export class SignatureProvider {
   /**
    * Generates a new identity pair for a sovereign agent.
+   * Derives a unique wallet address from the Public Key (Zero-Trust).
    */
   static generateIdentity() {
     const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519", {
@@ -16,9 +17,8 @@ export class SignatureProvider {
       privateKeyEncoding: { type: "pkcs8", format: "pem" },
     });
 
-    // ZERO-TRUST FIX: Wallet Address MUST be derived from Public Key, NEVER Private Key.
-    const keyData = typeof publicKey === "string" ? publicKey : String(publicKey);
-    const walletAddress = `pi-${crypto.createHash("sha256").update(keyData).digest("hex").slice(0, 32)}`;
+    // Derive wallet address strictly from the Public Key (SHA-256 hash truncated to 32 chars)
+    const walletAddress = `pi-${crypto.createHash("sha256").update(publicKey).digest("hex").slice(0, 32)}`;
 
     return { publicKey, privateKey, walletAddress };
   }
