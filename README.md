@@ -333,7 +333,7 @@ npm run forge
 | **AI Oracle** | Google Gemini 1.5 Pro (`@google/generative-ai`) |
 | **Finance** | Pi Network SDK, Soroban Bridge, Upstash Redis |
 | **Validation** | Zod, JSON Schema |
-| **Deployment** | Vercel (frontend), Docker (sidecar engine) |
+| **Deployment** | Docker (sidecar engine) |
 | **Testing** | Playwright E2E |
 | **CI/CD** | GitHub Actions, Husky, lint-staged |
 

@@ -86,61 +86,21 @@ jobs:
           test -s bin/sovereign-engine
           test -f sidecar/sovereign-engine/Dockerfile
 
-      - name: Validate deploy secrets/config
-        id: validate_config
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          verdict="PASS"
-          details="All required deployment secrets are configured."
-
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
-              if [ -z "${!key}" ]; then
-                verdict="FAIL"
-                details="Missing required deploy secret: ${key}"
-                break
-              fi
-            done
-          else
-            details="Skipped strict secret validation for non-main or PR context."
-          fi
-
-          echo "verdict=${verdict}" >> "$GITHUB_OUTPUT"
-          echo "details=${details}" >> "$GITHUB_OUTPUT"
-
-          if [ "$verdict" = "FAIL" ]; then
-            echo "$details"
-            exit 1
-          fi
-
       - name: Generate release checklist
-        id: checklist
         run: |
-          readiness="READY"
-          if [ "${{ steps.validate_config.outputs.verdict }}" != "PASS" ]; then
-            readiness="BLOCKED"
-          fi
-
-          cat > release-checklist.md <<EOF
+          cat > release-checklist.md <<'EOF'
           # Release Checklist
 
-          ## Passing test matrix
+          ## Build & verification matrix
           - Node typecheck
           - Go build (CLI + sovereign engine)
-          - Security scans (Secretlint + Trivy)
+          - Security scans (Secretlint + Trivy + govulncheck)
           - Targeted Performance SLO Profiling
           - Contract Sync Validation
           - Artifact sanity checks
 
-          ## Secret/config validation result
-          - Verdict: ${{ steps.validate_config.outputs.verdict }}
-          - Details: ${{ steps.validate_config.outputs.details }}
-
-          ## Deployment readiness verdict
-          - ${readiness}
+          ## Deployment
+          - Managed outside GitHub Actions; no deploy secrets enforced here.
           EOF
 
       - name: Upload release checklist artifact
@@ -150,10 +110,3 @@ jobs:
           name: release-checklist
           path: release-checklist.md
           if-no-files-found: error
-
-  # Tiered Test Gates (T1-T4) job removed: the test:tier1..tier4 and
-  # playwright:install:chromium npm scripts never existed in package.json
-  # so the job only passed when it was skipped behind a failing build.
-  # Now that Build & Security Audit is green and Playwright was removed
-  # along with the frontend, the placeholder job has been deleted. Reintroduce
-  # a real test harness here if/when those tiers are actually authored.
