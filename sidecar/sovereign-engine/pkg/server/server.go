@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 	"time"
-	"crypto/ed25519"
 
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/bridge"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/engine"
@@ -425,16 +426,27 @@ func (s *SovereignServer) QueryMemory(ctx context.Context, req *pb.MemoryQuery) 
 
 	insights := make([]*pb.MemoryInsight, 0, len(results))
 	for _, res := range results {
-		// StoreMemory writes req.DataJson (a string) into res.Data,
-		// so the value is normally a string. A checked assertion lets
-		// us pass it through verbatim when it is and gracefully fall
-		// back to fmt.Sprintf when something else slipped in via an
-		// older code path, rather than panicking via res.Data.(string).
+		// StoreMemory writes req.DataJson (already a JSON string) into
+		// res.Data, so the value is normally a string we can return
+		// verbatim. Legacy records from the pre-typed StoreMemory path
+		// stored maps / arbitrary values; those need to be re-encoded
+		// to a JSON string here so the wire field stays parseable as
+		// JSON. Using json.Marshal preserves nested structure;
+		// fmt.Sprintf would have produced Go-formatted text like
+		// 'map[k:v]' which downstream consumers cannot deserialize.
 		var dataJSON string
-		if s, ok := res.Data.(string); ok {
-			dataJSON = s
-		} else if res.Data != nil {
-			dataJSON = fmt.Sprintf("%v", res.Data)
+		switch v := res.Data.(type) {
+		case nil:
+			dataJSON = ""
+		case string:
+			dataJSON = v
+		default:
+			encoded, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("⚠️ [QueryMemory] failed to re-encode legacy Data for memory %s: %v", res.ID, err)
+				continue
+			}
+			dataJSON = string(encoded)
 		}
 		insights = append(insights, &pb.MemoryInsight{
 			Id:        res.ID,
