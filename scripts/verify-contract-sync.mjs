@@ -26,7 +26,7 @@ for (const [message, expected] of protoChecks) {
 }
 
 const schemaChecks = [
-  ['SimulationRequestSchema', ['goalId', 'parallelInstances', 'modelVersion', 'complexity', 'personas']],
+  ['SimulationRequestSchema', ['goalId', 'instances', 'modelVersion', 'complexity', 'personas']],
   ['SimulationResponseSchema', ['goalId', 'predictedRoi', 'riskScore', 'strategyRecommendation', 'reasoning', 'estimatedRevenueUsd']],
   ['PluginRequestSchema', ['pluginId', 'sourceCode', 'envVars', 'allowedCapabilities', 'signature']],
   ['PluginResponseSchema', ['pluginId', 'success', 'outputJson', 'errorMessage', 'executionTimeMs', 'logs']],
@@ -41,19 +41,31 @@ for (const [schemaName, expected] of schemaChecks) {
 }
 
 const bridgeTypeChecks = [
-  'export type SimulationRequest = import("../contracts/critical-contracts").SimulationRequestContract;',
-  'export type SimulationResponse = import("../contracts/critical-contracts").SimulationResponseContract;',
-  'export type EscrowRequest = import("../contracts/critical-contracts").EscrowRequestContract;',
-  'export type EscrowResponse = import("../contracts/critical-contracts").EscrowResponseContract;',
-  'export type PaymentRequest = import("../contracts/critical-contracts").PaymentRequestContract;',
-  'export type PaymentResponse = import("../contracts/critical-contracts").PaymentResponseContract;',
-  'export type PluginRequest = import("../contracts/critical-contracts").PluginRequestContract;',
-  'export type PluginResponse = import("../contracts/critical-contracts").PluginResponseContract;',
+  ['SimulationRequest', 'SimulationRequestContract'],
+  ['SimulationResponse', 'SimulationResponseContract'],
+  ['EscrowRequest', 'EscrowRequestContract'],
+  ['EscrowResponse', 'EscrowResponseContract'],
+  ['PaymentRequest', 'PaymentRequestContract'],
+  ['PaymentResponse', 'PaymentResponseContract'],
+  ['PluginRequest', 'PluginRequestContract'],
+  ['PluginResponse', 'PluginResponseContract'],
 ];
 
-for (const line of bridgeTypeChecks) {
-  if (!bridgeSource.includes(line)) {
-    diffs.push(`Missing bridge interface binding: ${line}`);
+// The bridge file mixes single/double quotes and occasionally splits a
+// type alias across two lines. Use a regex that tolerates either quote
+// style and whitespace (including newlines) inside the declaration so
+// we are validating the contract, not the formatting.
+for (const [typeName, contractName] of bridgeTypeChecks) {
+  const pattern = new RegExp(
+    `export\\s+type\\s+${typeName}\\s*=\\s*` +
+      `import\\s*\\(\\s*["']\\.\\.\\/contracts\\/critical-contracts["']\\s*\\)\\s*\\.\\s*` +
+      `${contractName}\\s*;`,
+    'm',
+  );
+  if (!pattern.test(bridgeSource)) {
+    diffs.push(
+      `Missing bridge interface binding: export type ${typeName} = import("../contracts/critical-contracts").${contractName};`,
+    );
   }
 }
 

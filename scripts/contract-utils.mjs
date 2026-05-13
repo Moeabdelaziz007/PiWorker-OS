@@ -31,11 +31,20 @@ function extractObjectLiteral(source, startIndex) {
 }
 
 export function getSchemaKeys(contractsSource, schemaName) {
-  const marker = `export const ${schemaName} = z.object(`;
-  const markerIndex = contractsSource.indexOf(marker);
-  if (markerIndex === -1) throw new Error(`Schema ${schemaName} not found.`);
+  // Match both single-line `= z.object({...})` and multi-line chained
+  // `= z\n  .object({...}).strict()`. The schemas in
+  // core/contracts/critical-contracts.ts currently use the chained
+  // form, but either should be acceptable. `\s*` covers whitespace
+  // including newlines.
+  const declaration = new RegExp(
+    `export const ${schemaName}\\s*=\\s*z\\s*\\.\\s*object\\s*\\(`,
+    'm',
+  );
+  const match = declaration.exec(contractsSource);
+  if (!match) throw new Error(`Schema ${schemaName} not found.`);
+  const markerEnd = match.index + match[0].length;
 
-  const body = extractObjectLiteral(contractsSource, markerIndex + marker.length);
+  const body = extractObjectLiteral(contractsSource, markerEnd);
   const keys = [];
   let depthParen = 0;
   let depthBrace = 0;
