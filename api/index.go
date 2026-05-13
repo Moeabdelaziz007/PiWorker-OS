@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	bridgelog "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/log"
 	pb "github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/pb"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/server"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
@@ -22,18 +23,24 @@ const devAuthTokenFallback = "SOVEREIGN_DEV_TOKEN"
 var (
 	srv               *server.SovereignServer
 	expectedAuthToken string
+	logger            *slog.Logger
 )
 
 func init() {
+	logger = bridgelog.New(bridgelog.ComponentAPIBridge, nil)
+
 	var err error
 	srv, err = server.NewSovereignServer(nil)
 	if err != nil {
-		log.Printf("❌ [Bridge] Failed to init Sovereign Server: %v", err)
+		logger.Error("failed to init Sovereign Server", slog.String("error", err.Error()))
 	}
 
 	expectedAuthToken, err = resolveAuthToken()
 	if err != nil {
-		log.Fatalf("❌ [Bridge] auth configuration error: %v", err)
+		// init() must abort on misconfigured auth in production. Emit
+		// the structured record before os.Exit so log routers see it.
+		logger.Error("auth configuration error", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 }
 
@@ -57,36 +64,22 @@ func resolveAuthToken() (string, error) {
 	}
 
 	if isDevEnvironment() {
-		log.Printf("⚠️ [Bridge] SOVEREIGN_AUTH_TOKEN not set; using development fallback token")
+		logger.Warn("SOVEREIGN_AUTH_TOKEN not set; using development fallback token")
 		return devAuthTokenFallback, nil
 	}
 
 	return "", errors.New("SOVEREIGN_AUTH_TOKEN is required outside development")
 }
 
-type bridgeLog struct {
-	Timestamp     string `json:"timestamp"`
-	Component     string `json:"component"`
-	Operation     string `json:"operation"`
-	AuthContext   string `json:"auth_context"`
-	RequestID     string `json:"request_id"`
-	CorrelationID string `json:"correlation_id"`
-	ErrorCode     string `json:"error_code,omitempty"`
-	Message       string `json:"message,omitempty"`
-}
-
+// emitBridgeLog preserves the legacy signature so the existing call
+// sites in the HTTP handlers below do not need to change shape. It
+// builds a context from the (reqID, corrID, auth) triple and delegates
+// to the shared structured logger. The JSON shape on the wire stays
+// identical to the old bridgeLog struct so downstream parsers keep
+// working unchanged.
 func emitBridgeLog(op, auth, reqID, corrID, message, errorCode string) {
-	line, _ := json.Marshal(bridgeLog{
-		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
-		Component:     "API_BRIDGE",
-		Operation:     op,
-		AuthContext:   auth,
-		RequestID:     reqID,
-		CorrelationID: corrID,
-		ErrorCode:     errorCode,
-		Message:       message,
-	})
-	log.Println(string(line))
+	ctx := bridgelog.WithRequest(context.Background(), reqID, corrID, auth)
+	bridgelog.Op(ctx, logger, op, errorCode, message)
 }
 
 func requestContext(r *http.Request) (context.Context, string, string, string) {
