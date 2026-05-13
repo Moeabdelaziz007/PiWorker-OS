@@ -45,7 +45,7 @@ func (pm *PaymentMaker) ExecuteSovereignPayment(ctx context.Context, req Payment
 	}
 
 	log.Printf("🚀 [Pi Platform] Approving Payment ID: %s", paymentID)
-	err := pm.PlatformClient.ApprovePayment(paymentID)
+	err := pm.PlatformClient.ApprovePayment(ctx, paymentID)
 	if err != nil {
 		return "", fmt.Errorf("platform approval failed: %v", err)
 	}
@@ -59,10 +59,14 @@ func (pm *PaymentMaker) ExecuteSovereignPayment(ctx context.Context, req Payment
 }
 
 // ReconcileTransaction audits the ledger to ensure the payment is finalized.
+//
+// TODO: accept a context.Context parameter so the audit can be canceled
+// when the upstream operator gives up; for now we use context.Background()
+// to preserve the prior synchronous fire-and-forget behavior.
 func (pm *PaymentMaker) ReconcileTransaction(paymentID string) (bool, error) {
 	log.Printf("🔍 [Reconciliation] Auditing Payment: %s", paymentID)
-	
-	payment, err := pm.PlatformClient.GetPayment(paymentID)
+
+	payment, err := pm.PlatformClient.GetPayment(context.Background(), paymentID)
 	if err != nil {
 		return false, err
 	}

@@ -25,6 +25,16 @@ func (m *MockHTTPClient) Get(url string) (*http.Response, error) {
 	}, nil
 }
 
+// Do satisfies the HTTPDoer interface so the mock can stand in for
+// *http.Client wherever Client.Do is used (e.g., InvokeSoroban). Returns
+// the same canned response as Get.
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return &http.Response{
+		StatusCode: m.StatusCode,
+		Body:       io.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
+	}, nil
+}
+
 func TestLedgerConnector_GetBalance(t *testing.T) {
 	mock := &MockHTTPClient{
 		StatusCode: 200,
@@ -51,19 +61,23 @@ func TestLedgerConnector_GetBalance(t *testing.T) {
 }
 
 func TestLedgerConnector_VerifyPiTransaction(t *testing.T) {
+	// The mock now mirrors the PiPayment shape returned by the Pi Platform
+	// API (api.minepi.com/v2). Both the Horizon-style Client.Get path and
+	// the Pi Platform Client.Do path are routed through the same mock so a
+	// single canned body answers every request the connector makes.
 	mock := &MockHTTPClient{
 		StatusCode: 200,
 		ResponseJSON: `{
-			"_embedded": {
-				"records": [
-					{
-						"type": "payment",
-						"from": "SENDER_ABC",
-						"to": "RECEIVER_XYZ",
-						"amount": "10.00",
-						"asset_type": "native"
-					}
-				]
+			"identifier": "TX_123",
+			"amount": 10.00,
+			"from_address": "SENDER_ABC",
+			"to_address": "RECEIVER_XYZ",
+			"status": {
+				"developer_approved": true,
+				"transaction_verified": true,
+				"developer_completed": false,
+				"cancelled": false,
+				"user_cancelled": false
 			}
 		}`,
 	}
@@ -71,6 +85,11 @@ func TestLedgerConnector_VerifyPiTransaction(t *testing.T) {
 	lc := &LedgerConnector{
 		NetworkURL: "http://mock-horizon",
 		Client:     mock,
+		PlatformClient: &PiPlatformClient{
+			BaseURL: "http://mock-pi-platform",
+			APIKey:  "test-key",
+			Client:  mock,
+		},
 	}
 
 	success, sender, err := lc.VerifyPiTransaction("TX_123", "RECEIVER_XYZ", 10.00)

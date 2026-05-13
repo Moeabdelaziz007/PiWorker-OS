@@ -73,6 +73,10 @@ message EmbodiedIntent {
   map<string, string> execution_metadata = 4;
   string control_mode = 5;
   repeated bytes visual_subgoals = 6;
+  // goal and persona are passed to the hybrid reasoning layer in
+  // SendEmbodiedIntent (sidecar/sovereign-engine/pkg/server/server.go).
+  string goal = 7;
+  string persona = 8;
 }
 
 message IntentResponse {

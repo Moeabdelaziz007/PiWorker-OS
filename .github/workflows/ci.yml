@@ -41,7 +41,7 @@ jobs:
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25.x"
+          go-version: "1.25.10"
           cache-dependency-path: go.sum
 
       - name: Verify Go module integrity
@@ -83,7 +83,7 @@ jobs:
       - name: Artifact sanity checks
         run: |
           test -s bin/piworker-cli
-          test -d .next
+          test -s bin/sovereign-engine
           test -f sidecar/sovereign-engine/Dockerfile
 
       - name: Validate deploy secrets/config
@@ -128,13 +128,12 @@ jobs:
           # Release Checklist
 
           ## Passing test matrix
-          - ✅ Node typecheck
-          - ✅ Node build
-          - ✅ Go build (CLI + sovereign engine)
-          - ✅ Security scans (Secretlint + Trivy)
-          - ✅ Targeted Performance SLO Profiling
-          - ✅ Contract Sync Validation
-          - ✅ Artifact sanity checks
+          - Node typecheck
+          - Go build (CLI + sovereign engine)
+          - Security scans (Secretlint + Trivy)
+          - Targeted Performance SLO Profiling
+          - Contract Sync Validation
+          - Artifact sanity checks
 
           ## Secret/config validation result
           - Verdict: ${{ steps.validate_config.outputs.verdict }}
@@ -152,48 +151,9 @@ jobs:
           path: release-checklist.md
           if-no-files-found: error
 
-  sandbox-audit:
-    name: Tiered Test Gates (T1-T4)
-    runs-on: ubuntu-latest
-    needs: build
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.25.x"
-          cache-dependency-path: go.sum
-
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Tier 1 - Static checks
-        run: npm run test:tier1
-
-      - name: Tier 2 - Unit tests
-        run: npm run test:tier2
-
-      - name: Tier 3 - Node↔Go bridge handshake
-        run: npm run test:tier3
-        env:
-          SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
-          AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
-      - name: Install Playwright browsers
-        run: npm run playwright:install:chromium
-
-      - name: Tier 4 - Playwright E2E final gate
-        run: npm run test:tier4
-        env:
-          SOVEREIGN_ENGINE_URL: localhost:50051
-          SOVEREIGN_AUTH_TOKEN: ${{ secrets.SOVEREIGN_AUTH_TOKEN }}
-          AGENT_SYSTEM_SECRET: ${{ secrets.AGENT_SYSTEM_SECRET }}
+  # Tiered Test Gates (T1-T4) job removed: the test:tier1..tier4 and
+  # playwright:install:chromium npm scripts never existed in package.json
+  # so the job only passed when it was skipped behind a failing build.
+  # Now that Build & Security Audit is green and Playwright was removed
+  # along with the frontend, the placeholder job has been deleted. Reintroduce
+  # a real test harness here if/when those tiers are actually authored.

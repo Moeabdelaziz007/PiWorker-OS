@@ -37,7 +37,23 @@ func TestMEVHarvester_AnalyzePath(t *testing.T) {
 }
 
 func TestMEVHarvester_ExecuteArbitrage(t *testing.T) {
+	// InvokeSoroban does a real HTTP POST; without an injected client this
+	// test would dial DNS for "http://mock" and fail in any sandbox/CI env.
+	// We swap in the same MockHTTPClient used by the ledger tests and have
+	// it return a JSON-RPC success envelope so ExecuteArbitrage can extract
+	// a transaction hash deterministically.
+	mock := &MockHTTPClient{
+		StatusCode: 200,
+		ResponseJSON: `{
+			"result": {
+				"hash": "MOCK_TX_HASH_0xABC",
+				"status": "SUCCESS"
+			}
+		}`,
+	}
+
 	lc := NewLedgerConnector("http://mock")
+	lc.Client = mock
 	mev := NewMEVHarvester(lc)
 
 	p1 := PricePoint{Pair: "Pi/USDC", Price: 1.00}

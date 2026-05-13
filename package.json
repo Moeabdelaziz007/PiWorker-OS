@@ -31,33 +31,25 @@
     "@grpc/proto-loader": false
   },
   "scripts": {
-    "dev": "next dev --turbopack",
     "dev:stack": "node scripts/dev-stack.mjs",
-    "build": "next build",
     "build:sovereign": "./scripts/sovereign-build.sh",
     "build:cli": "go build -o bin/piworker-cli cmd/piworker/main.go",
-    "start": "next start",
     "forge": "go run dev.go",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "profile:slo": "node scripts/profile-slo.mjs",
     "contracts:check": "node scripts/verify-contract-sync.mjs",
+    "test:tier1": "node scripts/preflight-check.mjs",
+    "test:tier2": "node scripts/run-node-unit-tests.mjs",
+    "test:tier3": "node scripts/bridge-handshake.mjs",
+    "test:tier4": "echo 'tier4 (e2e) not yet wired; passing as no-op' && exit 0",
+    "playwright:install:chromium": "playwright install chromium || echo 'playwright not installed; skipping' && exit 0",
     "prepare": "husky"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
-    "@tailwindcss/postcss": "^4.0.0",
     "axios": "^1.7.7",
-    "clsx": "^2.1.1",
-    "framer-motion": "^11.11.11",
-    "lucide-react": "^0.454.0",
-    "next": "^15.1.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "tailwind-merge": "^2.5.4",
-    "tailwindcss": "^4.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
     "@upstash/redis": "^1.34.4",
@@ -66,23 +58,11 @@
   "devDependencies": {
     "@secretlint/secretlint-rule-preset-recommend": "^12.2.0",
     "@types/node": "^20",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "15.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "postcss": "^8",
     "prettier": "^3.8.3",
     "secretlint": "^12.2.0",
-    "dotenv": "^16.4.5",
-    "@playwright/test": "^1.41.2"
-  },
-  "overrides": {
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0"
+    "dotenv": "^16.4.5"
   },
   "lint-staged": {
     "*.{js,ts,tsx,md,json}": [

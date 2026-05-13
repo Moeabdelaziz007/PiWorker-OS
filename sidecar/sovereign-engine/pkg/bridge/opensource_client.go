@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
 // OpenSourceClient handles interactions with OpenAI-compatible APIs (Gemma, DeepSeek, Mistral).

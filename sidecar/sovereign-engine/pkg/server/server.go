@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 	"time"
-	"crypto/ed25519"
 
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/bridge"
 	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/engine"
@@ -371,62 +372,93 @@ func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 
 // 4. Memory Layer (Pattern 7: Neural Memory Mesh)
 
-func (s *SovereignServer) StoreMemory(ctx context.Context, req interface{}) (interface{}, error) {
-	// We use interface{} because the pb types aren't generated yet
-	// Connect-Lite will pass us a map or a struct if we decode it manually
-	
-	m, ok := req.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid memory request type")
+func (s *SovereignServer) StoreMemory(ctx context.Context, req *pb.MemoryInsight) (*pb.MemoryResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("nil MemoryInsight")
 	}
-
+	// NewSovereignServer only logs (does not fail) when
+	// memory.NewMemoryStore returns an error, so s.Memory can legally
+	// be nil at this point. Bail with a clean error before the
+	// dereference panics on the Store call.
+	if s.Memory == nil {
+		return nil, fmt.Errorf("memory store not initialized")
+	}
 	insight := memory.SovereignInsight{
-		ID:        fmt.Sprintf("%v", m["id"]),
-		AgentID:   fmt.Sprintf("%v", m["agent_id"]),
-		Topic:     fmt.Sprintf("%v", m["topic"]),
-		Data:      m["data_json"],
-		Signature: fmt.Sprintf("%v", m["signature"]),
-		Timestamp: fmt.Sprintf("%v", m["timestamp"]),
+		ID:        req.Id,
+		AgentID:   req.AgentId,
+		Topic:     req.Topic,
+		Data:      req.DataJson,
+		Signature: req.Signature,
+		Timestamp: req.Timestamp,
 	}
-
 	if err := s.Memory.Store(insight); err != nil {
 		return nil, err
 	}
-
-	return map[string]interface{}{
-		"success":   true,
-		"memory_id": insight.ID,
-	}, nil
+	return &pb.MemoryResponse{Success: true, MemoryId: insight.ID}, nil
 }
 
-func (s *SovereignServer) QueryMemory(ctx context.Context, req interface{}) (interface{}, error) {
-	m, ok := req.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid query request type")
+// ApprovePiPayment is the server-side bridge for the /api/sovereign/payment/approve
+// HTTP route in api/index.go. It delegates to the Pi Platform client and is
+// intentionally lazy-initialized so test setups that do not exercise the Pi
+// flow do not need to provision PI_API_KEY. The caller's ctx is forwarded to
+// the outbound HTTP call so request cancellations and deadlines are honored.
+func (s *SovereignServer) ApprovePiPayment(ctx context.Context, paymentID string) error {
+	client := finance.NewPiPlatformClient()
+	return client.ApprovePayment(ctx, paymentID)
+}
+
+// CompletePiPayment mirrors ApprovePiPayment for the /api/sovereign/payment/complete
+// HTTP route. The Pi Platform requires both the payment ID and the on-chain txid.
+// The caller's ctx is forwarded to the outbound HTTP call.
+func (s *SovereignServer) CompletePiPayment(ctx context.Context, paymentID, txID string) error {
+	client := finance.NewPiPlatformClient()
+	return client.CompletePayment(ctx, paymentID, txID)
+}
+
+func (s *SovereignServer) QueryMemory(ctx context.Context, req *pb.MemoryQuery) (*pb.MemoryList, error) {
+	if req == nil {
+		return nil, fmt.Errorf("nil MemoryQuery")
 	}
+	if s.Memory == nil {
+		return nil, fmt.Errorf("memory store not initialized")
+	}
+	results := s.Memory.Query(req.Topic, req.AgentId)
 
-	topic := fmt.Sprintf("%v", m["topic"])
-	agentId := fmt.Sprintf("%v", m["agent_id"])
-
-	results := s.Memory.Query(topic, agentId)
-	
-	// Convert results to map for JSON response
-	insights := []map[string]interface{}{}
+	insights := make([]*pb.MemoryInsight, 0, len(results))
 	for _, res := range results {
-		insights = append(insights, map[string]interface{}{
-			"id":        res.ID,
-			"agent_id":  res.AgentID,
-			"topic":     res.Topic,
-			"data_json": res.Data,
-			"signature": res.Signature,
-			"timestamp": res.Timestamp,
-			"relevance": res.Relevance,
+		// StoreMemory writes req.DataJson (already a JSON string) into
+		// res.Data, so the value is normally a string we can return
+		// verbatim. Legacy records from the pre-typed StoreMemory path
+		// stored maps / arbitrary values; those need to be re-encoded
+		// to a JSON string here so the wire field stays parseable as
+		// JSON. Using json.Marshal preserves nested structure;
+		// fmt.Sprintf would have produced Go-formatted text like
+		// 'map[k:v]' which downstream consumers cannot deserialize.
+		var dataJSON string
+		switch v := res.Data.(type) {
+		case nil:
+			dataJSON = ""
+		case string:
+			dataJSON = v
+		default:
+			encoded, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("⚠️ [QueryMemory] failed to re-encode legacy Data for memory %s: %v", res.ID, err)
+				continue
+			}
+			dataJSON = string(encoded)
+		}
+		insights = append(insights, &pb.MemoryInsight{
+			Id:        res.ID,
+			AgentId:   res.AgentID,
+			Topic:     res.Topic,
+			DataJson:  dataJSON,
+			Signature: res.Signature,
+			Timestamp: res.Timestamp,
+			Relevance: res.Relevance,
 		})
 	}
-
-	return map[string]interface{}{
-		"insights": insights,
-	}, nil
+	return &pb.MemoryList{Insights: insights}, nil
 }
 
 // 5. Profit Vortex (Pattern 4: Digital Darwinism)

@@ -2,12 +2,12 @@ package pi402
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
-	"Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
 )
 
 /**
@@ -57,15 +57,27 @@ func (e *Pi402Engine) AuthorizeWallet(masterSeed []byte, agentID string) (*Agent
 	return sw, nil
 }
 
-// VerifyAgentSignature ensures the transaction was signed by the agent's unique key.
+// VerifyAgentSignature ensures the transaction was signed by the agent's
+// unique ed25519 key. Returns false on any of: unknown agent, missing
+// public key, malformed map entry, or invalid signature. Callers MUST
+// gate payout/authorization on a true return.
 func (e *Pi402Engine) VerifyAgentSignature(agentID string, message []byte, signature []byte) bool {
 	val, ok := e.ActiveWallets.Load(agentID)
 	if !ok {
 		return false
 	}
-
-	sw := val.(*AgentSubWallet)
-	// In a real implementation, we'd use ed25519.Verify
-	// For this protocol bridge, we assume the server-side session wallet is authoritative.
-	return true 
+	wallet, ok := val.(*AgentSubWallet)
+	if !ok || wallet == nil {
+		// Defensive: the map should never contain anything else, but
+		// a wrong type or nil entry must never silently authorize a
+		// signature.
+		return false
+	}
+	// ed25519.Verify panics (not just returns false) when the public key
+	// length is anything other than ed25519.PublicKeySize (32 bytes), so
+	// reject every wrong-length key before dispatching the verification.
+	if len(wallet.PublicKey) != ed25519.PublicKeySize {
+		return false
+	}
+	return ed25519.Verify(wallet.PublicKey, message, signature)
 }

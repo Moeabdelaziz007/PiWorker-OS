@@ -2,6 +2,7 @@ package finance
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,7 +35,7 @@ type PiPayment struct {
 type PiPlatformClient struct {
 	BaseURL string
 	APIKey  string
-	Client  *http.Client
+	Client  HTTPDoer
 }
 
 func NewPiPlatformClient() *PiPlatformClient {
@@ -48,8 +49,12 @@ func NewPiPlatformClient() *PiPlatformClient {
 }
 
 // GetPayment retrieves the full state of a payment from Pi servers.
-func (pc *PiPlatformClient) GetPayment(paymentID string) (*PiPayment, error) {
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/payments/%s", pc.BaseURL, paymentID), nil)
+// Honors ctx cancellation and deadlines on the outbound HTTP call.
+func (pc *PiPlatformClient) GetPayment(ctx context.Context, paymentID string) (*PiPayment, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/payments/%s", pc.BaseURL, paymentID), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Authorization", "Key "+pc.APIKey)
 
 	resp, err := pc.Client.Do(req)
@@ -70,8 +75,12 @@ func (pc *PiPlatformClient) GetPayment(paymentID string) (*PiPayment, error) {
 }
 
 // ApprovePayment notifies Pi servers that the app acknowledges the payment.
-func (pc *PiPlatformClient) ApprovePayment(paymentID string) error {
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/payments/%s/approve", pc.BaseURL, paymentID), nil)
+// Honors ctx cancellation and deadlines on the outbound HTTP call.
+func (pc *PiPlatformClient) ApprovePayment(ctx context.Context, paymentID string) error {
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/payments/%s/approve", pc.BaseURL, paymentID), nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Authorization", "Key "+pc.APIKey)
 
 	resp, err := pc.Client.Do(req)
@@ -87,9 +96,13 @@ func (pc *PiPlatformClient) ApprovePayment(paymentID string) error {
 }
 
 // CompletePayment finalizes the payment in the Pi ecosystem after blockchain submission.
-func (pc *PiPlatformClient) CompletePayment(paymentID string, txid string) error {
+// Honors ctx cancellation and deadlines on the outbound HTTP call.
+func (pc *PiPlatformClient) CompletePayment(ctx context.Context, paymentID string, txid string) error {
 	payload, _ := json.Marshal(map[string]string{"txid": txid})
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/payments/%s/complete", pc.BaseURL, paymentID), bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/payments/%s/complete", pc.BaseURL, paymentID), bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Authorization", "Key "+pc.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
