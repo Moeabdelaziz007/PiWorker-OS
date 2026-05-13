@@ -2,6 +2,10 @@
 
 # Dependencies
 node_modules/
+tsconfig.tsbuildinfo
+.artifacts/
+build_report_*.log
+bin/
 .pnp
 .pnp.js
 jspm_packages/
