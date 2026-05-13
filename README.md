@@ -11,6 +11,12 @@
 
 </div>
 
+<div align="center">
+
+[![Sovereign AI Stack · 1 Human + 12 AI Agents across 5 projects](https://img.shields.io/badge/SOVEREIGN%20AI%20STACK-1%20Human%20%2B%2012%20AI%20Agents%20across%205%20projects-39FF14?style=for-the-badge&labelColor=050505&logo=github&logoColor=39FF14)](https://github.com/Moeabdelaziz007#07-architects--ai-collaborators--المعماريون-والمتعاونون-الذكيون)
+
+</div>
+
 ---
 
 ## 🇸🇦 النسخة العربية | Arabic Version
@@ -336,6 +342,41 @@ npm run forge
 | **Deployment** | Vercel (frontend), Docker (sidecar engine) |
 | **Testing** | Playwright E2E |
 | **CI/CD** | GitHub Actions, Husky, lint-staged |
+
+---
+
+## 🤝 Built by 1 Human + 3 AI Agents
+
+PiWorker-OS is the **Twin OS** of the [**Sovereign AI Stack**](https://github.com/Moeabdelaziz007#07-architects--ai-collaborators--المعماريون-والمتعاونون-الذكيون): 5 sovereign projects engineered by **1 human and 12 AI agents** in total. PiWorker alone carries the fingerprints of **3 of those 12 agents**, derived from commit history (direct authors, `Co-authored-by` trailers, and multi-model runtime integration).
+
+<div align="center">
+<table>
+<tr>
+<td align="center" width="160" valign="top">
+  <a href="https://github.com/Moeabdelaziz007"><img src="https://github.com/Moeabdelaziz007.png" width="80" style="border-radius:50%;"/></a>
+  <br/><br/><b>Mohamed Abdelaziz</b><br/>
+  <sub>🏛️ Sovereign Architect</sub>
+</td>
+<td align="center" width="160" valign="top">
+  <a href="https://blacksmith.sh"><img src="https://img.shields.io/badge/AI-Codesmith-ff6b35?style=for-the-badge&logo=githubactions&logoColor=white" height="36"/></a>
+  <br/><br/><b>Codesmith</b><br/>
+  <sub>🔨 Blacksmith · CI · Autofix</sub>
+</td>
+<td align="center" width="160" valign="top">
+  <a href="https://jules.google"><img src="https://img.shields.io/badge/AI-Jules-10b981?style=for-the-badge&logo=googlecloud&logoColor=white" height="36"/></a>
+  <br/><br/><b>Jules</b><br/>
+  <sub>🔁 Google Antigravity · Async</sub>
+</td>
+<td align="center" width="160" valign="top">
+  <a href="https://developers.google.com/gemini-code-assist"><img src="https://img.shields.io/badge/AI-Gemini_1.5_Pro-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white" height="36"/></a>
+  <br/><br/><b>Gemini 1.5 Pro</b><br/>
+  <sub>🔬 AI Oracle · Multi-model failover</sub>
+</td>
+</tr>
+</table>
+</div>
+
+> See the full [12-agent roster on the profile README →](https://github.com/Moeabdelaziz007#07-architects--ai-collaborators--المعماريون-والمتعاونون-الذكيون)
 
 ---
 
