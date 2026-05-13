@@ -20,6 +20,9 @@ func decodeLine(t *testing.T, line []byte) map[string]any {
 }
 
 func TestOpEmitsCanonicalFields(t *testing.T) {
+	// Pin LOG_LEVEL so the test does not silently filter INFO records
+	// when the surrounding process sets LOG_LEVEL=warn or error.
+	t.Setenv("LOG_LEVEL", "debug")
 	var buf bytes.Buffer
 	logger := New(ComponentAPIBridge, &buf)
 
@@ -63,6 +66,8 @@ func TestOpEmitsCanonicalFields(t *testing.T) {
 func TestOpKeepsErrorCodeOnFailure(t *testing.T) {
 	// The complement of the omitempty rule: when error_code IS set,
 	// it must appear on the wire so failure paths still surface.
+	// Pin LOG_LEVEL so ERROR records emit regardless of host env.
+	t.Setenv("LOG_LEVEL", "debug")
 	var buf bytes.Buffer
 	logger := New(ComponentAPIBridge, &buf)
 
@@ -83,6 +88,10 @@ func keysOf(m map[string]any) []string {
 }
 
 func TestOpLevelFollowsErrorCode(t *testing.T) {
+	// Pin LOG_LEVEL=debug so every level (INFO/WARN/ERROR) under test
+	// is emitted regardless of what LOG_LEVEL is set to in the host
+	// environment when the test process starts.
+	t.Setenv("LOG_LEVEL", "debug")
 	cases := []struct {
 		errorCode string
 		wantLevel string
