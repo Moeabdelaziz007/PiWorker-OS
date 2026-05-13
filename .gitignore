@@ -15,6 +15,7 @@ build/
 sidecar/sovereign-engine/bin/
 sidecar/sovereign-engine/pkg/pb/*.go
 !sidecar/sovereign-engine/pkg/pb/sovereign.pb.go
+!sidecar/sovereign-engine/pkg/pb/sovereign_grpc.pb.go
 *.exe
 *.exe~
 *.dll
