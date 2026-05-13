@@ -89,19 +89,43 @@ func (s *SovereignServer) ConnectLiteHandler() http.Handler {
 			return nil, err
 		}
 		// The regenerated pb.MemoryList struct tags `insights` with
-		// json:",omitempty", which would silently drop the field when
-		// QueryMemory returns zero matches and produce '{}' on the wire
-		// instead of the previous stable '{"insights":[]}' shape that
-		// the map-based handler emitted. Wrap into a local type without
-		// the omitempty tag and force a non-nil slice so the wire
-		// contract stays the same for consumers that expect an array.
-		insights := resp.GetInsights()
-		if insights == nil {
-			insights = []*pb.MemoryInsight{}
+		// json:",omitempty", and every field on pb.MemoryInsight is
+		// also tagged with omitempty by the proto generator. That would
+		// silently drop:
+		//   - the whole `insights` key when zero matches (returning
+		//     '{}' instead of the previous '{"insights":[]}'),
+		//   - the `relevance` field when a record's score is 0 (which
+		//     downstream neural-memory ranking treats as required),
+		//   - any other field that happens to be the zero value
+		//     (empty signature, empty data_json, etc.).
+		// The previous map-based handler always emitted every field,
+		// so to preserve the wire contract we project each insight
+		// into a local struct whose JSON tags do NOT carry omitempty,
+		// and we force a non-nil insights slice.
+		type wireInsight struct {
+			Id        string  `json:"id"`
+			AgentId   string  `json:"agent_id"`
+			Topic     string  `json:"topic"`
+			DataJson  string  `json:"data_json"`
+			Signature string  `json:"signature"`
+			Timestamp string  `json:"timestamp"`
+			Relevance float32 `json:"relevance"`
 		}
-		return struct {
-			Insights []*pb.MemoryInsight `json:"insights"`
-		}{Insights: insights}, nil
+		out := struct {
+			Insights []wireInsight `json:"insights"`
+		}{Insights: []wireInsight{}}
+		for _, i := range resp.GetInsights() {
+			out.Insights = append(out.Insights, wireInsight{
+				Id:        i.GetId(),
+				AgentId:   i.GetAgentId(),
+				Topic:     i.GetTopic(),
+				DataJson:  i.GetDataJson(),
+				Signature: i.GetSignature(),
+				Timestamp: i.GetTimestamp(),
+				Relevance: i.GetRelevance(),
+			})
+		}
+		return out, nil
 	}))
 
 	mux.HandleFunc(prefix+"EvaluateVortex", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
