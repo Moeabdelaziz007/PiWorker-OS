@@ -41,7 +41,9 @@
     "test:tier1": "node scripts/preflight-check.mjs",
     "test:tier2": "node scripts/run-node-unit-tests.mjs",
     "test:tier3": "node scripts/bridge-handshake.mjs",
-    "test:tier4": "echo 'tier4 (e2e) not yet wired; passing as no-op' && exit 0",
+    "test:tier4": "node scripts/run-real-e2e.mjs",
+    "test:e2e:real": "node scripts/run-real-e2e.mjs",
+    "test:e2e:baseline": "node scripts/aggregate-e2e-baseline.mjs",
     "playwright:install:chromium": "playwright install chromium || echo 'playwright not installed; skipping' && exit 0",
     "prepare": "husky"
   },

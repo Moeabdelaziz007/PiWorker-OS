@@ -1,40 +1,81 @@
-# Critical E2E Scenarios
+# Sovereign E2E Suite
 
-This suite stabilizes the highest-priority sovereign flows with deterministic fixtures and explicit environment contracts.
+There is one lane. It is real. No mocks, no in-process gateways, no fixture
+tokens. A green run means the suite actually exercised a deployed Sovereign
+Engine.
 
-## Scenarios
+The previous simulation harness (`sovereign-critical-path.e2e.test.mjs`,
+`offline-simulation.ts`, `neural-fiscal-loop.test.ts`, `sandbox-audit.spec.ts`
+and the corresponding mocked artifacts under `tests/e2e/artifacts/`) has been
+removed. The `test:tier4` script is no longer a no-op; it is an alias for
+`test:e2e:real`.
 
-1. Sandbox plugin execution (happy path + invalid token)
-2. Simulation request flow (gRPC available + HTTP fallback)
-3. Payment/escrow critical path
-4. Health/status endpoints and recovery behavior
+## Real lane
 
-## Determinism
+`tests/e2e/real/sovereign-critical-path.real.e2e.test.mjs`
 
-All tests use fixed IDs and payloads from `DETERMINISTIC` constants in `sovereign-critical-path.e2e.test.mjs`.
+Required env (the suite exits non-zero before running any test if any of
+these are missing):
 
-## Required environment contract
+| Variable | Purpose |
+|----------|---------|
+| `SOVEREIGN_STAGING_URL` | Base URL of the deployed engine. `SOVEREIGN_ENGINE_URL` is accepted as a fallback. |
+| `SOVEREIGN_AUTH_TOKEN`  | Real bearer token for the `X-Sovereign-Token` header on staging. |
+| `AGENT_SYSTEM_SECRET`   | HMAC secret used to sign plugin source for `/api/sovereign/execute`. |
 
-- `SOVEREIGN_AUTH_TOKEN`
-- `AGENT_SYSTEM_SECRET`
-- `SOVEREIGN_ENGINE_URL`
+Optional:
 
-The suite sets deterministic values in `beforeEach` and asserts they are present before every scenario.
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `REAL_E2E_TIMEOUT_MS` | `15000` | Per-request timeout. |
+| `REAL_E2E_RETRIES`    | `2`     | Retries on 408/429/5xx only. |
+| `REAL_E2E_AGENT_ID`   | `agent-real-e2e` | Agent id for payment/escrow. |
+| `REAL_E2E_AMOUNT_PI`  | `0.0001` | Pi amount for escrow scenario; keep tiny. |
 
-## Retry policy
+Run it with:
 
-Retries are allowed only through `withTransientRetry`, which retries network/transient failures only:
+```bash
+SOVEREIGN_STAGING_URL=https://staging.piworker.example \
+SOVEREIGN_AUTH_TOKEN=... \
+AGENT_SYSTEM_SECRET=... \
+npm run test:e2e:real
+```
 
-- statuses: `408`, `429`, `500`, `502`, `503`, `504`
-- network codes: `ECONNRESET`, `ECONNREFUSED`, `ENOTFOUND`, `ETIMEDOUT`
+Scenarios exercised:
 
-Invalid-token/auth failures are intentionally **not retried**.
+1. `health` &mdash; `GET /health`
+2. `status` &mdash; `GET /api/status` (must report ONLINE/OPERATIONAL)
+3. `execute` &mdash; `POST /api/sovereign/execute` with a real HMAC signature
+4. `simulate` &mdash; `POST /api/sovereign/simulate`
+5. `lock-escrow` &mdash; `POST /api/sovereign/lock-escrow`
+6. `events` &mdash; `GET /events` SSE reachability probe
 
-## Artifacts
+Each scenario records `duration_ms`, `status`, `attempts`, and `outcome`.
 
-Each scenario writes a JSON artifact under `tests/e2e/artifacts/` containing:
+## Artifacts and baseline
 
-- deterministic data snapshot
-- event timeline
-- scenario start/end timestamps
+Every run writes two files under `tests/e2e/artifacts/`:
 
+- `real-run-<ISO>.json` (immutable history, one per run)
+- `real-latest.json` (overwritten each run)
+
+Aggregate the historical artifacts into a single baseline with:
+
+```bash
+npm run test:e2e:baseline
+```
+
+This emits `tests/e2e/artifacts/baseline-metrics.json` containing per-scenario
+p50/p95 duration, per-scenario success rate, and the top failing endpoint
+across all recorded runs. Commit a `baseline-metrics.json` snapshot when you
+declare a release candidate green so regressions are easy to spot.
+
+## Cadence
+
+- **PR CI**: `npm run test:e2e:real` against a stable staging deployment.
+- **Nightly / pre-release**: `npm run test:e2e:real` followed by
+  `npm run test:e2e:baseline`, with the resulting `baseline-metrics.json`
+  diffed against the previously committed snapshot.
+
+If staging is unavailable, the suite fails. That is by design: a passing E2E
+build must mean we actually talked to staging.
