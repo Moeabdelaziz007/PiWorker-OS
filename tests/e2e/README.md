@@ -17,20 +17,20 @@ removed. The `test:tier4` script is no longer a no-op; it is an alias for
 Required env (the suite exits non-zero before running any test if any of
 these are missing):
 
-| Variable | Purpose |
-|----------|---------|
+| Variable                | Purpose                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------- |
 | `SOVEREIGN_STAGING_URL` | Base URL of the deployed engine. `SOVEREIGN_ENGINE_URL` is accepted as a fallback. |
-| `SOVEREIGN_AUTH_TOKEN`  | Real bearer token for the `X-Sovereign-Token` header on staging. |
-| `AGENT_SYSTEM_SECRET`   | HMAC secret used to sign plugin source for `/api/sovereign/execute`. |
+| `SOVEREIGN_AUTH_TOKEN`  | Real bearer token for the `X-Sovereign-Token` header on staging.                   |
+| `AGENT_SYSTEM_SECRET`   | HMAC secret used to sign plugin source for `/api/sovereign/execute`.               |
 
 Optional:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `REAL_E2E_TIMEOUT_MS` | `15000` | Per-request timeout. |
-| `REAL_E2E_RETRIES`    | `2`     | Retries on 408/429/5xx only. |
-| `REAL_E2E_AGENT_ID`   | `agent-real-e2e` | Agent id for payment/escrow. |
-| `REAL_E2E_AMOUNT_PI`  | `0.0001` | Pi amount for escrow scenario; keep tiny. |
+| Variable              | Default          | Purpose                                   |
+| --------------------- | ---------------- | ----------------------------------------- |
+| `REAL_E2E_TIMEOUT_MS` | `15000`          | Per-request timeout.                      |
+| `REAL_E2E_RETRIES`    | `2`              | Retries on 408/429/5xx only.              |
+| `REAL_E2E_AGENT_ID`   | `agent-real-e2e` | Agent id for payment/escrow.              |
+| `REAL_E2E_AMOUNT_PI`  | `0.0001`         | Pi amount for escrow scenario; keep tiny. |
 
 Run it with:
 
@@ -79,3 +79,36 @@ declare a release candidate green so regressions are easy to spot.
 
 If staging is unavailable, the suite fails. That is by design: a passing E2E
 build must mean we actually talked to staging.
+
+## Emergency manual runbook (staging gate fallback)
+
+Use this when GitHub Actions is degraded or secrets/vars are temporarily unavailable
+in CI but you still need to verify the release lane manually.
+
+1. Export the required vars from your secure vault/session:
+
+```bash
+export SOVEREIGN_STAGING_URL=https://staging.piworker.example
+export SOVEREIGN_AUTH_TOKEN='<staging token>'
+export AGENT_SYSTEM_SECRET='<hmac secret>'
+```
+
+2. Run the real lane (tier4 alias):
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+npm run test:tier4
+```
+
+3. Confirm artifacts were produced:
+
+```bash
+test -f tests/e2e/artifacts/real-latest.json
+ls tests/e2e/artifacts/real-run-*.json | tail -n 1
+```
+
+4. Attach `tests/e2e/artifacts/real-latest.json` and the latest
+   `real-run-<timestamp>.json` to the incident/release ticket.
+
+5. If this is a main/release promotion, block rollout until the manual run is
+   green and evidence is attached.
