@@ -1,6 +1,14 @@
 {
   "name": "piworker-os",
   "version": "2.0.0",
+  "aix": {
+    "stackVersion": "0.369.0",
+    "stackCodename": "Echo369",
+    "spec": "AIX/1.0",
+    "layer": "L5",
+    "layerName": "satellite-pi",
+    "authority": "axiomid.app"
+  },
   "type": "module",
   "private": true,
   "workspaces": [
