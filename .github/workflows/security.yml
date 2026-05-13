@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Checkout Code
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Trivy vulnerability scanner in fs mode
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.

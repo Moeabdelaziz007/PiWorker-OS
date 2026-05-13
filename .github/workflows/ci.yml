@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Checkout code
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
@@ -124,7 +124,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
