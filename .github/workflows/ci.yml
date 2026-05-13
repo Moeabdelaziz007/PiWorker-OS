@@ -10,17 +10,33 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect API/proto changes
+    runs-on: ubuntu-latest
+    outputs:
+      api_or_proto_changed: ${{ steps.filter.outputs.api_or_proto }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api_or_proto:
+              - 'api/**'
+              - '**/*.proto'
+              - 'sidecar/sovereign-engine/pkg/pb/**'
+
   build:
     name: Build & Security Audit
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
@@ -38,7 +54,6 @@ jobs:
         run: npm run contracts:check
 
       - name: Setup Go
-        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/setup-go@v5
         with:
           go-version: "1.25.10"
@@ -69,8 +84,13 @@ jobs:
       - name: Secret scan (Secretlint)
         run: npx secretlint "**/*"
 
+      - name: Static scan (Semgrep)
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+          semgrep --config p/owasp-top-ten --error
+
       - name: Vulnerability scan (Trivy)
-        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: aquasecurity/trivy-action@v0.24.0
         with:
           scan-type: fs
@@ -88,25 +108,48 @@ jobs:
 
       - name: Generate release checklist
         run: |
-          cat > release-checklist.md <<'EOF'
+          cat > release-checklist.md <<'EOF2'
           # Release Checklist
 
           ## Build & verification matrix
           - Node typecheck
           - Go build (CLI + sovereign engine)
-          - Security scans (Secretlint + Trivy + govulncheck)
+          - Security scans (Secretlint + Semgrep + Trivy + govulncheck + npm audit)
           - Targeted Performance SLO Profiling
           - Contract Sync Validation
           - Artifact sanity checks
 
           ## Deployment
           - Managed outside GitHub Actions; no deploy secrets enforced here.
-          EOF
+          EOF2
 
       - name: Upload release checklist artifact
-        # Pin action versions to a vetted release tag for supply-chain security and reproducible runs.
         uses: actions/upload-artifact@v4
         with:
           name: release-checklist
           path: release-checklist.md
           if-no-files-found: error
+
+  contract-tests:
+    name: Contract tests for API/proto changes
+    needs: changes
+    if: needs.changes.outputs.api_or_proto_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --legacy-peer-deps
+      - name: Contract sync check
+        run: npm run contracts:check
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.10"
+          cache-dependency-path: go.sum
+      - name: API package tests
+        run: go test ./api/...
