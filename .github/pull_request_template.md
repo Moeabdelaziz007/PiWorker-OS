@@ -19,6 +19,13 @@ Fixes # (issue)
 
 Before submitting, you **MUST** ensure the following. PRs failing these checks will be closed.
 
+### 🔒 Mandatory Security Checklist (Required)
+
+- [ ] **I confirm this PR passes dependency, secret, and static scans in CI (required).**
+- [ ] **I confirm no hardcoded secrets/tokens/keys are introduced (required).**
+- [ ] **I reviewed new/changed dependencies for risk and licensing impact (required).**
+- [ ] **Any CRITICAL/HIGH findings are resolved or explicitly approved with SLA tracking (required).**
+
 ### Code Quality & Standards
 
 - [ ] My code follows the **Clean Room Engineering** rules (no legacy copy-paste).
@@ -27,12 +34,16 @@ Before submitting, you **MUST** ensure the following. PRs failing these checks w
 - [ ] My changes generate zero new TypeScript warnings or errors (`npm run typecheck`).
 - [ ] Code is properly formatted (`npm run format` or via `lint-staged`).
 
+### API / Proto Contract Safety
+
+- [ ] If this PR changes API/proto contracts, contract tests are updated and passing in CI.
+- [ ] If this PR changes an external interface, backward-compatibility policy is followed (versioning + deprecation window).
+
 ### Security & Architecture (PoPW & Sandbox)
 
 - [ ] I have verified that this change does **not** break the Sandbox isolation boundaries.
 - [ ] If this PR introduces an Architectural Decision, I have created/updated an ADR in `docs/architecture/adr/`.
 - [ ] If this PR relates to physical work, it passes the Proof of Physical Work (PoPW) criteria.
-- [ ] No hardcoded secrets or API keys (e.g., `GEMINI_API_KEY`) are included in this PR.
 
 ### Testing
 
