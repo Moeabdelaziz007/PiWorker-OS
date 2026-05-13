@@ -136,6 +136,7 @@ message PluginResponse {
   string output_json = 3;
   string error_message = 4;
   int64 execution_time_ms = 5;
+  repeated string logs = 6;
 }
 
 // --- Memory Layer ---

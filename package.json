@@ -40,6 +40,8 @@
     "forge": "go run dev.go",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "profile:slo": "node scripts/profile-slo.mjs",
+    "contracts:check": "node scripts/verify-contract-sync.mjs",
     "prepare": "husky"
   },
   "dependencies": {
