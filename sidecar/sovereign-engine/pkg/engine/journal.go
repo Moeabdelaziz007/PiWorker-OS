@@ -71,6 +71,37 @@ func (j *SovereignJournal) Fail(id, ns, reason string) error {
 	return j.log(JournalEntry{ID: id, Type: "FAIL", Namespace: ns, Data: map[string]string{"reason": reason}})
 }
 
+// GetActiveCount returns the number of intents currently in flight,
+// defined as entries with a BEGIN log line that have no matching
+// COMMIT or FAIL entry yet. Used by the HTTP bridge to render the
+// 'active_intents' field on /api/status.
+func (j *SovereignJournal) GetActiveCount() int {
+	entries, err := j.Replay()
+	if err != nil {
+		return 0
+	}
+	// Tally per (id, namespace) tuple: +1 on BEGIN, -1 on COMMIT/FAIL.
+	// Any tuple still at +1 after the scan is an in-flight intent.
+	type key struct{ id, ns string }
+	tally := make(map[key]int, len(entries))
+	for _, e := range entries {
+		k := key{e.ID, e.Namespace}
+		switch e.Type {
+		case "BEGIN":
+			tally[k]++
+		case "COMMIT", "FAIL":
+			tally[k]--
+		}
+	}
+	active := 0
+	for _, v := range tally {
+		if v > 0 {
+			active++
+		}
+	}
+	return active
+}
+
 func (j *SovereignJournal) Replay() ([]JournalEntry, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()

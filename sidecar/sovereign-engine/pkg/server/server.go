@@ -371,62 +371,58 @@ func (s *SovereignServer) CommitPayment(ctx context.Context, req *pb.PaymentRequ
 
 // 4. Memory Layer (Pattern 7: Neural Memory Mesh)
 
-func (s *SovereignServer) StoreMemory(ctx context.Context, req interface{}) (interface{}, error) {
-	// We use interface{} because the pb types aren't generated yet
-	// Connect-Lite will pass us a map or a struct if we decode it manually
-	
-	m, ok := req.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid memory request type")
+func (s *SovereignServer) StoreMemory(ctx context.Context, req *pb.MemoryInsight) (*pb.MemoryResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("nil MemoryInsight")
 	}
-
 	insight := memory.SovereignInsight{
-		ID:        fmt.Sprintf("%v", m["id"]),
-		AgentID:   fmt.Sprintf("%v", m["agent_id"]),
-		Topic:     fmt.Sprintf("%v", m["topic"]),
-		Data:      m["data_json"],
-		Signature: fmt.Sprintf("%v", m["signature"]),
-		Timestamp: fmt.Sprintf("%v", m["timestamp"]),
+		ID:        req.Id,
+		AgentID:   req.AgentId,
+		Topic:     req.Topic,
+		Data:      req.DataJson,
+		Signature: req.Signature,
+		Timestamp: req.Timestamp,
 	}
-
 	if err := s.Memory.Store(insight); err != nil {
 		return nil, err
 	}
-
-	return map[string]interface{}{
-		"success":   true,
-		"memory_id": insight.ID,
-	}, nil
+	return &pb.MemoryResponse{Success: true, MemoryId: insight.ID}, nil
 }
 
-func (s *SovereignServer) QueryMemory(ctx context.Context, req interface{}) (interface{}, error) {
-	m, ok := req.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("invalid query request type")
+// ApprovePiPayment is the server-side bridge for the /api/sovereign/payment/approve
+// HTTP route in api/index.go. It delegates to the Pi Platform client and is
+// intentionally lazy-initialized so test setups that do not exercise the Pi
+// flow do not need to provision PI_API_KEY.
+func (s *SovereignServer) ApprovePiPayment(ctx context.Context, paymentID string) error {
+	client := finance.NewPiPlatformClient()
+	return client.ApprovePayment(paymentID)
+}
+
+// CompletePiPayment mirrors ApprovePiPayment for the /api/sovereign/payment/complete
+// HTTP route. The Pi Platform requires both the payment ID and the on-chain txid.
+func (s *SovereignServer) CompletePiPayment(ctx context.Context, paymentID, txID string) error {
+	client := finance.NewPiPlatformClient()
+	return client.CompletePayment(paymentID, txID)
+}
+
+func (s *SovereignServer) QueryMemory(ctx context.Context, req *pb.MemoryQuery) (*pb.MemoryList, error) {
+	if req == nil {
+		return nil, fmt.Errorf("nil MemoryQuery")
 	}
+	results := s.Memory.Query(req.Topic, req.AgentId)
 
-	topic := fmt.Sprintf("%v", m["topic"])
-	agentId := fmt.Sprintf("%v", m["agent_id"])
-
-	results := s.Memory.Query(topic, agentId)
-	
-	// Convert results to map for JSON response
-	insights := []map[string]interface{}{}
+	insights := make([]*pb.MemoryInsight, 0, len(results))
 	for _, res := range results {
-		insights = append(insights, map[string]interface{}{
-			"id":        res.ID,
-			"agent_id":  res.AgentID,
-			"topic":     res.Topic,
-			"data_json": res.Data,
-			"signature": res.Signature,
-			"timestamp": res.Timestamp,
-			"relevance": res.Relevance,
+		insights = append(insights, &pb.MemoryInsight{
+			Id:        res.ID,
+			AgentId:   res.AgentID,
+			Topic:     res.Topic,
+			DataJson:  fmt.Sprintf("%v", res.Data),
+			Signature: res.Signature,
+			Timestamp: res.Timestamp,
 		})
 	}
-
-	return map[string]interface{}{
-		"insights": insights,
-	}, nil
+	return &pb.MemoryList{Insights: insights}, nil
 }
 
 // 5. Profit Vortex (Pattern 4: Digital Darwinism)

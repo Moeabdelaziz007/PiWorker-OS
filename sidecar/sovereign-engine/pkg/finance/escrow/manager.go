@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance/pi402"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance/pi402"
 )
 
 /**

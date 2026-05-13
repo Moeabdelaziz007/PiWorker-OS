@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
-	"Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
+	"github.com/Moeabdelaziz007/PiWorker-OS/sidecar/sovereign-engine/pkg/finance"
 )
 
 /**
@@ -64,8 +63,13 @@ func (e *Pi402Engine) VerifyAgentSignature(agentID string, message []byte, signa
 		return false
 	}
 
-	sw := val.(*AgentSubWallet)
-	// In a real implementation, we'd use ed25519.Verify
-	// For this protocol bridge, we assume the server-side session wallet is authoritative.
-	return true 
+	_ = val.(*AgentSubWallet) // type-assert to validate the cast; verification stub below
+	// In a real implementation, we would use ed25519.Verify against
+	// the agent's stored public key. For this protocol bridge we
+	// trust the server-side session wallet to authenticate the
+	// caller. Tracked as a follow-up: wire ed25519.Verify through
+	// AgentSubWallet.PublicKey when the keypair plumbing lands.
+	_ = message
+	_ = signature
+	return true
 }

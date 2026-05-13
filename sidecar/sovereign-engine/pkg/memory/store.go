@@ -2,7 +2,6 @@ package memory
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 	"time"

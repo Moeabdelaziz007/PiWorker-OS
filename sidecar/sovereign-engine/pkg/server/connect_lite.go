@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -69,19 +68,23 @@ func (s *SovereignServer) ConnectLiteHandler() http.Handler {
 	}))
 
 	mux.HandleFunc(prefix+"StoreMemory", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
-		var req map[string]interface{}
+		// Decode the JSON body directly into the proto-generated type
+		// now that pb.MemoryInsight is in scope. The JSON tags on the
+		// generated struct map snake_case wire fields to the right
+		// Go fields, so no manual transcription is needed.
+		var req pb.MemoryInsight
 		if err := json.Unmarshal(body, &req); err != nil {
 			return nil, err
 		}
-		return s.StoreMemory(ctx, req)
+		return s.StoreMemory(ctx, &req)
 	}))
 
 	mux.HandleFunc(prefix+"QueryMemory", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
-		var req map[string]interface{}
+		var req pb.MemoryQuery
 		if err := json.Unmarshal(body, &req); err != nil {
 			return nil, err
 		}
-		return s.QueryMemory(ctx, req)
+		return s.QueryMemory(ctx, &req)
 	}))
 
 	mux.HandleFunc(prefix+"EvaluateVortex", s.wrapHandler(func(ctx context.Context, body []byte) (any, error) {
@@ -115,7 +118,10 @@ func (s *SovereignServer) wrapHandler(f handlerFunc) http.HandlerFunc {
 			expectedToken = "SOVEREIGN_DEV_TOKEN"
 		}
 		if token == "" || token != expectedToken {
-			http.Error(w, "Unauthenticated", http.StatusUnauthenticated)
+			// net/http does not expose StatusUnauthenticated; the HTTP
+			// equivalent of the gRPC UNAUTHENTICATED code is 401
+			// Unauthorized per RFC 7235.
+			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
 
