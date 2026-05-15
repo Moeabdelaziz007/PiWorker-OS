@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 /**
- * PiWorker Sovereign Identity (did:piworker)
+ * PiWorker Sovereign Identity (did:axiom)
  * Local-first, unkillable identity generation based on AIP standards.
  */
 export class PiWorkerDID {

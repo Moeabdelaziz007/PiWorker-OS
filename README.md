@@ -277,7 +277,7 @@ Every agent carries a unique **DNA manifest** defining:
 - `generation` — evolutionary generation number
 - `capabilities` — CBAC permission list
 
-Current agents in the system: **CEO Orchestrator**, **Market Sniper**, **SaaS Factory**, **Bounty Hunter** — each with a `did:piworker:...` decentralized identifier and a trust score out of 1000.
+Current agents in the system: **CEO Orchestrator**, **Market Sniper**, **SaaS Factory**, **Bounty Hunter** — each with a `did:axiom:axiomid.app:...` decentralized identifier and a trust score out of 1000.
 
 ---
 

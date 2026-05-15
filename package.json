@@ -60,6 +60,7 @@
     "@google/generative-ai": "^0.21.0",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
+    "@axiom/pi": "^0.1.0",
     "axios": "^1.7.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",

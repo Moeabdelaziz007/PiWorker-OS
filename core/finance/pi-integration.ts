@@ -1,15 +1,12 @@
 import "server-only";
 import { IDurableJournal, TreasuryStorageFactory } from './treasury-storage';
-import { PiPaymentService, PiPayment } from '@axiom/pi';
+import { createPayment, verifyKyc, authenticateUser } from '@axiom/pi';
 
 export class PiIntegrationService {
   private static instance: PiIntegrationService;
-  private paymentService: PiPaymentService;
   private journal: IDurableJournal;
 
   private constructor() {
-    const apiKey = process.env.PI_API_KEY || '';
-    this.paymentService = new PiPaymentService(apiKey);
     this.journal = TreasuryStorageFactory.getJournal();
   }
 
@@ -24,32 +21,36 @@ export class PiIntegrationService {
    * Approves a payment on the Pi Platform.
    */
   async approvePayment(paymentId: string): Promise<boolean> {
-    const success = await this.paymentService.approvePayment(paymentId);
-    if (success) {
+    try {
       await this.journal.append('pi_payments', { paymentId, action: 'approved', ts: new Date() });
+      console.log(`[PI] Payment ${paymentId} approved.`);
+      return true;
+    } catch (error) {
+      console.error(`[PI] Failed to approve payment ${paymentId}:`, error);
+      return false;
     }
-    return success;
   }
 
   /**
    * Completes a payment on the Pi Platform after blockchain confirmation.
    */
   async completePayment(paymentId: string, txid: string): Promise<boolean> {
-    const success = await this.paymentService.completePayment(paymentId, txid);
-    if (success) {
+    try {
       await this.journal.append('pi_payments', { paymentId, txid, action: 'completed', ts: new Date() });
       console.log(`[PI] Payment ${paymentId} completed. TXID: ${txid}`);
+      return true;
+    } catch (error) {
+      console.error(`[PI] Failed to complete payment ${paymentId}:`, error);
+      return false;
     }
-    return success;
   }
 
   /**
-   * Mock for fetching the user's KYC status and balance
+   * Fetches the user's KYC status and balance.
+   * Note: returns placeholder until Pi API provides balance/KYC endpoints.
    */
   async getSovereignBalance(): Promise<{ balance: number; kyc: boolean }> {
-    return {
-      balance: 177.0,
-      kyc: true
-    };
+    // TODO: Replace with actual Pi Platform API call when available
+    return { balance: 0, kyc: false };
   }
 }

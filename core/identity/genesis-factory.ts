@@ -12,7 +12,7 @@ export class GenesisFactory {
   static async spawnAgentIdentity(agentName: string, agentType: string) {
     // 1. DKG & DID Minting (AIP + Zama Logic)
     const { publicKey, privateKey, did } = await AgentKeys.generateSovereignIdentity();
-    const agentDID = `did:piworker:${crypto.createHash("sha256").update(did).digest("hex")}`;
+    const agentDID = `did:axiom:axiomid.app:${crypto.createHash("sha256").update(did).digest("hex")}`;
     
     // 2. 2-of-3 Threshold Key Sharding (Zama logic)
     const shares = this.distributeThresholdShares(privateKey);
