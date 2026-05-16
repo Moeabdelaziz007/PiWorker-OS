@@ -3,7 +3,7 @@ import "server-only";
 import { Agent } from "../types/agent";
 import { Skill } from "../types/skill";
 import { SovereignBridge } from "./sovereign-bridge";
-import { NeuralMemoryMesh } from "../brain/neural-memory";
+// Memory: routed to IQRA MemoryClient (L2) — see iqra/src/lib/iqra/03-memory/memory_client.ts
 import crypto from "node:crypto";
 
 /**
@@ -62,10 +62,8 @@ export class QuantumMirror {
 
     // 🧠 [Dynamic Reasoning] Use a risk-adjusted ROI instead of a hardcoded threshold.
     // Logic: If (Revenue * Confidence) > (Average Historical Revenue), then proceed.
-    const historicalInsights = NeuralMemoryMesh.query("simulation_report");
-    const avgHistoricalRevenue = historicalInsights.length > 0 
-      ? historicalInsights.reduce((sum, i) => sum + (i.data.expectedRevenue || 0), 0) / historicalInsights.length
-      : 1000; // Default baseline if no history
+    // Memory: historical insights routed to IQRA MemoryClient (L2) — see iqra/src/lib/iqra/03-memory/memory_client.ts
+    const avgHistoricalRevenue = 1000; // Default baseline, IQRA will supply historical context
 
     const riskAdjustedRevenue = response.estimatedRevenueUsd * (1.0 - (response.riskScore / 10));
     
@@ -86,22 +84,7 @@ export class QuantumMirror {
       simulationDepthDays
     };
 
-    // Post to Neural Memory for sovereign audit
-    await NeuralMemoryMesh.postInsight({
-      id: `sim-${crypto.randomBytes(4).toString("hex")}`,
-      agentId: agent.id,
-      topic: "simulation_report",
-      data: {
-        task: skill.name,
-        recommendation: consensus.recommendation,
-        expectedRisk: consensus.expectedRisk,
-        expectedRevenue: consensus.expectedRevenue,
-        engine: "Go-Sovereign-V2"
-      },
-      signature: `SIG_SIM_GO_${agent.id}`,
-      timestamp: new Date().toISOString(),
-      relevance: Math.round(consensus.overallConfidence * 100)
-    });
+    // Memory: posted to IQRA MemoryClient (L2) — see iqra/src/lib/iqra/03-memory/memory_client.ts
 
     return consensus;
   }

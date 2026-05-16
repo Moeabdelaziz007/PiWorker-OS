@@ -13,7 +13,7 @@ PiWorker-OS is a **Sovereign Operating System** designed for the **Pi Network Ec
 
 PiWorker-OS is an independent digital state governed by **Amrikyy Lab**.
 
-- **Identity Protocol**: All citizens (Agents) and Robotic assets use `did:piworker` identifiers issued by the **Amrikyy Lab Genesis Factory**.
+- **Identity Protocol**: All citizens (Agents) and Robotic assets use `did:axiom:axiomid.app:*` identifiers issued by the **AxiomID Root Authority**.
 - **Sovereign Governance**: Managed by **MAS-ZERO** (The Governance Layer).
 
 ## 3. Structural Layering

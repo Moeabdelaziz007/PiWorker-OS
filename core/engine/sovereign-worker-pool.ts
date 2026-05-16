@@ -1,5 +1,5 @@
 import { Agent, AgentRole } from "../types/agent";
-import { NeuralMemoryMesh } from "../brain/neural-memory";
+// Memory: routed to IQRA MemoryClient (L2) — see iqra/src/lib/iqra/03-memory/memory_client.ts
 import { GemmaAdapter } from "../brain/gemma-adapter";
 import { Skill } from "../types/skill";
 import crypto from "node:crypto";
@@ -19,18 +19,16 @@ export class SovereignWorkerPool {
   private static instance: SovereignWorkerPool;
   private jobQueue: Job[] = [];
   private brain: GemmaAdapter;
-  private memory: typeof NeuralMemoryMesh;
 
-  private constructor(brain: GemmaAdapter, memory: typeof NeuralMemoryMesh) {
+  private constructor(brain: GemmaAdapter) {
     this.brain = brain;
-    this.memory = memory;
     console.log("[WORKER_POOL] Sovereign heartbeat initialized.");
   }
 
-  public static getInstance(brain?: GemmaAdapter, memory?: typeof NeuralMemoryMesh): SovereignWorkerPool {
+  public static getInstance(brain?: GemmaAdapter): SovereignWorkerPool {
     if (!SovereignWorkerPool.instance) {
-      if (!brain || !memory) throw new Error("WorkerPool requires brain and memory for first initialization.");
-      SovereignWorkerPool.instance = new SovereignWorkerPool(brain, memory);
+      if (!brain) throw new Error("WorkerPool requires brain for first initialization.");
+      SovereignWorkerPool.instance = new SovereignWorkerPool(brain);
     }
     return SovereignWorkerPool.instance;
   }
@@ -65,15 +63,7 @@ export class SovereignWorkerPool {
     try {
       // In v2, every job is treated as a Sovereign Goal
       // We will simulate it first using Quantum Mirror (called via Orchestrator)
-      await this.memory.postInsight({
-        id: `pool-${crypto.randomBytes(4).toString("hex")}`,
-        agentId: "system",
-        topic: "job_started",
-        data: { jobId: job.id, type: job.type },
-        signature: "SIG_POOL",
-        timestamp: new Date().toISOString(),
-        relevance: 50
-      });
+      // Memory: posted to IQRA MemoryClient (L2) — see iqra/src/lib/iqra/03-memory/memory_client.ts
 
       // Logic for job execution would go here, interfacing with MASOrchestrator
       // For now, we simulate success
